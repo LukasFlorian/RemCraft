@@ -35,7 +35,9 @@ jobs:
         run: npm run build
         env:
           # Project sites are served from /<repository>/.
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          # Custom domain (e.g. remcraft.example.com): set the repository variable
+          # BASE_PATH to "/". Default: GitHub Pages project path /<repo>/.
+          VITE_BASE_PATH: ${{ vars.BASE_PATH || format('/{0}/', github.event.repository.name) }}
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
       - uses: actions/configure-pages@v5
