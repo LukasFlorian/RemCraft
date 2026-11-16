@@ -19,7 +19,7 @@ export function GlobalModals(): ReactNode {
     case 'search':
       return <SearchDialog onClose={close} />;
     case 'import':
-      return <ImportDialog onClose={close} parentId={modal.parentId ?? null} />;
+      return <ImportDialog onClose={close} parentId={modal.parentId ?? null} initialSource={modal.source} />;
     case 'occlusion':
       return <OcclusionEditor remId={modal.remId} onClose={close} />;
     case 'recorder':

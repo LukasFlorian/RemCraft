@@ -3,7 +3,7 @@
  * handout PDF with two slides per A4 page, notes, imported cards and two past
  * lectures, so analysis and review are filled immediately.
  */
-import type { FokusDoc } from '@core/lecture/fokusCards';
+import type { CardFileDoc } from '@core/lecture/cardFile';
 import { rt } from '@core/richtext/ops';
 import type { RemCraftApp } from '../app';
 
@@ -118,9 +118,9 @@ export async function makeDemoPdf(): Promise<Uint8Array> {
   return doc.save();
 }
 
-/** Demo cards in the `fokus-cards` format. */
-export const DEMO_CARDS: FokusDoc = {
-  format: 'fokus-cards',
+/** Demo cards in the RemCraft card file format. */
+export const DEMO_CARDS: CardFileDoc = {
+  format: 'remcraft-cards',
   version: 1,
   source: { pdf: 'Demo_ML_Handout.pdf', pdf_pages: 3 },
   cards: [
@@ -200,7 +200,7 @@ export async function createDemo(app: RemCraftApp): Promise<string> {
   note(2, 'Backprop ist kein Lernverfahren, sondern berechnet nur Gradienten');
   if (slides[3]) app.lectures.setFlag(slides[3].id, 'unclear', true);
   if (slides[2]) app.lectures.setFlag(slides[2].id, 'important', true);
-  app.lectures.importFokus(deckId, DEMO_CARDS, 'demo.fokus.json');
+  app.lectures.importCards(deckId, DEMO_CARDS, 'demo.cards.json');
   // Two past lectures with synthetic attention data.
   const day = 24 * 3600_000;
   for (const [ago, awayAt] of [

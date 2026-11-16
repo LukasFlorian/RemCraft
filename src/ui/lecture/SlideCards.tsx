@@ -109,7 +109,7 @@ export function SlideCards({
       {order.length === 0 ? (
         <div className="faint" style={{ fontSize: 13 }}>
           Keine Karten {all ? 'in diesem Foliensatz' : 'zu dieser Folie'}. Schreib in den Notizen z.
-          B. „Begriff &gt;&gt; Erklärung“ oder importiere eine *.fokus.json.
+          B. „Begriff &gt;&gt; Erklärung“ oder importiere eine Kartendatei (*.cards.json).
         </div>
       ) : view ? (
         <div className="mini-card">

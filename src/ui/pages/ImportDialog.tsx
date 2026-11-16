@@ -30,7 +30,7 @@ import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { pickFiles, pickFolder } from '../hooks/useFilePicker';
 import { archiveFromFiles } from '@data/services/fokusImport';
-import { importCardFile } from '../lecture/DeckPanel';
+import { importCardFile, SKILL_URL } from '../lecture/DeckPanel';
 
 /** An import source. */
 interface Source {
@@ -39,8 +39,10 @@ interface Source {
   icon: ReactNode;
   accept: string;
   format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus' | 'fokus-data' | 'share';
-  help: string;
+  help: ReactNode;
   csvDefaults?: { delimiterHint: string };
+  /** Not shown in the source grid (opened directly, e.g. from Settings). */
+  hidden?: boolean;
 }
 
 const SOURCES: Source[] = [
@@ -50,6 +52,7 @@ const SOURCES: Source[] = [
     icon: <FolderInput size={22} color="#2ec4a6" />,
     accept: '',
     format: 'fokus-data',
+    hidden: true,
     help: 'Wähle den Ordner „data“ deiner Fokus-Installation (darin liegen decks, sessions und courses). Übernommen werden Kurse, Foliensätze mit Layout, Notizen, Markierungen, Zeichnungen, Textfelder, Hervorhebungen, importierte Karten und alle Vorlesungen mit Auswertung. Mehrfaches Importieren erzeugt keine Duplikate.',
   },
   {
@@ -62,11 +65,21 @@ const SOURCES: Source[] = [
   },
   {
     id: 'fokus',
-    label: 'Fokus-Karten (.fokus.json)',
+    label: 'Karten mit Folien (.cards.json)',
     icon: <FileJson size={22} color="#f2a33a" />,
     accept: '.json',
     format: 'fokus',
-    help: 'Karten aus dem Skill fokus-flashcards: jede Karte wird über PDF-Seite und Zitat ihrer Folie zugeordnet. Der passende Foliensatz wird anhand des PDF-Namens gefunden.',
+    help: (
+      <>
+        Karteikarten mit Folienzuordnung: jede Karte landet über PDF-Seite und ein wörtliches Zitat
+        auf ihrer Folie; der passende Foliensatz wird am PDF-Namen erkannt. Solche Dateien erstellt
+        Claude mit dem{' '}
+        <a href={SKILL_URL} download>
+          RemCraft-Skill (herunterladen)
+        </a>{' '}
+        aus deinen Folien.
+      </>
+    ),
   },
   {
     id: 'share',
@@ -191,15 +204,20 @@ function useFolders(): { id: RemId; title: string }[] {
 export function ImportDialog({
   onClose,
   parentId = null,
+  initialSource,
 }: {
   onClose: () => void;
   parentId?: RemId | null;
+  /** Id of a source to open directly. */
+  initialSource?: string;
 }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
   const toast = useToast();
   const folders = useFolders();
-  const [source, setSource] = useState<Source | null>(null);
+  const [source, setSource] = useState<Source | null>(
+    SOURCES.find((s) => s.id === initialSource) ?? null,
+  );
   const [target, setTarget] = useState<RemId | ''>(parentId ?? '');
   const [files, setFiles] = useState<File[]>([]);
   const [paste, setPaste] = useState('');
@@ -325,7 +343,7 @@ export function ImportDialog({
     return (
       <Modal title="Import to RemCraft" onClose={onClose} wide>
         <div className="import-grid">
-          {SOURCES.map((s) => (
+          {SOURCES.filter((s) => !s.hidden).map((s) => (
             <button key={s.id} className="import-source" onClick={() => setSource(s)}>
               {s.icon}
               <span>{s.label}</span>

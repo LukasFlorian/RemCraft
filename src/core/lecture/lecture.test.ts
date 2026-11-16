@@ -13,10 +13,10 @@ import {
   anchorScore,
   cardKey,
   cardOutline,
-  exportFokus,
+  exportCardFile,
   resolveSlides,
-  validateFokus,
-} from './fokusCards';
+  validateCardFile,
+} from './cardFile';
 import type { Mask } from './layout';
 import {
   detectAuto,
@@ -152,10 +152,10 @@ describe('fokus cards', () => {
     });
   });
   it('validates and builds outlines', () => {
-    expect(validateFokus({ format: 'x' })[0]).toMatch(/Kein Fokus/);
-    expect(validateFokus({ format: 'fokus-cards', version: 1, cards: [{ front: '' }] })[0]).toMatch(
-      /front/,
-    );
+    expect(validateCardFile({ format: 'x' })[0]).toMatch(/Keine RemCraft-Kartendatei/);
+    expect(
+      validateCardFile({ format: 'fokus-cards', version: 1, cards: [{ front: '' }] })[0],
+    ).toMatch(/front/);
     expect(cardKey({ front: 'a', back: 'b' })).toHaveLength(12);
     expect(cardOutline({ front: 'Q', remnote: 'Q >> A' })[0]!.text).toBe('Q >> A');
     const mc = cardOutline({
@@ -196,7 +196,7 @@ describe('fokus cards', () => {
       back: rt('Viele Daten'),
       direction: 'forward',
     });
-    const { doc, remnote } = exportFokus(createMemoryGraph([deck, s0, c]), 'd', 'VL01');
+    const { doc, remnote } = exportCardFile(createMemoryGraph([deck, s0, c]), 'd', 'VL01');
     expect(doc.source).toMatchObject({ pdf: 'VL01.pdf', pdf_pages: 2 });
     expect(doc.cards[0]).toMatchObject({
       front: 'Was ist Big Data?',
@@ -283,5 +283,16 @@ describe('planRelayout', () => {
     expect(plan.reuse).toEqual([0]);
     expect(plan.moveTo.get(2)).toBe(0);
     expect(plan.moveTo.has(1)).toBe(false); // empty: simply removed
+  });
+});
+
+describe('card files from RemNote-style generators', () => {
+  it('turns the RemNote arrow of numeric cards into a card separator', () => {
+    const [node] = cardOutline({
+      type: 'numeric',
+      front: 'Q',
+      remnote: 'Wie viel? (Numeric answer)→Korrekte Antwort: 3 Rechenweg: 1+2',
+    });
+    expect(node!.text).toContain('>>');
   });
 });

@@ -9,7 +9,9 @@
     "node": ">=20"
   },
   "scripts": {
+    "predev": "node scripts/build-skill.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/build-skill.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",

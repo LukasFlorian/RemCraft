@@ -17,7 +17,7 @@
  * sessions/<sid>/events.jsonl        one event per line (see `fokus/session.py`)
  * ```
  */
-import type { FokusCard, FokusDoc, FokusNote } from '../lecture/fokusCards';
+import type { CardFileCard, CardFileDoc, CardFileNote } from '../lecture/cardFile';
 import type {
   LectureEvent,
   SlideAnnotations,
@@ -51,9 +51,9 @@ export interface FokusSlideNote {
 
 /** `cards.json`. */
 export interface FokusCardsJson {
-  imports?: { id: string; file?: string; source?: FokusDoc['source'] }[];
-  cards?: (FokusCard & { import?: string })[];
-  notes?: (FokusNote & { import?: string })[];
+  imports?: { id: string; file?: string; source?: CardFileDoc['source'] }[];
+  cards?: (CardFileCard & { import?: string })[];
+  notes?: (CardFileNote & { import?: string })[];
 }
 
 /** One entry of `cards_progress.json`. */
@@ -298,18 +298,18 @@ export function convertSessionEvents(
 }
 
 /** Builds the `fokus-cards` documents (one per original import file) of a deck. */
-export function cardDocs(data: FokusCardsJson): { file: string; doc: FokusDoc }[] {
+export function cardDocs(data: FokusCardsJson): { file: string; doc: CardFileDoc }[] {
   const imports = data.imports ?? [];
-  const byImport = new Map<string, { cards: FokusCard[]; notes: FokusNote[] }>();
-  const bucket = (id: string | undefined): { cards: FokusCard[]; notes: FokusNote[] } => {
+  const byImport = new Map<string, { cards: CardFileCard[]; notes: CardFileNote[] }>();
+  const bucket = (id: string | undefined): { cards: CardFileCard[]; notes: CardFileNote[] } => {
     const key = id ?? '';
     if (!byImport.has(key)) byImport.set(key, { cards: [], notes: [] });
     return byImport.get(key)!;
   };
   for (const { import: imp, ...card } of data.cards ?? [])
-    bucket(imp).cards.push(stripDerived(card) as FokusCard);
+    bucket(imp).cards.push(stripDerived(card) as CardFileCard);
   for (const { import: imp, ...note } of data.notes ?? [])
-    bucket(imp).notes.push(stripDerived(note) as FokusNote);
+    bucket(imp).notes.push(stripDerived(note) as CardFileNote);
   return [...byImport.entries()]
     .filter(([, v]) => v.cards.length || v.notes.length)
     .map(([id, v]) => {
@@ -322,7 +322,7 @@ export function cardDocs(data: FokusCardsJson): { file: string; doc: FokusDoc }[
           ...(imp?.source ? { source: imp.source } : {}),
           cards: v.cards,
           notes: v.notes,
-        } as FokusDoc,
+        } as CardFileDoc,
       };
     });
 }

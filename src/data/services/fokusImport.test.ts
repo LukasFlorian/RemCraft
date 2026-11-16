@@ -15,7 +15,8 @@ import fixtureJson from '../testing/fixtures/fokus-data.json';
 const fixture = fixtureJson as Record<string, string>;
 
 /** Bytes of a base64 string. */
-const bytes = (b64: string): Uint8Array<ArrayBuffer> => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+const bytes = (b64: string): Uint8Array<ArrayBuffer> =>
+  Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
 /** The fixture as files of a selected folder (like `<input webkitdirectory>`). */
 function folder(prefix = 'Fokus/'): File[] {

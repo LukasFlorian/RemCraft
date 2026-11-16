@@ -2,7 +2,7 @@
  * Assistant panel (replaces Fokus' Claude-Code panel, which needs a local
  * CLI): chat with any configured AI provider about the slides, with explicit
  * context chips (`@` like in Claude Code), quick actions, "→ Notizen" and
- * flashcard generation in the `fokus-cards` format (imported onto the slides).
+ * flashcard generation as a RemCraft card file (imported onto the slides).
  */
 import { useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -13,7 +13,7 @@ import { createAiProvider } from '@ai/registry';
 import type { ChatMessage } from '@ai/provider';
 import { buildContext } from '@data/lecture/context';
 import type { ContextChip } from '@data/lecture/context';
-import type { FokusDoc } from '@core/lecture/fokusCards';
+import type { CardFileDoc } from '@core/lecture/cardFile';
 import type { RemId } from '@core/model/types';
 import { useApp } from '../app/context';
 import { useToast } from '../components/Toast';
@@ -78,9 +78,9 @@ const ACTIONS: {
   },
 ];
 
-/** Instructions for card generation in the fokus-cards format. */
-const CARD_INSTRUCTIONS = `Antworte NUR mit einem JSON-Codeblock im Format "fokus-cards" Version 1:
-{"format":"fokus-cards","version":1,"cards":[{"section":"…","type":"basic|concept|cloze|mc|set|list","front":"…","back":"…","options":[{"text":"…","correct":true}],"items":["…"],"pages":[PDF-Seite],"anchor":"3-12 Wörter WÖRTLICH von der Folie","remnote":"RemNote-Zeile, z. B. Frage >> Antwort"}],"notes":[]}
+/** Instructions for card generation in the RemCraft card file format. */
+const CARD_INSTRUCTIONS = `Antworte NUR mit einem JSON-Codeblock im Format "remcraft-cards" Version 1:
+{"format":"remcraft-cards","version":1,"cards":[{"section":"…","type":"basic|concept|cloze|mc|set|list","front":"…","back":"…","options":[{"text":"…","correct":true}],"items":["…"],"pages":[PDF-Seite],"anchor":"3-12 Wörter WÖRTLICH von der Folie","remnote":"RemNote-Zeile, z. B. Frage >> Antwort"}],"notes":[]}
 Regeln: "pages" sind PDF-Seitennummern (1-basiert) aus dem Kontext; "anchor" wird wörtlich kopiert (Folientitel oder eindeutige Phrase); MC: richtige Optionen zuerst; Cloze in "remnote" mit {{…}}; Sprache der Folien.`;
 
 /** Extracts the first JSON code block (or bare JSON) of an answer. */
@@ -155,11 +155,11 @@ export function AssistantPanel({
       }
       setHistory((h) => [...h, { role: 'assistant', content: answer }]);
       if (cards) {
-        const doc = extractJson(answer) as FokusDoc;
-        const res = app.lectures.importFokus(
+        const doc = extractJson(answer) as CardFileDoc;
+        const res = app.lectures.importCards(
           deckId,
           doc,
-          `assistent-${new Date().toISOString().slice(0, 10)}.fokus.json`,
+          `assistent-${new Date().toISOString().slice(0, 10)}.cards.json`,
         );
         toast(`${res.cards} Karten importiert und den Folien zugeordnet`);
       }

@@ -4,15 +4,15 @@
  * `*.fokus.json` card files.
  */
 import { buildLectureState, isRunning } from '@core/lecture/session';
-import type { FokusDoc, MappedBy } from '@core/lecture/fokusCards';
+import type { CardFileDoc, MappedBy } from '@core/lecture/cardFile';
 import {
   anchorScore,
   cardKey,
   cardOutline,
   noteOutline,
   resolveSlides,
-  validateFokus,
-} from '@core/lecture/fokusCards';
+  validateCardFile,
+} from '@core/lecture/cardFile';
 import { detectBoxes, nonEmptyBoxes, planRelayout } from '@core/lecture/layout';
 import { outlineToRems } from '@core/io/markdown';
 import { createRem } from '@core/model/factories';
@@ -35,7 +35,7 @@ import type { FileService } from './files';
 import type { RemService } from './rems';
 
 /** Result of a card import. */
-export interface FokusImportResult {
+export interface CardImportResult {
   cards: number;
   notes: number;
   mapped: Partial<Record<MappedBy, number>>;
@@ -439,7 +439,7 @@ export class LectureService {
   // =========================================================================
 
   /** Suggests the deck a card file belongs to (by PDF name, then page count). */
-  suggestDeck(doc: FokusDoc): RemId | undefined {
+  suggestDeck(doc: CardFileDoc): RemId | undefined {
     const decks = this.store.all('rems').filter((r) => r.deck);
     const name = doc.source?.pdf?.toLowerCase();
     return (
@@ -449,15 +449,15 @@ export class LectureService {
   }
 
   /**
-   * Imports a `fokus-cards` document into a deck: every card and explanation
+   * Imports a card file (`remcraft-cards`) into a deck: every card and explanation
    * is mapped to its slide and becomes Rems below the slide Rem. Re-importing
    * the same file replaces its Rems but keeps the Rem (and so the learning
    * progress) of every unchanged card.
    *
    * @throws Error when the document is invalid.
    */
-  importFokus(deckId: RemId, doc: FokusDoc, fileName: string): FokusImportResult {
-    const errors = validateFokus(doc);
+  importCards(deckId: RemId, doc: CardFileDoc, fileName: string): CardImportResult {
+    const errors = validateCardFile(doc);
     if (errors.length) throw new Error(errors.slice(0, 5).join('; '));
     const slides = this.slides(deckId);
     const refs = slides.map((s) => ({ page: s.slide!.page, text: s.slideText ?? '' }));

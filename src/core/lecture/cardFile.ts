@@ -1,12 +1,14 @@
 /**
- * The `fokus-cards` exchange format (`*.fokus.json`, written by the
- * `fokus-flashcards` Claude skill): flashcards and slide explanations with
- * the PDF page(s) and a verbatim *anchor* phrase of their slide.
+ * The RemCraft card file format (`remcraft-cards` v1, `*.cards.json`, written
+ * by the `remcraft-flashcards` Claude skill, see `skills/`): flashcards and
+ * slide explanations with the PDF page(s) and a verbatim *anchor* phrase of
+ * their slide.
  *
  * Import maps every item onto a slide (page + anchor, see
  * {@link resolveSlides}) and turns it into RemCraft Rems below the slide Rem,
  * so imported cards are regular spaced-repetition cards. Export produces the
- * same format from a deck, closing the loop with the skill and Fokus.
+ * same format from a deck. The older, otherwise identical `fokus-cards`
+ * format is still accepted.
  */
 import { exportMarkdown } from '../io/markdown';
 import type { OutlineNode } from '../io/outline';
@@ -20,10 +22,14 @@ import { fold } from '../search/search';
 import { isoDate } from '../util/time';
 
 /** Format name and version. */
-export const FOKUS_FORMAT = 'fokus-cards';
-export const FOKUS_VERSION = 1;
+export const CARD_FORMAT = 'remcraft-cards';
+/** Earlier name of the same format (still imported). */
+export const LEGACY_CARD_FORMAT = 'fokus-cards';
+/** File suffix of card files. */
+export const CARD_FILE_SUFFIX = '.cards.json';
+export const CARD_VERSION = 1;
 /** Card types of the format. */
-export const FOKUS_TYPES = [
+export const CARD_TYPES = [
   'basic',
   'concept',
   'cloze',
@@ -34,8 +40,8 @@ export const FOKUS_TYPES = [
   'descriptor',
 ] as const;
 
-/** A card of a `fokus-cards` file. */
-export interface FokusCard {
+/** A card of a card file. */
+export interface CardFileCard {
   id?: string;
   section?: string;
   type?: string;
@@ -49,32 +55,32 @@ export interface FokusCard {
 }
 
 /** An explanation of a slide. */
-export interface FokusNote {
+export interface CardFileNote {
   pages?: number[];
   anchor?: string;
   title?: string;
   text: string;
 }
 
-/** A `fokus-cards` document. */
-export interface FokusDoc {
-  format: typeof FOKUS_FORMAT;
+/** A card file. */
+export interface CardFileDoc {
+  format: typeof CARD_FORMAT | typeof LEGACY_CARD_FORMAT;
   version: number;
   created?: string;
   source?: { pdf?: string; pdf_pages?: number; title?: string };
   remnote_file?: string;
-  cards: FokusCard[];
-  notes?: FokusNote[];
+  cards: CardFileCard[];
+  notes?: CardFileNote[];
 }
 
 /** Problems of an import file (empty = fine). */
-export function validateFokus(doc: unknown): string[] {
-  const d = doc as Partial<FokusDoc> | null;
-  if (!d || typeof d !== 'object' || d.format !== FOKUS_FORMAT)
-    return [`Kein Fokus-Kartenformat (erwartet "format": "${FOKUS_FORMAT}")`];
+export function validateCardFile(doc: unknown): string[] {
+  const d = doc as Partial<CardFileDoc> | null;
+  if (!d || typeof d !== 'object' || (d.format !== CARD_FORMAT && d.format !== LEGACY_CARD_FORMAT))
+    return [`Keine RemCraft-Kartendatei (erwartet "format": "${CARD_FORMAT}")`];
   const errors: string[] = [];
-  if (Number(d.version ?? 0) > FOKUS_VERSION)
-    errors.push(`Version ${String(d.version)} ist neuer als diese App (kann ${FOKUS_VERSION})`);
+  if (Number(d.version ?? 0) > CARD_VERSION)
+    errors.push(`Version ${String(d.version)} ist neuer als diese App (kann ${CARD_VERSION})`);
   if (!Array.isArray(d.cards) || (d.notes !== undefined && !Array.isArray(d.notes)))
     errors.push('"cards" und "notes" müssen Listen sein');
   else if (d.cards.length + (d.notes?.length ?? 0) > 5000)
@@ -102,7 +108,7 @@ function hash(s: string): string {
 }
 
 /** Stable content key: results survive re-imports and re-ordering. */
-export function cardKey(card: Pick<FokusCard, 'front' | 'back' | 'section'>): string {
+export function cardKey(card: Pick<CardFileCard, 'front' | 'back' | 'section'>): string {
   return hash(`${card.front}\u0000${card.back ?? ''}\u0000${card.section ?? ''}`);
 }
 
@@ -194,8 +200,13 @@ function plain(s: string): string {
  * Outline nodes of a card: its `remnote` lines if present (exactly what the
  * skill wrote), otherwise built from the readable fields.
  */
-export function cardOutline(card: FokusCard): OutlineNode[] {
-  if (card.remnote?.trim()) return parseOutline(card.remnote);
+export function cardOutline(card: CardFileCard): OutlineNode[] {
+  if (card.remnote?.trim()) {
+    // Numeric cards written for RemNote use its arrow "→" as separator; RemCraft
+    // reads "→" as "answered" in notes, so it becomes ">>" here.
+    const source = card.type === 'numeric' ? card.remnote.replace('→', ' >> ') : card.remnote;
+    return parseOutline(source);
+  }
   const front = plain(card.front.trim());
   const back = plain((card.back ?? '').trim());
   switch (card.type) {
@@ -223,29 +234,29 @@ export function cardOutline(card: FokusCard): OutlineNode[] {
 }
 
 /** Outline of an explanation: title bullet with the Markdown text below. */
-export function noteOutline(note: FokusNote): OutlineNode[] {
+export function noteOutline(note: CardFileNote): OutlineNode[] {
   const body = parseOutline(note.text);
   return [{ text: `💡 ${plain(note.title?.trim() || 'Erklärung')}`, block: {}, children: body }];
 }
 
 /**
- * Exports the cards of a deck as a `fokus-cards` document plus the matching
+ * Exports the cards of a deck as a card file (`remcraft-cards`) plus the matching
  * RemNote file contents.
  *
  * @param graph Rem graph.
  * @param deckId Deck document.
  * @param fileBase Base name for the files (`<base>.remnote.md`).
  */
-export function exportFokus(
+export function exportCardFile(
   graph: RemGraph,
   deckId: RemId,
   fileBase: string,
-): { doc: FokusDoc; remnote: string } {
+): { doc: CardFileDoc; remnote: string } {
   const deck = graph.get(deckId);
   const slides = graph.children(deckId).filter((r) => r.slide);
   const title = (r: Rem): string => toPlainText(r.text);
-  const cards: FokusCard[] = [];
-  const notes: FokusNote[] = [];
+  const cards: CardFileCard[] = [];
+  const notes: CardFileNote[] = [];
   const refName = (id: RemId): string => toPlainText(graph.get(id)?.text ?? []);
   let n = 0;
   const visit = (rem: Rem, slide: Rem, section: string): void => {
@@ -303,8 +314,8 @@ export function exportFokus(
   const remnote = slides.map((s) => exportMarkdown(graph, [s.id])).join('');
   return {
     doc: {
-      format: FOKUS_FORMAT,
-      version: FOKUS_VERSION,
+      format: CARD_FORMAT,
+      version: CARD_VERSION,
       created: isoDate(Date.now()),
       source: {
         pdf: deck?.deck?.pdfName ?? '',

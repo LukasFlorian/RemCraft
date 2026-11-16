@@ -2,7 +2,7 @@
 
 The first AI feature is the **lecture assistant** (key K in lecture mode, `ui/lecture/AssistantPanel.tsx`):
 it explains slides, quizzes you, answers open questions from your notes and generates flashcards
-in the `fokus-cards` format, which are imported onto their slides. Context is chosen explicitly
+as a RemCraft card file (`remcraft-cards`), which is imported onto the slides. Context is chosen explicitly
 with chips (`@Folie`, `@Foliensatz`, `@Meine Notizen`, `@Karten`, `@Vorlesung`, `@Kurs`,
 built by `data/lecture/context.ts`).
 

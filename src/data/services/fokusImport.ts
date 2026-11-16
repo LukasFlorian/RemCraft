@@ -10,7 +10,7 @@
  * deterministic lecture ids; notes are only added to slides without notes.
  * The conversion itself is pure and lives in `@core/io/fokusData`.
  */
-import { cardKey } from '@core/lecture/fokusCards';
+import { cardKey } from '@core/lecture/cardFile';
 import {
   cardDocs,
   convertAnnotations,
@@ -388,7 +388,7 @@ export class FokusImportService {
     );
     for (const { file, doc } of cardDocs(data)) {
       try {
-        summary.cards += this.lectures.importFokus(deckId, doc, file).cards;
+        summary.cards += this.lectures.importCards(deckId, doc, file).cards;
       } catch (e) {
         summary.warnings.push(`Karten aus ${file}: ${e instanceof Error ? e.message : String(e)}`);
         continue;

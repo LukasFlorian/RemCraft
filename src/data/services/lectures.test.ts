@@ -1,4 +1,7 @@
 import { createRem } from '@core/model/factories';
+import type { CardFileDoc } from '@core/lecture/cardFile';
+import { selectCardIndex } from '../selectors';
+import skillOutput from '../testing/fixtures/skill-output.cards.json';
 import { buildLectureState, summarize } from '@core/lecture/session';
 import { rt, toPlainText } from '@core/richtext/ops';
 import { RemCraftApp } from '../app';
@@ -81,7 +84,7 @@ describe('LectureService', () => {
   it('imports fokus cards onto slides and keeps progress on re-import', async () => {
     const { app } = await setup();
     expect(app.lectures.suggestDeck(DOC)).toBe('deck');
-    const res = app.lectures.importFokus('deck', DOC, 'VL01.fokus.json');
+    const res = app.lectures.importCards('deck', DOC, 'VL01.fokus.json');
     expect(res).toMatchObject({ cards: 3, notes: 1, unmapped: 1 });
     const titles = (id: string) => app.store.children(id).map((r) => toPlainText(r.text));
     expect(titles('s2')).toEqual(['Was ist HDFS?']);
@@ -89,7 +92,7 @@ describe('LectureService', () => {
     expect(titles('s0')).toEqual(['💡 Überblick']);
     const hdfs = app.store.children('s2')[0]!;
     app.practice.answer(`${hdfs.id}/f`, 3, { now: Date.now(), durationMs: 1, mode: 'srs' });
-    app.lectures.importFokus('deck', { ...DOC, cards: DOC.cards.slice(0, 1) }, 'VL01.fokus.json');
+    app.lectures.importCards('deck', { ...DOC, cards: DOC.cards.slice(0, 1) }, 'VL01.fokus.json');
     expect(app.store.children('s2')[0]!.id).toBe(hdfs.id);
     expect(app.practice.stateOf(`${hdfs.id}/f`)!.reps).toBe(1);
     expect(titles('s1')).toEqual([]);
@@ -152,6 +155,27 @@ describe('LectureService', () => {
     expect(app.store.get('card')!.parentId).toBe('s1');
     expect(app.store.get('old')).toBeUndefined();
     expect(app.lectures.repairDeck('deck')).toBe(0);
+    app.dispose();
+  });
+
+  it('imports a card file written by the remcraft-flashcards skill', async () => {
+    const { app } = await setup();
+    const res = app.lectures.importCards(
+      'deck',
+      skillOutput as unknown as CardFileDoc,
+      'VL01.cards.json',
+    );
+    expect(res).toMatchObject({ cards: 5, notes: 1, unmapped: 0 });
+    const kids = (id: string) => app.store.children(id).map((r) => toPlainText(r.text));
+    expect(kids('s0')).toEqual(['💡 Überblick']);
+    // MC: both correct options are marked (the {CORRECT: A, B} tag is read and removed).
+    const mc = app.store.children('s1').find((r) => toPlainText(r.text).startsWith('Welche Vs'))!;
+    expect(toPlainText(mc.text)).toBe('Welche Vs gehören zu Big Data?');
+    expect(app.store.children(mc.id).filter((o) => o.mcCorrect).length).toBe(2);
+    // Every card on the HDFS slide generates at least one flashcard.
+    const index = selectCardIndex(app.store);
+    for (const r of app.store.children('s2'))
+      expect(index.byRem.get(r.id)?.length ?? 0).toBeGreaterThan(0);
     app.dispose();
   });
 });

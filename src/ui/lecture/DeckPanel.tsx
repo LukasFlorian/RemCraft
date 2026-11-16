@@ -1,11 +1,13 @@
 /**
  * Header of a slide-deck document: open the slides / start a lecture,
- * import and export cards (`*.fokus.json` + RemNote), export for AI,
+ * import and export card files (`*.cards.json` + RemNote), the Claude skill
+ * that writes them, export for AI,
  * handout, review and analysis.
  */
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import {
+  Sparkles,
   BarChart3,
   Download,
   FileJson,
@@ -15,8 +17,8 @@ import {
   Printer,
   Upload,
 } from 'lucide-react';
-import type { FokusDoc } from '@core/lecture/fokusCards';
-import { exportFokus } from '@core/lecture/fokusCards';
+import type { CardFileDoc } from '@core/lecture/cardFile';
+import { CARD_FILE_SUFFIX, exportCardFile } from '@core/lecture/cardFile';
 import type { RemId } from '@core/model/types';
 import { toPlainText } from '@core/richtext/ops';
 import { exportForAi } from '@data/lecture/context';
@@ -34,7 +36,7 @@ export async function importCardFile(
   toast: (m: string, k?: 'info' | 'error') => void,
 ): Promise<RemId | undefined> {
   try {
-    const doc = JSON.parse(await file.text()) as FokusDoc;
+    const doc = JSON.parse(await file.text()) as CardFileDoc;
     const target = deckId ?? app.lectures.suggestDeck(doc);
     if (!target) {
       toast(
@@ -43,7 +45,7 @@ export async function importCardFile(
       );
       return undefined;
     }
-    const res = app.lectures.importFokus(target, doc, file.name);
+    const res = app.lectures.importCards(target, doc, file.name);
     const how = Object.entries(res.mapped)
       .map(([k, v]) => `${v}× ${k}`)
       .join(', ');
@@ -56,6 +58,9 @@ export async function importCardFile(
     return undefined;
   }
 }
+
+/** Download URL of the `remcraft-flashcards` Claude skill (built by `scripts/build-skill.mjs`). */
+export const SKILL_URL = `${import.meta.env.BASE_URL}remcraft-flashcards.zip`;
 
 /** The deck header. */
 export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
@@ -83,18 +88,30 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
             void pickFiles('.json').then(([f]) => f && importCardFile(app, f, deckId, toast))
           }
         >
-          <Upload size={14} /> Karten importieren (.fokus.json)
+          <Upload size={14} /> Karten importieren
         </button>
         <button
           className="btn btn-sm"
           onClick={() => {
-            const { doc, remnote } = exportFokus(app.store, deckId, base);
-            downloadText(`${base}.fokus.json`, JSON.stringify(doc, null, 2), 'application/json');
+            const { doc, remnote } = exportCardFile(app.store, deckId, base);
+            downloadText(
+              `${base}${CARD_FILE_SUFFIX}`,
+              JSON.stringify(doc, null, 2),
+              'application/json',
+            );
             downloadText(`${base}.remnote.md`, remnote, 'text/markdown');
           }}
         >
           <FileJson size={14} /> Karten exportieren
         </button>
+        <a
+          className="btn btn-sm"
+          href={SKILL_URL}
+          download
+          title="Claude-Skill, der aus Folien Karten mit Folienzuordnung erstellt (Datei in Claude unter Einstellungen → Skills hochladen)"
+        >
+          <Sparkles size={14} /> Claude-Skill
+        </a>
         <button
           className="btn btn-sm"
           onClick={() =>
