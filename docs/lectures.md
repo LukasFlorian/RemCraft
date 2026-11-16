@@ -45,6 +45,27 @@ the service is `app.lectures` (`src/data/services/lectures.ts`); the UI in `src/
 _Demo_: _Vorlesungen → Demo-Kurs erzeugen_ builds a course with a 5-slide handout, notes,
 cards and two past lectures.
 
+## Moving over from Fokus
+
+*Import → Fokus: alles übernehmen* takes the `data` folder of a Fokus installation (by default
+`quasi_counter_and_regression/data`, or `data_dir` from `config.toml`) and imports:
+
+| Fokus | RemCraft |
+|---|---|
+| Courses (`courses/*/course.json`) | Top-level folders |
+| Course files | File documents in the folder (PDFs that are decks are not duplicated) |
+| Decks (`decks/*/deck.json` + `slides.pdf`) | Slide decks with **Fokus' exact layout** (same slide indices); decks without a course go to “Ohne Kurs (Fokus)” |
+| Notes per slide (`notes.json`) | Outline below the slide: one Rem per line, indentation kept, `>>` lines become flashcards |
+| Markers, pen/marker strokes, text boxes, highlights | `slideFlags` and slide annotations |
+| Imported `*.fokus.json` cards (`cards.json`) | Cards on their slides; cards disabled in Fokus stay disabled |
+| Lectures (`sessions/*`) | Lectures with the full event history (analysis, review, CSV); a lecture left running is closed |
+
+Not imported: Fokus' known/unknown counters of cards (RemCraft schedules cards with spaced
+repetition from scratch), render caches, exports and settings. Re-running the import adds only what
+is new (ids of imported objects are kept in `settings.externalIds`; notes are added only to slides
+without notes). Converter: `core/io/fokusData.ts`; service: `data/services/fokusImport.ts`; the test
+uses data produced by the real Fokus app (`scripts/make_fokus_fixture.py`).
+
 ## Settings
 
 _Settings → Vorlesungen_ (`LectureSettings`, defaults in `core/lecture/analytics.ts`):

@@ -499,6 +499,11 @@ export interface Settings {
   learnAheadMinutes?: number;
   /** Lecture mode (Fokus) options; defaults apply when absent. */
   lecture?: Partial<LectureSettings>;
+  /**
+   * Ids of imported objects from other apps (`<source>:<kind>:<id>` -> Rem id),
+   * so re-importing (e.g. Fokus data, later Anki) updates instead of duplicating.
+   */
+  externalIds?: Record<string, string>;
   updatedAt: Timestamp;
 }
 

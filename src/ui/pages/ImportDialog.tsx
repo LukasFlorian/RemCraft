@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   FileText,
   FileUp,
+  FolderInput,
   Layers,
   ListTree,
   NotebookPen,
@@ -27,7 +28,8 @@ import { useApp, useSelector } from '../app/context';
 import { Field, Switch } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { pickFiles } from '../hooks/useFilePicker';
+import { pickFiles, pickFolder } from '../hooks/useFilePicker';
+import { archiveFromFiles } from '@data/services/fokusImport';
 import { importCardFile } from '../lecture/DeckPanel';
 
 /** An import source. */
@@ -36,12 +38,20 @@ interface Source {
   label: string;
   icon: ReactNode;
   accept: string;
-  format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus' | 'share';
+  format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus' | 'fokus-data' | 'share';
   help: string;
   csvDefaults?: { delimiterHint: string };
 }
 
 const SOURCES: Source[] = [
+  {
+    id: 'fokus-data',
+    label: 'Fokus: alles übernehmen',
+    icon: <FolderInput size={22} color="#2ec4a6" />,
+    accept: '',
+    format: 'fokus-data',
+    help: 'Wähle den Ordner „data“ deiner Fokus-Installation (darin liegen decks, sessions und courses). Übernommen werden Kurse, Foliensätze mit Layout, Notizen, Markierungen, Zeichnungen, Textfelder, Hervorhebungen, importierte Karten und alle Vorlesungen mit Auswertung. Mehrfaches Importieren erzeugt keine Duplikate.',
+  },
   {
     id: 'deck',
     label: 'Foliensatz (PDF)',
@@ -201,6 +211,7 @@ export function ImportDialog({
     bothDirections: false,
   });
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState('');
 
   /** Runs the import. */
   const run = async (): Promise<void> => {
@@ -214,6 +225,26 @@ export function ImportDialog({
         onClose();
         return;
       }
+      if (source.format === 'fokus-data') {
+        const s = await app.fokusImport.run(archiveFromFiles(files), (msg, done, total) =>
+          setProgress(`${msg} (${done}/${total})`),
+        );
+        const parts = [
+          `${s.courses} Kurse`,
+          `${s.decks} Foliensätze`,
+          `${s.lectures} Vorlesungen`,
+          `${s.slidesWithNotes} Folien mit Notizen`,
+          `${s.cards} Karten`,
+          `${s.files} Dateien`,
+        ];
+        toast(
+          `Fokus übernommen: ${parts.join(', ')}${s.skipped ? ` (${s.skipped} schon vorhanden)` : ''}`,
+        );
+        for (const w of s.warnings.slice(0, 3)) toast(w, 'error');
+        navigate('/lectures');
+        onClose();
+        return;
+      }
       if (source.format === 'deck') {
         let last: RemId | null = null;
         for (const f of files) last = await app.lectures.importPdf(f, parent);
@@ -223,7 +254,8 @@ export function ImportDialog({
       }
       if (source.format === 'share') {
         let root: RemId | undefined;
-        for (const f of files) root = await app.sharing.clone(await app.sharing.readFile(f), parent);
+        for (const f of files)
+          root = await app.sharing.clone(await app.sharing.readFile(f), parent);
         if (root) navigate(`/rem/${root}`);
         onClose();
         return;
@@ -365,18 +397,33 @@ export function ImportDialog({
       ) : (
         <Field group label="Files">
           <div className="row">
-            <button
-              className="btn"
-              onClick={() =>
-                void pickFiles(source.accept, source.format !== 'backup').then(
-                  (f) => f.length && setFiles(f),
-                )
-              }
-            >
-              <FileUp size={15} /> Choose file{source.format !== 'backup' ? 's' : ''}
-            </button>
+            {source.format === 'fokus-data' ? (
+              <button
+                className="btn"
+                onClick={() => void pickFolder().then((f) => f.length && setFiles(f))}
+              >
+                <FolderInput size={15} /> Ordner „data“ wählen
+              </button>
+            ) : (
+              <button
+                className="btn"
+                onClick={() =>
+                  void pickFiles(source.accept, source.format !== 'backup').then(
+                    (f) => f.length && setFiles(f),
+                  )
+                }
+              >
+                <FileUp size={15} /> Choose file{source.format !== 'backup' ? 's' : ''}
+              </button>
+            )}
             <span className="muted ellipsis">
-              {files.length ? files.map((f) => f.name).join(', ') : 'No file selected'}
+              {busy && progress
+                ? progress
+                : files.length
+                  ? source.format === 'fokus-data'
+                    ? `${files.length} Dateien`
+                    : files.map((f) => f.name).join(', ')
+                  : 'No file selected'}
             </span>
           </div>
         </Field>
@@ -417,7 +464,7 @@ export function ImportDialog({
           />
         </div>
       )}
-      {source.format !== 'backup' && (
+      {source.format !== 'backup' && source.format !== 'fokus-data' && (
         <Field label="Import into">
           <select className="select" value={target} onChange={(e) => setTarget(e.target.value)}>
             <option value="">Top level</option>

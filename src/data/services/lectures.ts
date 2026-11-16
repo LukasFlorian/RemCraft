@@ -29,7 +29,7 @@ export interface FokusImportResult {
 }
 
 /** Slide title from its text (first line, shortened). */
-function slideTitle(index: number, text: string): string {
+export function slideTitle(index: number, text: string): string {
   const first = text.split('\n').find((l) => l.trim().length > 2)?.trim() ?? '';
   const short = first.length > 80 ? `${first.slice(0, 77)}…` : first;
   return short ? `Folie ${index + 1} · ${short}` : `Folie ${index + 1}`;
