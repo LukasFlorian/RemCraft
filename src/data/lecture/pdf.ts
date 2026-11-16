@@ -7,6 +7,7 @@
  * text selection). pdf.js is loaded lazily so it does not weigh on the
  * initial bundle.
  */
+import type * as PdfJsModule from 'pdfjs-dist';
 import type { Mask } from '@core/lecture/layout';
 
 /** A positioned text run, coordinates relative to the page (0..1). */
@@ -45,7 +46,7 @@ export interface PdfEngine {
   open(data: ArrayBuffer | Blob): Promise<PdfDoc>;
 }
 
-type PdfJs = typeof import('pdfjs-dist');
+type PdfJs = typeof PdfJsModule;
 let pdfjsPromise: Promise<PdfJs> | null = null;
 
 /** Loads pdf.js and its worker once. */

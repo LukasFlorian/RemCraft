@@ -95,6 +95,12 @@ describe('fokus cards', () => {
     expect(resolveSlides({ pages: [9], anchor: 'Die 5 Vs' }, slides)).toEqual({ slides: [1], by: 'anchor' });
     expect(resolveSlides({ pages: [1] }, slides)).toEqual({ slides: [0], by: 'page' });
     expect(resolveSlides({ anchor: 'gibt es nicht' }, slides)).toEqual({ slides: [], by: 'none' });
+    // A verbatim match beats a slide that merely contains the same words.
+    const tie = [
+      { page: 0, text: 'Lernrate bestimmt die Schrittweite' },
+      { page: 0, text: 'Die Lernrate' },
+    ];
+    expect(resolveSlides({ pages: [1], anchor: 'Die Lernrate' }, tie)).toEqual({ slides: [1], by: 'page+anchor' });
   });
   it('validates and builds outlines', () => {
     expect(validateFokus({ format: 'x' })[0]).toMatch(/Kein Fokus/);

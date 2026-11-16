@@ -103,7 +103,8 @@ export function anchorScore(anchor: string, slideText: string): number {
   if (t.includes(a)) return 1;
   const aw = new Set(a.split(' '));
   const tw = new Set(t.split(' '));
-  return [...aw].filter((w) => tw.has(w)).length / aw.size;
+  // Word overlap stays below a verbatim match, so the slide quoting the phrase wins ties.
+  return Math.min(0.99, [...aw].filter((w) => tw.has(w)).length / aw.size);
 }
 
 /** A slide as seen by the resolver. */

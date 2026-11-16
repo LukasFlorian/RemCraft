@@ -3,7 +3,8 @@
  */
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { createOpenAiCompatibleProvider, loadAiConfig, saveAiConfig } from '@ai/openaiCompatible';
+import { loadAiConfig, saveAiConfig } from '@ai/openaiCompatible';
+import { AI_PROVIDERS, createAiProvider } from '@ai/registry';
 import { Field } from '../../components/Controls';
 import { useToast } from '../../components/Toast';
 
@@ -11,6 +12,7 @@ import { useToast } from '../../components/Toast';
 export function AiSection(): ReactNode {
   const toast = useToast();
   const initial = loadAiConfig();
+  const [provider, setProvider] = useState(initial?.provider ?? 'openai-compatible');
   const [baseUrl, setBaseUrl] = useState(initial?.baseUrl ?? 'https://api.openai.com/v1');
   const [apiKey, setApiKey] = useState(initial?.apiKey ?? '');
   const [model, setModel] = useState(initial?.model ?? '');
@@ -19,10 +21,30 @@ export function AiSection(): ReactNode {
     <div className="card col" style={{ gap: 14 }}>
       <h2 className="card-title">AI provider (experimental)</h2>
       <p className="muted" style={{ margin: 0 }}>
-        RemCraft has no AI features yet, but any OpenAI-compatible API (OpenAI, OpenRouter, Groq,
+        The lecture assistant (slides, notes, card generation) uses this provider: Claude via the Anthropic API or any OpenAI-compatible API (OpenAI, OpenRouter, Groq,
         Mistral, a local Ollama/LM Studio server, …) can be configured here for future features. The
         key is stored only on this device and never synchronised.
       </p>
+      <Field label="Anbieter">
+        <select
+          className="select"
+          value={provider}
+          onChange={(e) => {
+            const p = AI_PROVIDERS.get(e.target.value);
+            setProvider(e.target.value);
+            if (p) {
+              setBaseUrl(p.defaultBaseUrl);
+              setModel(p.defaultModel);
+            }
+          }}
+        >
+          {AI_PROVIDERS.list().map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      </Field>
       <Field label="Base URL">
         <input
           className="input"
@@ -52,7 +74,7 @@ export function AiSection(): ReactNode {
         <button
           className="btn btn-primary"
           onClick={() => {
-            saveAiConfig(baseUrl && model ? { baseUrl, apiKey, model } : null);
+            saveAiConfig(model ? { provider, baseUrl, apiKey, model } : null);
             toast('Saved on this device');
           }}
         >
@@ -64,11 +86,7 @@ export function AiSection(): ReactNode {
           onClick={async () => {
             setTesting(true);
             try {
-              const answer = await createOpenAiCompatibleProvider({
-                baseUrl,
-                apiKey,
-                model,
-              }).complete([{ role: 'user', content: 'Reply with the single word: pong' }], {
+              const answer = await createAiProvider({ provider, baseUrl, apiKey, model }).complete([{ role: 'user', content: 'Reply with the single word: pong' }], {
                 maxTokens: 5,
               });
               toast(`Provider answered: ${answer.trim() || '(empty)'}`);

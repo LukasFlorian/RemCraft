@@ -16,6 +16,7 @@ import {
   FolderPlus,
   Layers,
   MoreHorizontal,
+  Presentation,
   Redo2,
   Star,
   Undo2,
@@ -31,6 +32,9 @@ import { Outliner } from '../editor/Outliner';
 import { RemContent } from '../editor/RemBlock';
 import { TitleEditor } from '../editor/TitleEditor';
 import { FileView } from '../editor/blocks';
+import { DeckPanel } from '../lecture/DeckPanel';
+import { pickFiles } from '../hooks/useFilePicker';
+import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { PriorityBadge, useRemMenu } from './remMenu';
 
@@ -209,7 +213,8 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
               <RemContent rem={rem} />
             </div>
           )}
-          {rem.file && <FileView rem={rem} />}
+          {rem.file && !rem.deck && <FileView rem={rem} />}
+          {rem.deck && <DeckPanel deckId={remId} />}
           <div className="doc-body">
             {rem.isFolder ? <FolderContents folderId={remId} /> : <Outliner rootId={remId} />}
           </div>
@@ -254,6 +259,7 @@ function DailyNav({ date }: { date: string }): ReactNode {
 /** Contents of a folder: its documents and sub-folders. */
 function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
   const app = useApp();
+  const toast = useToast();
   const navigate = useNavigate();
   const children = useChildren(folderId);
   return (
@@ -276,6 +282,23 @@ function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
           }}
         >
           <FolderPlus size={14} /> New folder
+        </button>
+        <button
+          className="btn btn-sm"
+          onClick={() =>
+            void pickFiles('.pdf,application/pdf').then(async ([file]) => {
+              if (!file) return;
+              toast('Foliensatz wird analysiert…');
+              try {
+                const id = await app.lectures.importPdf(file, folderId);
+                navigate(`/rem/${id}`);
+              } catch (e) {
+                toast(e instanceof Error ? e.message : String(e), 'error');
+              }
+            })
+          }
+        >
+          <Presentation size={14} /> Foliensatz (PDF)
         </button>
       </div>
       {children.length === 0 && <div className="empty">This folder is empty.</div>}

@@ -15,6 +15,7 @@ import {
   Layers,
   LayoutGrid,
   PanelLeftClose,
+  Presentation,
   PlusCircle,
   Search,
   Settings,
@@ -26,6 +27,7 @@ import { useAccount, useApp, useNow, useSelector } from '../app/context';
 import { useModals } from '../app/modals';
 import { useLocalState } from '../hooks/useLocalState';
 import { useRemTitle } from '../hooks/useRemTitle';
+import { useActiveLecture } from '../lecture/useLecture';
 
 /** Documents and folders below a Rem (what the sidebar tree shows). */
 function useDocChildren(id: RemId | null): Rem[] {
@@ -110,6 +112,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
   const [pinnedOpen, setPinnedOpen] = useLocalState('sidebar.pinnedOpen', true);
   const [unpinnedOpen, setUnpinnedOpen] = useLocalState('sidebar.unpinnedOpen', true);
   const due = useSelector((s) => selectGlobalQueue(s, now).length);
+  const activeLecture = useActiveLecture();
   const editLater = useSelector((s) =>
     s.memo(
       'editLaterCount',
@@ -180,6 +183,9 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
         >
           <Layers size={17} /> Flashcards{' '}
           {due > 0 && <span className="nav-count badge">{due}</span>}
+        </button>
+        <button className={`nav-item${isActive('/lecture') ? ' active' : ''}`} onClick={() => go(activeLecture?.deckId ? `/lecture/${activeLecture.deckId}` : '/lectures')}>
+          <Presentation size={17} /> Vorlesungen {activeLecture && <span className="nav-count badge badge-success">live</span>}
         </button>
         <button
           className={`nav-item${isActive('/edit-later') ? ' active' : ''}`}

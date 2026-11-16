@@ -16,6 +16,10 @@ import { EditLaterPage } from '../pages/EditLaterPage';
 import { FlashcardsPage } from '../pages/flashcards/FlashcardsPage';
 import { PracticePage } from '../pages/practice/PracticePage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
+import { HandoutPage } from '../lecture/HandoutPage';
+import { LecturePage } from '../lecture/LecturePage';
+import { LecturesPage } from '../lecture/LecturesPage';
+import { ReviewPage } from '../lecture/ReviewPage';
 import { AppContext, useApp } from './context';
 import { ModalProvider } from './modals';
 
@@ -33,6 +37,11 @@ const router = createHashRouter([
       { path: 'flashcards/:tab', element: <FlashcardsPage /> },
       { path: 'flashcards/:tab/:examId', element: <FlashcardsPage /> },
       { path: 'practice', element: <PracticePage /> },
+      { path: 'lecture/:deckId', element: <LecturePage /> },
+      { path: 'lectures', element: <LecturesPage /> },
+      { path: 'lectures/:lectureId', element: <LecturesPage /> },
+      { path: 'review/:deckId', element: <ReviewPage /> },
+      { path: 'handout/:deckId', element: <HandoutPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/:section', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
@@ -62,6 +71,8 @@ export function App(): ReactNode {
     RemCraftApp.create()
       .then((a) => {
         created = a;
+        // Expose the app for debugging and end-to-end tests in development builds.
+        if (import.meta.env.DEV) (window as unknown as { remcraft: RemCraftApp }).remcraft = a;
         setApp(a);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));

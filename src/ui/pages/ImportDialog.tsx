@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   ClipboardPaste,
   Database,
+  FileJson,
+  Presentation,
   FileSpreadsheet,
   FileText,
   FileUp,
@@ -26,6 +28,7 @@ import { Field, Switch } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { pickFiles } from '../hooks/useFilePicker';
+import { importCardFile } from '../lecture/DeckPanel';
 
 /** An import source. */
 interface Source {
@@ -33,12 +36,28 @@ interface Source {
   label: string;
   icon: ReactNode;
   accept: string;
-  format: TextFormat | 'backup' | 'file' | 'paste';
+  format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus';
   help: string;
   csvDefaults?: { delimiterHint: string };
 }
 
 const SOURCES: Source[] = [
+  {
+    id: 'deck',
+    label: 'Foliensatz (PDF)',
+    icon: <Presentation size={22} color="#5b8cff" />,
+    accept: '.pdf,application/pdf',
+    format: 'deck',
+    help: 'Vorlesungsfolien: jede Folie wird ein Rem für deine Notizen. Handouts mit mehreren Folien pro Seite werden automatisch aufgeteilt.',
+  },
+  {
+    id: 'fokus',
+    label: 'Fokus-Karten (.fokus.json)',
+    icon: <FileJson size={22} color="#f2a33a" />,
+    accept: '.json',
+    format: 'fokus',
+    help: 'Karten aus dem Skill fokus-flashcards: jede Karte wird über PDF-Seite und Zitat ihrer Folie zugeordnet. Der passende Foliensatz wird anhand des PDF-Namens gefunden.',
+  },
   {
     id: 'remnote',
     label: 'RemNote',
@@ -184,6 +203,20 @@ export function ImportDialog({
       if (source.format === 'backup') {
         const n = app.io.importBackup(await files[0]!.text(), 'merge');
         toast(`Restored ${n} records`);
+        onClose();
+        return;
+      }
+      if (source.format === 'deck') {
+        let last: RemId | null = null;
+        for (const f of files) last = await app.lectures.importPdf(f, parent);
+        if (last) navigate(`/rem/${last}`);
+        onClose();
+        return;
+      }
+      if (source.format === 'fokus') {
+        let target: RemId | undefined;
+        for (const f of files) target = await importCardFile(app, f, undefined, toast);
+        if (target) navigate(`/rem/${target}`);
         onClose();
         return;
       }

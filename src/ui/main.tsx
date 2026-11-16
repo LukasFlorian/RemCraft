@@ -10,6 +10,7 @@ import './styles/components.css';
 import './styles/layout.css';
 import './styles/editor.css';
 import './styles/pages.css';
+import './styles/lecture.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
