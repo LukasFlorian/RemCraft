@@ -1,0 +1,115 @@
+/*
+ * Design tokens. Dark is the default theme (like RemNote); `data-theme` on
+ * <html> switches themes. Components only use these variables.
+ */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1f2030;
+  --bg-elevated: #26273a;
+  --bg-sunken: #191a28;
+  --sidebar: #181926;
+  --surface: #2a2b3f;
+  --surface-hover: #33344a;
+  --surface-active: #3b3d57;
+  --border: #393b52;
+  --border-strong: #4a4c66;
+  --text: #e8e8f2;
+  --text-muted: #a3a4bb;
+  --text-faint: #75778f;
+  --accent: #5b6cff;
+  --accent-hover: #6f7eff;
+  --accent-soft: rgba(91, 108, 255, 0.18);
+  --accent-text: #ffffff;
+  --success: #3fbf7f;
+  --success-soft: rgba(63, 191, 127, 0.16);
+  --danger: #ef5a6f;
+  --danger-soft: rgba(239, 90, 111, 0.16);
+  --warning: #f2a33a;
+  --warning-soft: rgba(242, 163, 58, 0.18);
+  --cloze: #7d8cff;
+  --cloze-bg: rgba(91, 108, 255, 0.22);
+  --ref: #8fa2ff;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --hl-red: rgba(239, 90, 111, 0.32);
+  --hl-orange: rgba(242, 140, 58, 0.32);
+  --hl-yellow: rgba(242, 205, 58, 0.3);
+  --hl-green: rgba(63, 191, 127, 0.3);
+  --hl-blue: rgba(91, 140, 255, 0.32);
+  --hl-purple: rgba(166, 104, 255, 0.32);
+  --banner: #213a9a;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #f5f6fa;
+  --sidebar: #f4f5f9;
+  --surface: #f1f2f7;
+  --surface-hover: #e8e9f1;
+  --surface-active: #dfe1ec;
+  --border: #e0e2ea;
+  --border-strong: #c9ccd9;
+  --text: #1d1e2c;
+  --text-muted: #5f6178;
+  --text-faint: #8f91a6;
+  --accent: #4655f5;
+  --accent-hover: #3443e6;
+  --accent-soft: rgba(70, 85, 245, 0.12);
+  --accent-text: #ffffff;
+  --success: #1f9d61;
+  --success-soft: rgba(31, 157, 97, 0.12);
+  --danger: #d63b52;
+  --danger-soft: rgba(214, 59, 82, 0.1);
+  --warning: #c77a12;
+  --warning-soft: rgba(199, 122, 18, 0.12);
+  --cloze: #4655f5;
+  --cloze-bg: rgba(70, 85, 245, 0.14);
+  --ref: #3f4fe0;
+  --shadow: 0 10px 30px rgba(20, 22, 40, 0.15);
+  --hl-red: rgba(239, 90, 111, 0.25);
+  --hl-orange: rgba(242, 140, 58, 0.28);
+  --hl-yellow: rgba(242, 205, 58, 0.4);
+  --hl-green: rgba(63, 191, 127, 0.25);
+  --hl-blue: rgba(91, 140, 255, 0.25);
+  --hl-purple: rgba(166, 104, 255, 0.22);
+  --banner: #3443e6;
+}
+
+:root {
+  --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --sidebar-width: 260px;
+  --content-width: 860px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Data-visualisation palette (validated reference palette, both modes). */
+:root,
+:root[data-theme='dark'] {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --seq-0: #26304a;
+  --seq-1: #1f4f8c;
+  --seq-2: #2a6cc0;
+  --seq-3: #3987e5;
+  --seq-4: #7fb2f0;
+}
+
+:root[data-theme='light'] {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --seq-0: #e8ecf3;
+  --seq-1: #b9d3f3;
+  --seq-2: #7fb2f0;
+  --seq-3: #2a78d6;
+  --seq-4: #174e94;
+}

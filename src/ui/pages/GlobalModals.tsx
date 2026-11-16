@@ -1,0 +1,31 @@
+/**
+ * Renders the globally opened modal (see `app/modals.tsx`).
+ */
+import type { ReactNode } from 'react';
+import { useModals } from '../app/modals';
+import { AudioRecorder } from './AudioRecorder';
+import { ExamEditor } from './ExamEditor';
+import { ImportDialog } from './ImportDialog';
+import { MoveDialog } from './MoveDialog';
+import { OcclusionEditor } from './OcclusionEditor';
+import { SearchDialog } from './SearchDialog';
+
+/** The active global modal. */
+export function GlobalModals(): ReactNode {
+  const { modal, close } = useModals();
+  if (!modal) return null;
+  switch (modal.kind) {
+    case 'search':
+      return <SearchDialog onClose={close} />;
+    case 'import':
+      return <ImportDialog onClose={close} parentId={modal.parentId ?? null} />;
+    case 'occlusion':
+      return <OcclusionEditor remId={modal.remId} onClose={close} />;
+    case 'recorder':
+      return <AudioRecorder remId={modal.remId} onClose={close} />;
+    case 'move':
+      return <MoveDialog remIds={modal.remIds} onClose={close} />;
+    case 'exam':
+      return <ExamEditor examId={modal.examId} scope={modal.scope} onClose={close} />;
+  }
+}

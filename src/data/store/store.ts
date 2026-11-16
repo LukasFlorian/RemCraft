@@ -57,6 +57,9 @@ interface UndoEntry {
   time: number;
 }
 
+/** Shared empty child list (stable identity for React snapshots). */
+const EMPTY_CHILDREN: readonly Rem[] = Object.freeze([]);
+
 /** All collection names. */
 const COLLECTION_NAMES: readonly CollectionName[] = ['rems', 'cards', 'logs', 'exams', 'schedulers', 'settings'];
 
@@ -195,7 +198,7 @@ export class Store implements RemGraph {
   /** {@link RemGraph.children} - ordered children of a Rem. */
   children(id: RemId | null): readonly Rem[] {
     const list = this.childIndex.get(id);
-    if (!list) return [];
+    if (!list) return EMPTY_CHILDREN;
     if (this.unsortedParents.has(id)) {
       list.sort(compareOrder);
       this.unsortedParents.delete(id);
@@ -221,6 +224,8 @@ export class Store implements RemGraph {
     const hit = this.memoCache.get(key);
     if (hit && hit.deps.length === deps.length && hit.deps.every((d, i) => Object.is(d, deps[i]))) return hit.value as T;
     const value = compute();
+    // Bound the cache (keys such as search queries are open-ended).
+    if (this.memoCache.size > 1000) this.memoCache.clear();
     this.memoCache.set(key, { deps, value });
     return value;
   }

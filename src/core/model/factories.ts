@@ -91,7 +91,7 @@ export function createDefaultSettings(now: Timestamp = Date.now()): Settings {
   return {
     id: 'settings',
     defaultSchedulerId: DEFAULT_SCHEDULER_ID,
-    dailyGoalMode: 'exam-and-active',
+    dailyGoalMode: 'all-due',
     dailyGoalNumber: 50,
     streakGoal: 10,
     newCardsPerDay: 20,
