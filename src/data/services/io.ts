@@ -40,7 +40,13 @@ export class ImportExportService {
    * @param parentId Folder to create the document in.
    * @returns Id of the created document and number of imported Rems.
    */
-  importAsDocument(title: string, text: string, format: TextFormat, parentId: RemId | null = null, csv?: Partial<CsvOptions>): { docId: RemId; count: number } {
+  importAsDocument(
+    title: string,
+    text: string,
+    format: TextFormat,
+    parentId: RemId | null = null,
+    csv?: Partial<CsvOptions>,
+  ): { docId: RemId; count: number } {
     return this.store.transact((tx) => {
       const doc = this.rems.createIn(tx, { parentId }, { text: rt(title), isDocument: true });
       const count = this.importInto(tx, text, format, { parentId: doc.id }, csv);
@@ -59,7 +65,13 @@ export class ImportExportService {
   }
 
   /** Imports into an existing parent inside a transaction. */
-  private importInto(tx: Transaction, text: string, format: TextFormat, pos: InsertPosition, csv?: Partial<CsvOptions>): number {
+  private importInto(
+    tx: Transaction,
+    text: string,
+    format: TextFormat,
+    pos: InsertPosition,
+    csv?: Partial<CsvOptions>,
+  ): number {
     if (format === 'csv') {
       const rems = csvToCardRems(parseCsv(text), {
         parentId: pos.parentId!,
@@ -77,7 +89,11 @@ export class ImportExportService {
   }
 
   /** Converts outline nodes and writes the Rems. */
-  private insertOutline(tx: Transaction, nodes: readonly OutlineNode[], pos: InsertPosition): Rem[] {
+  private insertOutline(
+    tx: Transaction,
+    nodes: readonly OutlineNode[],
+    pos: InsertPosition,
+  ): Rem[] {
     const siblings = this.store.children(pos.parentId);
     let lo: string | null;
     let hi: string | null;
@@ -93,11 +109,17 @@ export class ImportExportService {
       hi = siblings[i + 1]?.order ?? null;
     }
     if (lo !== null && hi !== null && lo >= hi) hi = null;
-    const created = outlineToRems(nodes, pos.parentId, {
-      resolveRef: (name) => this.rems.ensureByName(name, tx),
-      resolveTag: (name) => this.rems.ensureByName(name, tx),
-      now: this.store.clock.now(),
-    }, lo, hi);
+    const created = outlineToRems(
+      nodes,
+      pos.parentId,
+      {
+        resolveRef: (name) => this.rems.ensureByName(name, tx),
+        resolveTag: (name) => this.rems.ensureByName(name, tx),
+        now: this.store.clock.now(),
+      },
+      lo,
+      hi,
+    );
     for (const r of created) tx.put('rems', r);
     return created.filter((r) => r.parentId === pos.parentId);
   }

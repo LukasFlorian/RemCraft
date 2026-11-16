@@ -69,7 +69,9 @@ export function parseInline(src: string, opts: ParseInlineOptions = {}): ParsedI
 
 /** Narrows an arbitrary string to a highlight colour. */
 function asColor(value: string | undefined): HighlightColor {
-  return (HIGHLIGHT_COLORS as readonly string[]).includes(value ?? '') ? (value as HighlightColor) : 'yellow';
+  return (HIGHLIGHT_COLORS as readonly string[]).includes(value ?? '')
+    ? (value as HighlightColor)
+    : 'yellow';
 }
 
 /**
@@ -324,7 +326,12 @@ export function escapeText(text: string): string {
     .replace(/\{\{/g, '\\{\\{')
     .replace(/\[\[/g, '\\[\\[')
     .replace(/<(\/?(?:u|mark))/g, '\\<$1')
-    .replace(DELIMITER_PATTERN, (m) => m.split('').map((ch) => `\\${ch}`).join(''));
+    .replace(DELIMITER_PATTERN, (m) =>
+      m
+        .split('')
+        .map((ch) => `\\${ch}`)
+        .join(''),
+    );
 }
 
 /** Serialises one segment (without its cloze mark). */
@@ -382,7 +389,10 @@ export function serializeInline(value: RichText, opts: SerializeInlineOptions = 
       const s = value[j]!;
       const { cloze: _cloze, ...rest } = s.marks ?? {};
       const m = cleanMarks(rest);
-      inner += serializeSegment(m ? { ...s, marks: m } : ({ ...s, marks: undefined } as Segment), opts);
+      inner += serializeSegment(
+        m ? { ...s, marks: m } : ({ ...s, marks: undefined } as Segment),
+        opts,
+      );
       j++;
     }
     const merged = (runs.get(clozeId) ?? 0) > 1;

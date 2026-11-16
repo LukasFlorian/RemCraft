@@ -56,14 +56,21 @@ test('imports pasted RemNote text and creates an exam', async ({ page }) => {
   await page.getByRole('button', { name: 'Import' }).first().click();
   await page.getByRole('button', { name: 'Paste text' }).click();
   await page.getByLabel('Document title').fill('Imported deck');
-  await page.getByLabel('Text', { exact: true }).fill('- Q1 >> A1\n- Q2 >> A2\n- Which? {CORRECT: A, B} >>A)\n    - yes\n    - also yes\n    - no');
+  await page
+    .getByLabel('Text', { exact: true })
+    .fill(
+      '- Q1 >> A1\n- Q2 >> A2\n- Which? {CORRECT: A, B} >>A)\n    - yes\n    - also yes\n    - no',
+    );
   await page.getByRole('dialog').getByRole('button', { name: 'Import', exact: true }).click();
   await expect(page.getByLabel('Title')).toHaveText('Imported deck');
   await expect(page.locator('.mc-marker.is-correct')).toHaveCount(2);
 
   await page.goto('/#/flashcards/exams');
   await page.getByRole('button', { name: 'New exam' }).click();
-  await page.locator('.scope-item', { hasText: 'Imported deck' }).locator('input[type=checkbox]').check();
+  await page
+    .locator('.scope-item', { hasText: 'Imported deck' })
+    .locator('input[type=checkbox]')
+    .check();
   await page.getByRole('button', { name: 'Create exam' }).click();
   await expect(page.getByText('Study plan')).toBeVisible();
   await expect(page.locator('.stat-tile', { hasText: 'Cards' })).toContainText('3');

@@ -57,7 +57,12 @@ export function ImageView({
         <div
           key={o.id}
           className={`occlusion${hidden && !hidden(o) ? ' occlusion-open' : ''}${revealed === o.id ? ' occlusion-answer' : ''}`}
-          style={{ left: `${o.x * 100}%`, top: `${o.y * 100}%`, width: `${o.w * 100}%`, height: `${o.h * 100}%` }}
+          style={{
+            left: `${o.x * 100}%`,
+            top: `${o.y * 100}%`,
+            width: `${o.w * 100}%`,
+            height: `${o.h * 100}%`,
+          }}
         >
           {o.label && hidden?.(o) !== false && <span>{o.label}</span>}
         </div>
@@ -70,7 +75,8 @@ export function ImageView({
             e.stopPropagation();
             const startX = e.clientX;
             const startW = (e.currentTarget.parentElement as HTMLElement).offsetWidth;
-            const move = (ev: MouseEvent): void => onResize(Math.max(80, startW + ev.clientX - startX));
+            const move = (ev: MouseEvent): void =>
+              onResize(Math.max(80, startW + ev.clientX - startX));
             const up = (): void => {
               window.removeEventListener('mousemove', move);
               window.removeEventListener('mouseup', up);
@@ -89,7 +95,8 @@ export function FileView({ rem }: { rem: Rem }): ReactNode {
   const url = useFileUrl(rem.file?.src);
   const [open, setOpen] = useState(false);
   if (!rem.file) return null;
-  const isPdf = rem.file.mimeType === 'application/pdf' || rem.file.name.toLowerCase().endsWith('.pdf');
+  const isPdf =
+    rem.file.mimeType === 'application/pdf' || rem.file.name.toLowerCase().endsWith('.pdf');
   return (
     <div className="file-block" onClick={(e) => e.stopPropagation()}>
       <div className="row">
@@ -103,7 +110,13 @@ export function FileView({ rem }: { rem: Rem }): ReactNode {
           </button>
         )}
         {url && (
-          <a className="btn btn-sm" href={url} target="_blank" rel="noreferrer" download={rem.file.name}>
+          <a
+            className="btn btn-sm"
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            download={rem.file.name}
+          >
             <ExternalLink size={14} /> Open
           </a>
         )}
@@ -120,7 +133,8 @@ export function embedUrl(url: string): { kind: 'iframe' | 'video' | 'audio'; src
   const vimeo = /vimeo\.com\/(\d+)/.exec(url);
   if (vimeo) return { kind: 'iframe', src: `https://player.vimeo.com/video/${vimeo[1]}` };
   if (/\.(mp4|webm|ogv)(\?|$)/i.test(url)) return { kind: 'video', src: url };
-  if (/\.(mp3|wav|ogg|m4a|webm)(\?|$)/i.test(url) || url.startsWith('file:')) return { kind: 'audio', src: url };
+  if (/\.(mp3|wav|ogg|m4a|webm)(\?|$)/i.test(url) || url.startsWith('file:'))
+    return { kind: 'audio', src: url };
   return { kind: 'iframe', src: url };
 }
 
@@ -131,7 +145,15 @@ export function EmbedView({ url }: { url: string }): ReactNode {
   if (!resolved) return null;
   if (e.kind === 'audio') return <audio className="embed-audio" controls src={resolved} />;
   if (e.kind === 'video') return <video className="embed-video" controls src={resolved} />;
-  return <iframe className="embed-frame" src={e.src} title="Embedded content" allow="fullscreen; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" />;
+  return (
+    <iframe
+      className="embed-frame"
+      src={e.src}
+      title="Embedded content"
+      allow="fullscreen; picture-in-picture"
+      sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+    />
+  );
 }
 
 /** A portal: the target Rem's subtree, editable in place. */
@@ -160,14 +182,18 @@ export function SearchPortalView({ query }: { query: string }): ReactNode {
   return (
     <div className="portal search-portal" onClick={(e) => e.stopPropagation()}>
       <div className="portal-header">
-        <Search size={14} /> <span className="mono">{query}</span> <span className="faint">· {hits.length} results</span>
+        <Search size={14} /> <span className="mono">{query}</span>{' '}
+        <span className="faint">· {hits.length} results</span>
       </div>
       <ul className="search-portal-list">
         {hits.map((h) => {
           const rem = store.get(h.remId);
           if (!rem) return null;
           return (
-            <li key={h.remId} onClick={() => navigate(`/rem/${rem.isDocument ? rem.id : (rem.parentId ?? rem.id)}`)}>
+            <li
+              key={h.remId}
+              onClick={() => navigate(`/rem/${rem.isDocument ? rem.id : (rem.parentId ?? rem.id)}`)}
+            >
               {rem.todo && <input type="checkbox" readOnly checked={rem.todo === 'finished'} />}
               <RichTextView value={rem.text} inertRefs />
               {rem.back && (
@@ -193,10 +219,16 @@ export function TagTableView({ tagId }: { tagId: RemId }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
   const properties = useChildren(tagId).filter((c) => c.isProperty);
-  const rowIds = useSelector((s) => s.backlinks(tagId).filter((id) => s.get(id)?.tags.includes(tagId)).join(','));
+  const rowIds = useSelector((s) =>
+    s
+      .backlinks(tagId)
+      .filter((id) => s.get(id)?.tags.includes(tagId))
+      .join(','),
+  );
   const rows = useMemo(() => rowIds.split(',').filter(Boolean), [rowIds]);
   /** Value child of `rowId` for `propId`. */
-  const valueOf = (rowId: RemId, propId: RemId): Rem | undefined => app.store.children(rowId).find((c) => c.propertyId === propId);
+  const valueOf = (rowId: RemId, propId: RemId): Rem | undefined =>
+    app.store.children(rowId).find((c) => c.propertyId === propId);
   const setValue = (rowId: RemId, propId: RemId, value: string): void => {
     const existing = valueOf(rowId, propId);
     if (existing) app.rems.update(existing.id, { text: rt(value) }, `text:${existing.id}`);
@@ -223,7 +255,11 @@ export function TagTableView({ tagId }: { tagId: RemId }): ReactNode {
               </td>
               {properties.map((p) => (
                 <td key={p.id}>
-                  <input className="cell-input" defaultValue={toPlainText(valueOf(rowId, p.id)?.text ?? [])} onBlur={(e) => setValue(rowId, p.id, e.target.value)} />
+                  <input
+                    className="cell-input"
+                    defaultValue={toPlainText(valueOf(rowId, p.id)?.text ?? [])}
+                    onBlur={(e) => setValue(rowId, p.id, e.target.value)}
+                  />
                 </td>
               ))}
             </tr>
@@ -231,7 +267,8 @@ export function TagTableView({ tagId }: { tagId: RemId }): ReactNode {
           {rows.length === 0 && (
             <tr>
               <td colSpan={properties.length + 1} className="faint">
-                Tag Rems with this Rem (#) to add rows. Add children marked as “Property” to add columns.
+                Tag Rems with this Rem (#) to add rows. Add children marked as “Property” to add
+                columns.
               </td>
             </tr>
           )}

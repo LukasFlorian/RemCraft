@@ -46,20 +46,43 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
   };
 
   /** Moves a card into the review phase with the given interval. */
-  const graduate = (state: CardState, days: number, now: Timestamp, rating: Rating, ease = state.ease): CardState =>
-    bookkeeping(state, { phase: 'review', step: 0, interval: days, ease, due: now + days * DAY }, rating, now);
+  const graduate = (
+    state: CardState,
+    days: number,
+    now: Timestamp,
+    rating: Rating,
+    ease = state.ease,
+  ): CardState =>
+    bookkeeping(
+      state,
+      { phase: 'review', step: 0, interval: days, ease, due: now + days * DAY },
+      rating,
+      now,
+    );
 
   /** Schedules the card at a step of the current step phase. */
-  const atStep = (state: CardState, phase: 'learning' | 'relearning', step: number, delayMin: number, now: Timestamp, rating: Rating): CardState =>
-    bookkeeping(state, { phase, step, due: now + delayMin * MINUTE }, rating, now);
+  const atStep = (
+    state: CardState,
+    phase: 'learning' | 'relearning',
+    step: number,
+    delayMin: number,
+    now: Timestamp,
+    rating: Rating,
+  ): CardState => bookkeeping(state, { phase, step, due: now + delayMin * MINUTE }, rating, now);
 
   /** Handles new and learning cards. */
-  const reviewLearning = (state: CardState, rating: Rating, now: Timestamp, rng?: Rng): CardState => {
+  const reviewLearning = (
+    state: CardState,
+    rating: Rating,
+    now: Timestamp,
+    rng?: Rng,
+  ): CardState => {
     const steps = params.learningSteps;
     const step = state.phase === 'new' ? 0 : state.step;
     const ease = state.phase === 'new' ? params.startingEase : state.ease;
     const s = { ...state, ease };
-    if (rating === 4) return graduate(s, finalizeInterval(params.easyInterval, rng, false), now, rating);
+    if (rating === 4)
+      return graduate(s, finalizeInterval(params.easyInterval, rng, false), now, rating);
     if (steps.length === 0) {
       // Without learning steps every successful answer graduates immediately.
       if (rating === 1) return atStep(s, 'learning', 0, 1, now, rating);
@@ -72,7 +95,8 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
         return atStep(s, 'learning', step, hardStepDelay(steps, step), now, rating);
       case 3: {
         const next = step + 1;
-        if (next >= steps.length) return graduate(s, finalizeInterval(params.graduatingInterval, rng, false), now, rating);
+        if (next >= steps.length)
+          return graduate(s, finalizeInterval(params.graduatingInterval, rng, false), now, rating);
         return atStep(s, 'learning', next, steps[next]!, now, rating);
       }
     }
@@ -91,7 +115,14 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
       case 1:
         return atStep(state, 'relearning', 0, steps[0]!, now, rating);
       case 2:
-        return atStep(state, 'relearning', state.step, hardStepDelay(steps, state.step), now, rating);
+        return atStep(
+          state,
+          'relearning',
+          state.step,
+          hardStepDelay(steps, state.step),
+          now,
+          rating,
+        );
       case 3: {
         const next = state.step + 1;
         if (next >= steps.length) return graduate(state, lapseInterval, now, rating);
@@ -107,19 +138,32 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
 
     if (rating === 1) {
       const ease = Math.max(params.minimumEase, state.ease - 0.2);
-      const lapseInterval = Math.max(params.minimumLapseInterval, Math.round(current * params.lapseMultiplier));
+      const lapseInterval = Math.max(
+        params.minimumLapseInterval,
+        Math.round(current * params.lapseMultiplier),
+      );
       const base = { ...state, ease, interval: lapseInterval, lapses: state.lapses + 1 };
-      if (params.relearningSteps.length === 0) return graduate(base, lapseInterval, now, rating, ease);
+      if (params.relearningSteps.length === 0)
+        return graduate(base, lapseInterval, now, rating, ease);
       return atStep(base, 'relearning', 0, params.relearningSteps[0]!, now, rating);
     }
 
     // Compute all three successful intervals so they are strictly ordered.
-    const hard = finalizeInterval(Math.max((current + late / 4) * params.hardInterval, current + 1), undefined);
+    const hard = finalizeInterval(
+      Math.max((current + late / 4) * params.hardInterval, current + 1),
+      undefined,
+    );
     const good = Math.max(finalizeInterval((current + late / 2) * state.ease, undefined), hard + 1);
-    const easy = Math.max(finalizeInterval((current + late) * state.ease * params.easyBonus, undefined), good + 1);
+    const easy = Math.max(
+      finalizeInterval((current + late) * state.ease * params.easyBonus, undefined),
+      good + 1,
+    );
 
     const pick = { 2: hard, 3: good, 4: easy }[rating];
-    const days = Math.min(params.fuzz && rng ? fuzzInterval(pick, params.maximumInterval, rng) : pick, params.maximumInterval);
+    const days = Math.min(
+      params.fuzz && rng ? fuzzInterval(pick, params.maximumInterval, rng) : pick,
+      params.maximumInterval,
+    );
     const easeDelta = { 2: -0.15, 3: 0, 4: 0.15 }[rating];
     const ease = Math.max(params.minimumEase, state.ease + easeDelta);
     return graduate(state, days, now, rating, ease);

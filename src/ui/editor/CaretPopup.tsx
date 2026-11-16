@@ -5,7 +5,7 @@
  * Keyboard events are routed here by the editor through
  * `controller.popupKeys` while the popup is open.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, FileText, Folder, Plus } from 'lucide-react';
@@ -28,7 +28,9 @@ export function CaretPopup(): ReactNode {
 }
 
 /** Positions a popup below (or above) the caret. */
-function usePopupPosition(popup: PopupState): [React.RefObject<HTMLDivElement | null>, { left: number; top: number }] {
+function usePopupPosition(
+  popup: PopupState,
+): [React.RefObject<HTMLDivElement | null>, { left: number; top: number }] {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: popup.left, top: popup.bottom + 6 });
   useLayoutEffect(() => {
@@ -45,7 +47,10 @@ function usePopupPosition(popup: PopupState): [React.RefObject<HTMLDivElement | 
 }
 
 /** Removes the trigger text and returns the view (if still mounted). */
-function consumeTrigger(popup: PopupState, controller: ReturnType<typeof useController>): ReturnType<typeof useController>['activeView'] {
+function consumeTrigger(
+  popup: PopupState,
+  controller: ReturnType<typeof useController>,
+): ReturnType<typeof useController>['activeView'] {
   const active = controller.activeView;
   if (!active || active.remId !== popup.remId) return null;
   const { view } = active;
@@ -70,9 +75,12 @@ function SlashMenu({ popup }: { popup: PopupState }): ReactNode {
   const [column, setColumn] = useState<'groups' | 'items'>(popup.query ? 'items' : 'groups');
 
   const ctx = rem ? makeCtx(popup.remId, popup.instance) : null;
-  const filtered = useMemo(() => (ctx && rem ? filterCommands(ctx, rem, popup.query) : []), [popup.query, rem]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Filtering is cheap (≈ 80 commands), so it runs on every render.
+  const filtered = ctx && rem ? filterCommands(ctx, rem, popup.query) : [];
   const groups = COMMAND_GROUPS.filter((g) => filtered.some((c) => c.group === g));
-  const items: SlashCommand[] = popup.query ? filtered : filtered.filter((c) => c.group === groups[groupIndex]);
+  const items: SlashCommand[] = popup.query
+    ? filtered
+    : filtered.filter((c) => c.group === groups[groupIndex]);
 
   useEffect(() => {
     setItemIndex(0);
@@ -90,7 +98,8 @@ function SlashMenu({ popup }: { popup: PopupState }): ReactNode {
   controller.popupKeys = (key) => {
     switch (key) {
       case 'ArrowDown':
-        if (column === 'groups' && !popup.query) setGroupIndex((i) => Math.min(i + 1, groups.length - 1));
+        if (column === 'groups' && !popup.query)
+          setGroupIndex((i) => Math.min(i + 1, groups.length - 1));
         else setItemIndex((i) => Math.min(i + 1, items.length - 1));
         return true;
       case 'ArrowUp':
@@ -196,13 +205,19 @@ function Autocomplete({ popup }: { popup: PopupState }): ReactNode {
   const hits = useSelector((s) => (popup.query ? searchStore(s, popup.query, 8) : null));
   const recent = useSelector((s) =>
     s.memo('recentDocs', [s.collectionVersion('rems')], () =>
-      [...s.all('rems')].filter((r) => r.isDocument).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8),
+      [...s.all('rems')]
+        .filter((r) => r.isDocument)
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .slice(0, 8),
     ),
   );
   const options: Option[] = [
-    ...(hits ? hits.map((h) => h.remId) : recent.map((r) => r.id)).filter((id) => id !== popup.remId).map((remId): Option => ({ kind: 'rem', remId })),
+    ...(hits ? hits.map((h) => h.remId) : recent.map((r) => r.id))
+      .filter((id) => id !== popup.remId)
+      .map((remId): Option => ({ kind: 'rem', remId })),
   ];
-  if (popup.query.trim() && popup.kind !== 'portal') options.push({ kind: 'create', name: popup.query.trim() });
+  if (popup.query.trim() && popup.kind !== 'portal')
+    options.push({ kind: 'create', name: popup.query.trim() });
 
   useEffect(() => setIndex(0), [popup.query]);
 
@@ -213,7 +228,9 @@ function Autocomplete({ popup }: { popup: PopupState }): ReactNode {
     if (popup.kind === 'ref') {
       if (active) {
         const node = schema.nodes.ref!.create({ remId: targetId });
-        active.view.dispatch(active.view.state.tr.replaceSelectionWith(node, false).insertText(' '));
+        active.view.dispatch(
+          active.view.state.tr.replaceSelectionWith(node, false).insertText(' '),
+        );
         active.view.focus();
       }
     } else if (popup.kind === 'tag') {
@@ -256,20 +273,30 @@ function Autocomplete({ popup }: { popup: PopupState }): ReactNode {
 
   const label = popup.kind === 'ref' ? 'Reference' : popup.kind === 'tag' ? 'Tag' : 'Portal';
   return createPortal(
-    <div ref={ref} className="autocomplete menu" style={pos} onMouseDown={(e) => e.preventDefault()}>
+    <div
+      ref={ref}
+      className="autocomplete menu"
+      style={pos}
+      onMouseDown={(e) => e.preventDefault()}
+    >
       <div className="menu-label">
         {label}
         {popup.query ? `: ${popup.query}` : ' - recent documents'}
       </div>
       {options.length === 0 && <div className="menu-item faint">Type to search…</div>}
       {options.map((opt, i) => (
-        <button key={opt.kind === 'rem' ? opt.remId : 'create'} className={`menu-item${i === index ? ' active' : ''}`} onMouseEnter={() => setIndex(i)} onClick={() => choose(opt)}>
-          {opt.kind === 'rem' ? <RemOption remId={opt.remId} /> : (
+        <button
+          key={opt.kind === 'rem' ? opt.remId : 'create'}
+          className={`menu-item${i === index ? ' active' : ''}`}
+          onMouseEnter={() => setIndex(i)}
+          onClick={() => choose(opt)}
+        >
+          {opt.kind === 'rem' ? (
+            <RemOption remId={opt.remId} />
+          ) : (
             <>
               <Plus size={16} />
-              <span className="ellipsis">
-                Create “{opt.name}”
-              </span>
+              <span className="ellipsis">Create “{opt.name}”</span>
             </>
           )}
         </button>
@@ -290,7 +317,11 @@ function RemOption({ remId }: { remId: RemId }): ReactNode {
       <Icon size={16} className="faint" />
       <span className="col" style={{ gap: 0, minWidth: 0 }}>
         <span className="ellipsis">{title}</span>
-        {parentTitle && <span className="ellipsis faint" style={{ fontSize: 12 }}>{parentTitle}</span>}
+        {parentTitle && (
+          <span className="ellipsis faint" style={{ fontSize: 12 }}>
+            {parentTitle}
+          </span>
+        )}
       </span>
     </>
   );

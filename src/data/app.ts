@@ -78,7 +78,8 @@ export class RemCraftApp {
     this.files = new FileService(persistence);
     const client = backend ? createSupabase(backend) : null;
     this.auth = client ? new AuthService(client) : null;
-    this.remoteFactory = remoteFactory ?? (client ? (user) => new SupabaseBackend(client, user.id) : null);
+    this.remoteFactory =
+      remoteFactory ?? (client ? (user) => new SupabaseBackend(client, user.id) : null);
     this.account = {
       configured: Boolean(backend) || Boolean(remoteFactory),
       user: null,
@@ -125,7 +126,10 @@ export class RemCraftApp {
     if (user?.id === this.account.user?.id && (user === null || this.sync)) return;
     this.stopSync();
     if (!user || !this.remoteFactory) {
-      this.setAccount({ user: null, sync: { state: 'disabled', lastSyncedAt: null, error: null, pending: 0 } });
+      this.setAccount({
+        user: null,
+        sync: { state: 'disabled', lastSyncedAt: null, error: null, pending: 0 },
+      });
       return;
     }
     const previousUser = await this.persistence.getMeta<string>(USER_KEY);
@@ -170,7 +174,10 @@ export class RemCraftApp {
     this.stopSync();
     await this.auth?.signOut();
     if (clearLocal) await this.resetLocal(true);
-    this.setAccount({ user: null, sync: { state: 'disabled', lastSyncedAt: null, error: null, pending: 0 } });
+    this.setAccount({
+      user: null,
+      sync: { state: 'disabled', lastSyncedAt: null, error: null, pending: 0 },
+    });
   }
 
   /** Deletes all local data (optionally re-seeding the welcome content). */

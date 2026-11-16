@@ -12,13 +12,25 @@ import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 
 /** The move dialog. */
-export function MoveDialog({ remIds, onClose }: { remIds: RemId[]; onClose: () => void }): ReactNode {
+export function MoveDialog({
+  remIds,
+  onClose,
+}: {
+  remIds: RemId[];
+  onClose: () => void;
+}): ReactNode {
   const app = useApp();
   const toast = useToast();
   const [query, setQuery] = useState('');
-  const targets = useSelector((s) => s.memo('moveTargets', [s.collectionVersion('rems')], () => s.all('rems').filter((r) => r.isDocument || r.isFolder)));
+  const targets = useSelector((s) =>
+    s.memo('moveTargets', [s.collectionVersion('rems')], () =>
+      s.all('rems').filter((r) => r.isDocument || r.isFolder),
+    ),
+  );
   const q = fold(query);
-  const list = targets.filter((t) => !remIds.includes(t.id) && fold(toPlainText(t.text)).includes(q)).slice(0, 50);
+  const list = targets
+    .filter((t) => !remIds.includes(t.id) && fold(toPlainText(t.text)).includes(q))
+    .slice(0, 50);
   const move = (parentId: RemId | null): void => {
     if (app.rems.move(remIds, { parentId })) {
       toast('Moved');
@@ -27,14 +39,24 @@ export function MoveDialog({ remIds, onClose }: { remIds: RemId[]; onClose: () =
   };
   return (
     <Modal title="Move to…" onClose={onClose}>
-      <input className="input" autoFocus placeholder="Search documents and folders" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <input
+        className="input"
+        autoFocus
+        placeholder="Search documents and folders"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
       <div className="search-results">
         <button className="menu-item" onClick={() => move(null)}>
           <Folder size={16} /> Top level
         </button>
         {list.map((t) => (
           <button key={t.id} className="menu-item" onClick={() => move(t.id)}>
-            {t.isFolder ? <Folder size={16} className="icon-folder" /> : <FileText size={16} className="icon-doc" />}
+            {t.isFolder ? (
+              <Folder size={16} className="icon-folder" />
+            ) : (
+              <FileText size={16} className="icon-doc" />
+            )}
             <span className="ellipsis">{app.rems.title(t.id) || 'Untitled'}</span>
           </button>
         ))}

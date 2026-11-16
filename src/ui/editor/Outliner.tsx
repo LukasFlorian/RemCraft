@@ -25,7 +25,9 @@ export interface OutlinerProps {
 }
 
 /** Answer mode the root imposes on its children. */
-function childModeOf(rem: { direction: string; back: unknown; answerMode: ChildMode } | undefined): ChildMode {
+function childModeOf(
+  rem: { direction: string; back: unknown; answerMode: ChildMode } | undefined,
+): ChildMode {
   if (!rem || rem.direction === 'none') return 'none';
   return rem.answerMode;
 }
@@ -104,12 +106,26 @@ export function Outliner({ rootId, embedded }: OutlinerProps): ReactNode {
   }, [app, controller, instance]);
 
   if (!root) return null;
-  const mode = childModeOf({ direction: root.direction, back: root.back, answerMode: root.back !== null && isEmpty(root.back) && root.answerMode === 'inline' ? 'set' : root.answerMode });
+  const mode = childModeOf({
+    direction: root.direction,
+    back: root.back,
+    answerMode:
+      root.back !== null && isEmpty(root.back) && root.answerMode === 'inline'
+        ? 'set'
+        : root.answerMode,
+  });
 
   return (
     <div className={`outliner${embedded ? ' is-embedded' : ''}`} data-instance={instance}>
       {children.map((child, i) => (
-        <RemBlock key={child.id} remId={child.id} instance={instance} parentMode={mode} index={i} depth={0} />
+        <RemBlock
+          key={child.id}
+          remId={child.id}
+          instance={instance}
+          parentMode={mode}
+          index={i}
+          depth={0}
+        />
       ))}
       {!embedded && (
         <div
@@ -119,11 +135,16 @@ export function Outliner({ rootId, embedded }: OutlinerProps): ReactNode {
             appendRem({ app, controller, instance });
           }}
         >
-          {children.length === 0 && <span className="faint">Click here or press Enter to start writing…</span>}
+          {children.length === 0 && (
+            <span className="faint">Click here or press Enter to start writing…</span>
+          )}
         </div>
       )}
       {embedded && children.length === 0 && (
-        <div className="outliner-tail is-small" onMouseDown={(e) => (e.preventDefault(), appendRem({ app, controller, instance }))}>
+        <div
+          className="outliner-tail is-small"
+          onMouseDown={(e) => (e.preventDefault(), appendRem({ app, controller, instance }))}
+        >
           <span className="faint">Empty - click to add</span>
         </div>
       )}

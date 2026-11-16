@@ -11,7 +11,10 @@ import { createScheduler } from './scheduler';
 import { PracticeSession } from './session';
 
 const NOW = new Date(2026, 10, 16, 12).getTime(); // Mon 16 Nov 2026, noon
-const scheduler = createScheduler({ ...createDefaultScheduler(), sm2: { ...createDefaultScheduler().sm2, fuzz: false } });
+const scheduler = createScheduler({
+  ...createDefaultScheduler(),
+  sm2: { ...createDefaultScheduler().sm2, fuzz: false },
+});
 
 /** Card state helper. */
 function card(id: string, patch: Partial<CardState> = {}): CardState {
@@ -19,14 +22,26 @@ function card(id: string, patch: Partial<CardState> = {}): CardState {
 }
 
 /** Queue entry helper. */
-function entry(id: string, priority: EffectivePriority, state: Partial<CardState> = {}, docOrder = 0, examIds: string[] = []): QueueEntry {
+function entry(
+  id: string,
+  priority: EffectivePriority,
+  state: Partial<CardState> = {},
+  docOrder = 0,
+  examIds: string[] = [],
+): QueueEntry {
   return { cardId: id, remId: id, state: card(id, state), priority, examIds, docOrder };
 }
 
 describe('resolveInheritance', () => {
   const folder = createRem({ id: 'F', isFolder: true, priority: 'active', schedulerId: 'S1' });
   const doc = createRem({ id: 'D', parentId: 'F', isDocument: true });
-  const paused = createRem({ id: 'P', parentId: 'F', order: 'a1', isDocument: true, priority: 'paused' });
+  const paused = createRem({
+    id: 'P',
+    parentId: 'F',
+    order: 'a1',
+    isDocument: true,
+    priority: 'paused',
+  });
   const leaf = createRem({ id: 'L', parentId: 'D', text: rt('x') });
   const pausedLeaf = createRem({ id: 'PL', parentId: 'P', text: rt('y') });
   const other = createRem({ id: 'O', order: 'a2', isDocument: true });
@@ -61,11 +76,36 @@ describe('buildGlobalQueue', () => {
 
   it('orders buckets: learning, exam, active, maintaining, none and skips paused', () => {
     const entries = [
-      entry('none', 'none', { phase: 'review', due: NOW - DAY, interval: 3, lastReview: NOW - 4 * DAY }),
-      entry('maint', 'maintaining', { phase: 'review', due: NOW - DAY, interval: 3, lastReview: NOW - 4 * DAY }),
-      entry('act', 'active', { phase: 'review', due: NOW - HOUR, interval: 3, lastReview: NOW - 3 * DAY }),
-      entry('learn', 'none', { phase: 'learning', due: NOW + 5 * MINUTE, lastReview: NOW - 5 * MINUTE }),
-      entry('ex', 'exam', { phase: 'review', due: NOW, interval: 3, lastReview: NOW - 3 * DAY }, 0, ['E']),
+      entry('none', 'none', {
+        phase: 'review',
+        due: NOW - DAY,
+        interval: 3,
+        lastReview: NOW - 4 * DAY,
+      }),
+      entry('maint', 'maintaining', {
+        phase: 'review',
+        due: NOW - DAY,
+        interval: 3,
+        lastReview: NOW - 4 * DAY,
+      }),
+      entry('act', 'active', {
+        phase: 'review',
+        due: NOW - HOUR,
+        interval: 3,
+        lastReview: NOW - 3 * DAY,
+      }),
+      entry('learn', 'none', {
+        phase: 'learning',
+        due: NOW + 5 * MINUTE,
+        lastReview: NOW - 5 * MINUTE,
+      }),
+      entry(
+        'ex',
+        'exam',
+        { phase: 'review', due: NOW, interval: 3, lastReview: NOW - 3 * DAY },
+        0,
+        ['E'],
+      ),
       entry('paused', 'paused', { phase: 'review', due: NOW - DAY, interval: 3 }),
       entry('future', 'active', { phase: 'review', due: NOW + 5 * DAY, interval: 9 }),
     ];
@@ -80,18 +120,28 @@ describe('buildGlobalQueue', () => {
       entry('n3', 'none', {}, 3),
     ];
     expect(buildGlobalQueue(entries, opts).map((c) => c.cardId)).toEqual(['n1', 'n2']);
-    expect(buildGlobalQueue(entries, { ...opts, newIntroducedToday: 1 }).map((c) => c.cardId)).toEqual(['n1']);
+    expect(
+      buildGlobalQueue(entries, { ...opts, newIntroducedToday: 1 }).map((c) => c.cardId),
+    ).toEqual(['n1']);
   });
 
   it('applies exam new-card and final-review quotas', () => {
     const entries = [
       entry('e1', 'exam', {}, 1, ['E']),
       entry('e2', 'exam', {}, 2, ['E']),
-      entry('e3', 'exam', { phase: 'review', due: NOW + 9 * DAY, interval: 10, lastReview: NOW - DAY }, 3, ['E']),
+      entry(
+        'e3',
+        'exam',
+        { phase: 'review', due: NOW + 9 * DAY, interval: 10, lastReview: NOW - DAY },
+        3,
+        ['E'],
+      ),
     ];
     const q = buildGlobalQueue(entries, {
       ...opts,
-      examQuotas: new Map([['E', { newQuota: 1, finalReviewQuota: 1, finalReviewStart: startOfStudyDay(NOW) }]]),
+      examQuotas: new Map([
+        ['E', { newQuota: 1, finalReviewQuota: 1, finalReviewStart: startOfStudyDay(NOW) }],
+      ]),
     });
     expect(q).toEqual([
       { cardId: 'e1', bucket: 'exam-new', examId: 'E' },
@@ -103,7 +153,12 @@ describe('buildGlobalQueue', () => {
 describe('buildDocumentQueue', () => {
   const entries = [
     entry('b', 'paused', {}, 2),
-    entry('a', 'paused', { phase: 'review', due: NOW - DAY, interval: 2, lastReview: NOW - 3 * DAY }, 1),
+    entry(
+      'a',
+      'paused',
+      { phase: 'review', due: NOW - DAY, interval: 2, lastReview: NOW - 3 * DAY },
+      1,
+    ),
     entry('c', 'paused', { phase: 'review', due: NOW + 5 * DAY, interval: 9 }, 0),
   ];
   const opts = { now: NOW, dayStartHour: 4, retrievability: () => 0.5, rng: () => 0.1 };
@@ -112,7 +167,11 @@ describe('buildDocumentQueue', () => {
     expect(buildDocumentQueue(entries, 'srs', opts).map((c) => c.cardId)).toEqual(['a', 'b']);
   });
   it('in-order mode returns every card in document order', () => {
-    expect(buildDocumentQueue(entries, 'all-in-order', opts).map((c) => c.cardId)).toEqual(['c', 'a', 'b']);
+    expect(buildDocumentQueue(entries, 'all-in-order', opts).map((c) => c.cardId)).toEqual([
+      'c',
+      'a',
+      'b',
+    ]);
   });
   it('counts due cards including new ones', () => {
     expect(countDue(entries, NOW, 4)).toBe(2);
@@ -176,26 +235,56 @@ describe('exam planning', () => {
 
   it('makes all new cards due in due-now mode and when no learning days are left', () => {
     const cards = Array.from({ length: 7 }, (_, i) => card(`n${i}/f`));
-    expect(planExam({ ...exam, newCardMode: 'due-now' }, cards, { introducedToday: 0, correctToday: 0 }, NOW, 4, scheduler).todayNewQuota).toBe(7);
+    expect(
+      planExam(
+        { ...exam, newCardMode: 'due-now' },
+        cards,
+        { introducedToday: 0, correctToday: 0 },
+        NOW,
+        4,
+        scheduler,
+      ).todayNewQuota,
+    ).toBe(7);
     const soon = { ...exam, date: addStudyDays(NOW, 1) + 9 * HOUR };
-    expect(planExam(soon, cards, { introducedToday: 0, correctToday: 0 }, NOW, 4, scheduler).todayNewQuota).toBe(7);
+    expect(
+      planExam(soon, cards, { introducedToday: 0, correctToday: 0 }, NOW, 4, scheduler)
+        .todayNewQuota,
+    ).toBe(7);
   });
 
   it('assigns final reviews during the final window', () => {
     const inWindow = addStudyDays(NOW, 9) + HOUR; // one day before the exam
     const reviewed = Array.from({ length: 6 }, (_, i) =>
-      card(`r${i}/f`, { phase: 'review', interval: 30, due: inWindow + 20 * DAY, lastReview: NOW - DAY }),
+      card(`r${i}/f`, {
+        phase: 'review',
+        interval: 30,
+        due: inWindow + 20 * DAY,
+        lastReview: NOW - DAY,
+      }),
     );
-    const plan = planExam(exam, reviewed, { introducedToday: 0, correctToday: 0 }, inWindow, 4, scheduler);
+    const plan = planExam(
+      exam,
+      reviewed,
+      { introducedToday: 0, correctToday: 0 },
+      inWindow,
+      4,
+      scheduler,
+    );
     expect(plan.status).toBe('final-review');
     expect(plan.todayFinalReviewQuota).toBe(6);
   });
 
   it('flags a backlog as off-track and reports past exams', () => {
-    const overdue = [card('o/f', { phase: 'review', interval: 3, due: NOW - 3 * DAY, lastReview: NOW - 6 * DAY })];
-    expect(planExam(exam, overdue, { introducedToday: 0, correctToday: 0 }, NOW, 4, scheduler).onTrack).toBe(false);
+    const overdue = [
+      card('o/f', { phase: 'review', interval: 3, due: NOW - 3 * DAY, lastReview: NOW - 6 * DAY }),
+    ];
+    expect(
+      planExam(exam, overdue, { introducedToday: 0, correctToday: 0 }, NOW, 4, scheduler).onTrack,
+    ).toBe(false);
     const past = { ...exam, date: NOW - DAY };
-    expect(planExam(past, overdue, { introducedToday: 0, correctToday: 0 }, NOW, 4, scheduler).status).toBe('past');
+    expect(
+      planExam(past, overdue, { introducedToday: 0, correctToday: 0 }, NOW, 4, scheduler).status,
+    ).toBe('past');
   });
 });
 

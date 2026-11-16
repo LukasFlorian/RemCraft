@@ -35,7 +35,11 @@ export function SettingsPage(): ReactNode {
         <div className="settings-layout">
           <nav className="settings-nav">
             {SECTIONS.map((s) => (
-              <NavLink key={s.id} to={`/settings/${s.id}`} className={() => `nav-item${current.id === s.id ? ' active' : ''}`}>
+              <NavLink
+                key={s.id}
+                to={`/settings/${s.id}`}
+                className={() => `nav-item${current.id === s.id ? ' active' : ''}`}
+              >
                 {s.label}
               </NavLink>
             ))}

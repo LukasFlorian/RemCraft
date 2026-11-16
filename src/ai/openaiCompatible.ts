@@ -20,11 +20,18 @@ export class AiError extends Error {
  * @param config Endpoint, key and model.
  * @param fetchImpl Fetch implementation (injectable for tests).
  */
-export function createOpenAiCompatibleProvider(config: AiConfig, fetchImpl: typeof fetch = (...a) => fetch(...a)): AiProvider {
+export function createOpenAiCompatibleProvider(
+  config: AiConfig,
+  fetchImpl: typeof fetch = (...a) => fetch(...a),
+): AiProvider {
   const url = `${config.baseUrl.replace(/\/+$/, '')}/chat/completions`;
 
   /** Sends the request and checks the status. */
-  const request = async (messages: readonly ChatMessage[], options: CompletionOptions, stream: boolean): Promise<Response> => {
+  const request = async (
+    messages: readonly ChatMessage[],
+    options: CompletionOptions,
+    stream: boolean,
+  ): Promise<Response> => {
     const body: Record<string, unknown> = { model: config.model, messages, stream };
     if (options.temperature !== undefined) body.temperature = options.temperature;
     if (options.maxTokens !== undefined) body.max_tokens = options.maxTokens;

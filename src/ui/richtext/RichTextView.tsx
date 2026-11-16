@@ -66,7 +66,12 @@ function withMarks(content: ReactNode, marks: TextMarks | undefined, key: number
   if (marks.strike) node = <s>{node}</s>;
   if (marks.link) {
     node = (
-      <a href={marks.link} target="_blank" rel="noreferrer noopener" onClick={(e) => e.stopPropagation()}>
+      <a
+        href={marks.link}
+        target="_blank"
+        rel="noreferrer noopener"
+        onClick={(e) => e.stopPropagation()}
+      >
         {node}
       </a>
     );
@@ -89,7 +94,12 @@ function renderSegment(seg: Segment, key: number, inert: boolean | undefined): R
 }
 
 /** Renders rich text, grouping cloze runs so they can be hidden or highlighted. */
-export const RichTextView = memo(function RichTextView({ value, cloze = { kind: 'show' }, inertRefs, className }: RichTextViewProps): ReactNode {
+export const RichTextView = memo(function RichTextView({
+  value,
+  cloze = { kind: 'show' },
+  inertRefs,
+  className,
+}: RichTextViewProps): ReactNode {
   const out: ReactNode[] = [];
   let i = 0;
   while (i < value.length) {
@@ -115,7 +125,12 @@ export const RichTextView = memo(function RichTextView({ value, cloze = { kind: 
       );
     } else {
       const style: CSSProperties | undefined = undefined;
-      const cls = cloze.kind === 'reveal' && cloze.clozeId === id ? 'cloze cloze-answer' : cloze.kind === 'show' ? 'cloze' : 'cloze-other';
+      const cls =
+        cloze.kind === 'reveal' && cloze.clozeId === id
+          ? 'cloze cloze-answer'
+          : cloze.kind === 'show'
+            ? 'cloze'
+            : 'cloze-other';
       out.push(
         <span key={`c${start}`} className={cls} style={style}>
           {run}

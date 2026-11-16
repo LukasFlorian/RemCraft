@@ -3,7 +3,15 @@
  */
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
-import type { CardState, CollectionName, Exam, Rem, ReviewLog, SchedulerConfig, Settings } from '@core/model/types';
+import type {
+  CardState,
+  CollectionName,
+  Exam,
+  Rem,
+  ReviewLog,
+  SchedulerConfig,
+  Settings,
+} from '@core/model/types';
 import type { Change, RecordOf } from '../store/store';
 import type { CollectionData, OutboxEntry, PersistenceAdapter, StoredFile } from './adapter';
 import { outboxEntryOf } from './adapter';
@@ -38,7 +46,14 @@ class RemCraftDatabase extends Dexie {
   }
 }
 
-const COLLECTIONS: readonly CollectionName[] = ['rems', 'cards', 'logs', 'exams', 'schedulers', 'settings'];
+const COLLECTIONS: readonly CollectionName[] = [
+  'rems',
+  'cards',
+  'logs',
+  'exams',
+  'schedulers',
+  'settings',
+];
 
 /** IndexedDB-backed {@link PersistenceAdapter}. */
 export class DexieAdapter implements PersistenceAdapter {
@@ -57,7 +72,9 @@ export class DexieAdapter implements PersistenceAdapter {
   }
 
   async loadAll(): Promise<CollectionData> {
-    const entries = await Promise.all(COLLECTIONS.map(async (c) => [c, await this.table(c).toArray()] as const));
+    const entries = await Promise.all(
+      COLLECTIONS.map(async (c) => [c, await this.table(c).toArray()] as const),
+    );
     return Object.fromEntries(entries) as unknown as CollectionData;
   }
 
@@ -89,7 +106,13 @@ export class DexieAdapter implements PersistenceAdapter {
     for (const c of COLLECTIONS) {
       const records = await this.table(c).toArray();
       await this.db.outbox.bulkPut(
-        records.map((r) => ({ key: `${c}:${r.id}`, collection: c, id: r.id, updatedAt: r.updatedAt, deleted: false })),
+        records.map((r) => ({
+          key: `${c}:${r.id}`,
+          collection: c,
+          id: r.id,
+          updatedAt: r.updatedAt,
+          deleted: false,
+        })),
       );
     }
   }
@@ -115,6 +138,11 @@ export class DexieAdapter implements PersistenceAdapter {
   }
 
   async clear(): Promise<void> {
-    await Promise.all([...COLLECTIONS.map((c) => this.table(c).clear()), this.db.outbox.clear(), this.db.meta.clear(), this.db.files.clear()]);
+    await Promise.all([
+      ...COLLECTIONS.map((c) => this.table(c).clear()),
+      this.db.outbox.clear(),
+      this.db.meta.clear(),
+      this.db.files.clear(),
+    ]);
   }
 }

@@ -79,7 +79,10 @@ describe('Store', () => {
   it('does not record non-undoable or external changes', () => {
     const store = makeStore();
     store.transact((tx) => tx.put('rems', createRem({ id: 'a' })), { undoable: false });
-    store.applyExternal([{ collection: 'rems', id: 'b', record: createRem({ id: 'b', updatedAt: 5 }), updatedAt: 5 }], 'remote');
+    store.applyExternal(
+      [{ collection: 'rems', id: 'b', record: createRem({ id: 'b', updatedAt: 5 }), updatedAt: 5 }],
+      'remote',
+    );
     expect(store.canUndo()).toBe(false);
     expect(store.get('b')).toBeDefined();
   });
@@ -88,13 +91,36 @@ describe('Store', () => {
     const store = makeStore();
     store.transact((tx) => tx.put('rems', createRem({ id: 'a', text: rt('local') })));
     const localTime = store.get('a')!.updatedAt;
-    store.applyExternal([{ collection: 'rems', id: 'a', record: createRem({ id: 'a', text: rt('old'), updatedAt: localTime - 1 }), updatedAt: localTime - 1 }], 'remote');
+    store.applyExternal(
+      [
+        {
+          collection: 'rems',
+          id: 'a',
+          record: createRem({ id: 'a', text: rt('old'), updatedAt: localTime - 1 }),
+          updatedAt: localTime - 1,
+        },
+      ],
+      'remote',
+    );
     expect(store.get('a')!.text).toEqual(rt('local'));
-    store.applyExternal([{ collection: 'rems', id: 'a', record: createRem({ id: 'a', text: rt('new'), updatedAt: localTime + 100 }), updatedAt: localTime + 100 }], 'remote');
+    store.applyExternal(
+      [
+        {
+          collection: 'rems',
+          id: 'a',
+          record: createRem({ id: 'a', text: rt('new'), updatedAt: localTime + 100 }),
+          updatedAt: localTime + 100,
+        },
+      ],
+      'remote',
+    );
     expect(store.get('a')!.text).toEqual(rt('new'));
     // The clock moved past the remote timestamp.
     expect(store.clock.now()).toBeGreaterThan(localTime + 100);
-    store.applyExternal([{ collection: 'rems', id: 'a', record: undefined, updatedAt: localTime + 10_000 }], 'remote');
+    store.applyExternal(
+      [{ collection: 'rems', id: 'a', record: undefined, updatedAt: localTime + 10_000 }],
+      'remote',
+    );
     expect(store.get('a')).toBeUndefined();
   });
 

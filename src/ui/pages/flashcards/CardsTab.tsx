@@ -46,12 +46,15 @@ export function CardsTab(): ReactNode {
   const filtered = useMemo(() => {
     const q = fold(query.trim());
     return rows.filter((r) => {
-      if (q && !fold(`${r.front} ${r.back} ${r.doc ? app.rems.title(r.doc.id) : ''}`).includes(q)) return false;
+      if (q && !fold(`${r.front} ${r.back} ${r.doc ? app.rems.title(r.doc.id) : ''}`).includes(q))
+        return false;
       switch (state) {
         case 'new':
           return r.state.phase === 'new' && !r.state.disabled;
         case 'learning':
-          return (r.state.phase === 'learning' || r.state.phase === 'relearning') && !r.state.disabled;
+          return (
+            (r.state.phase === 'learning' || r.state.phase === 'relearning') && !r.state.disabled
+          );
         case 'review':
           return r.state.phase === 'review' && !r.state.disabled;
         case 'due':
@@ -76,9 +79,20 @@ export function CardsTab(): ReactNode {
   return (
     <div className="col" style={{ gap: 14 }}>
       <div className="row" style={{ flexWrap: 'wrap' }}>
-        <input className="input" style={{ maxWidth: 320 }} placeholder="Search cards" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search cards" />
+        <input
+          className="input"
+          style={{ maxWidth: 320 }}
+          placeholder="Search cards"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search cards"
+        />
         {(['all', 'new', 'learning', 'review', 'due', 'disabled'] as StateFilter[]).map((f) => (
-          <button key={f} className={`pill${state === f ? ' active' : ''}`} onClick={() => setState(f)}>
+          <button
+            key={f}
+            className={`pill${state === f ? ' active' : ''}`}
+            onClick={() => setState(f)}
+          >
             {f[0]!.toUpperCase() + f.slice(1)}
           </button>
         ))}
@@ -113,8 +127,17 @@ export function CardsTab(): ReactNode {
                 <input
                   type="checkbox"
                   aria-label="Select all"
-                  checked={filtered.length > 0 && filtered.slice(0, limit).every((r) => selected.has(r.spec.id))}
-                  onChange={(e) => setSelected(e.target.checked ? new Set(filtered.slice(0, limit).map((r) => r.spec.id)) : new Set())}
+                  checked={
+                    filtered.length > 0 &&
+                    filtered.slice(0, limit).every((r) => selected.has(r.spec.id))
+                  }
+                  onChange={(e) =>
+                    setSelected(
+                      e.target.checked
+                        ? new Set(filtered.slice(0, limit).map((r) => r.spec.id))
+                        : new Set(),
+                    )
+                  }
                 />
               </th>
               <th>Front</th>
@@ -131,18 +154,45 @@ export function CardsTab(): ReactNode {
             {filtered.slice(0, limit).map((r) => (
               <tr key={r.spec.id} className={r.state.disabled ? 'is-disabled' : ''}>
                 <td>
-                  <input type="checkbox" checked={selected.has(r.spec.id)} onChange={() => toggle(r.spec.id)} aria-label="Select card" />
+                  <input
+                    type="checkbox"
+                    checked={selected.has(r.spec.id)}
+                    onChange={() => toggle(r.spec.id)}
+                    aria-label="Select card"
+                  />
                 </td>
                 <td>
-                  <button className="link-plain cell-text" onClick={() => navigate(`/rem/${r.doc?.id ?? r.spec.remId}`)} title={r.doc ? app.rems.title(r.doc.id) : ''}>
+                  <button
+                    className="link-plain cell-text"
+                    onClick={() => navigate(`/rem/${r.doc?.id ?? r.spec.remId}`)}
+                    title={r.doc ? app.rems.title(r.doc.id) : ''}
+                  >
                     {r.front || '—'}
                   </button>
                 </td>
                 <td className="muted cell-text">{r.back}</td>
                 <td className="nowrap">{r.type}</td>
-                <td>{r.state.disabled ? <span className="badge">disabled</span> : <span className={`badge ${r.state.phase === 'review' ? 'badge-success' : r.state.phase === 'new' ? 'badge-accent' : 'badge-warning'}`}>{r.state.phase}</span>}</td>
-                <td className="nowrap muted">{r.state.phase === 'new' ? '—' : r.state.due <= now ? 'now' : `in ${formatInterval(r.state.due - now)}`}</td>
-                <td className="nowrap muted">{r.state.interval ? `${Math.round(r.state.interval)}d` : '—'}</td>
+                <td>
+                  {r.state.disabled ? (
+                    <span className="badge">disabled</span>
+                  ) : (
+                    <span
+                      className={`badge ${r.state.phase === 'review' ? 'badge-success' : r.state.phase === 'new' ? 'badge-accent' : 'badge-warning'}`}
+                    >
+                      {r.state.phase}
+                    </span>
+                  )}
+                </td>
+                <td className="nowrap muted">
+                  {r.state.phase === 'new'
+                    ? '—'
+                    : r.state.due <= now
+                      ? 'now'
+                      : `in ${formatInterval(r.state.due - now)}`}
+                </td>
+                <td className="nowrap muted">
+                  {r.state.interval ? `${Math.round(r.state.interval)}d` : '—'}
+                </td>
                 <td className="muted">{r.state.reps}</td>
                 <td className="muted">{r.state.lapses}</td>
               </tr>

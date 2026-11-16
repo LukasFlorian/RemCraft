@@ -19,7 +19,14 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState(0);
   const hits = useSelector((s) => (query.trim() ? searchStore(s, query, 40) : null));
-  const recent = useSelector((s) => s.memo('recentForSearch', [s.collectionVersion('rems')], () => [...s.all('rems')].filter((r) => r.isDocument).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 10)));
+  const recent = useSelector((s) =>
+    s.memo('recentForSearch', [s.collectionVersion('rems')], () =>
+      [...s.all('rems')]
+        .filter((r) => r.isDocument)
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .slice(0, 10),
+    ),
+  );
   const ids = hits ? hits.map((h) => h.remId) : recent.map((r) => r.id);
   const total = ids.length + (query.trim() ? 1 : 0);
   useEffect(() => setIndex(0), [query]);
@@ -65,12 +72,26 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
       </div>
       <div className="search-results">
         {!hits && <div className="menu-label">Recent documents</div>}
-        {hits && hits.length === 0 && <div className="faint" style={{ padding: 8 }}>No results.</div>}
+        {hits && hits.length === 0 && (
+          <div className="faint" style={{ padding: 8 }}>
+            No results.
+          </div>
+        )}
         {ids.map((id, i) => (
-          <SearchResult key={id} remId={id} active={i === index} onHover={() => setIndex(i)} onOpen={() => open(id)} />
+          <SearchResult
+            key={id}
+            remId={id}
+            active={i === index}
+            onHover={() => setIndex(i)}
+            onOpen={() => open(id)}
+          />
         ))}
         {query.trim() && (
-          <button className={`menu-item${index === ids.length ? ' active' : ''}`} onMouseEnter={() => setIndex(ids.length)} onClick={create}>
+          <button
+            className={`menu-item${index === ids.length ? ' active' : ''}`}
+            onMouseEnter={() => setIndex(ids.length)}
+            onClick={create}
+          >
             <Plus size={16} /> Create document “{query.trim()}”
           </button>
         )}
@@ -79,7 +100,17 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
   );
 }
 
-function SearchResult({ remId, active, onHover, onOpen }: { remId: RemId; active: boolean; onHover: () => void; onOpen: () => void }): ReactNode {
+function SearchResult({
+  remId,
+  active,
+  onHover,
+  onOpen,
+}: {
+  remId: RemId;
+  active: boolean;
+  onHover: () => void;
+  onOpen: () => void;
+}): ReactNode {
   const app = useApp();
   const rem = useSelector((s) => s.get(remId));
   const parent = useRemTitle(rem?.parentId ?? null, '');
@@ -87,9 +118,14 @@ function SearchResult({ remId, active, onHover, onOpen }: { remId: RemId; active
   const Icon = rem.isFolder ? Folder : FileText;
   void app;
   return (
-    <button className={`menu-item search-result${active ? ' active' : ''}`} onMouseEnter={onHover} onClick={onOpen} ref={(el) => {
+    <button
+      className={`menu-item search-result${active ? ' active' : ''}`}
+      onMouseEnter={onHover}
+      onClick={onOpen}
+      ref={(el) => {
         if (active) el?.scrollIntoView({ block: 'nearest' });
-      }}>
+      }}
+    >
       <Icon size={16} className="faint" />
       <span className="col" style={{ gap: 0, minWidth: 0, flex: 1 }}>
         <span className="ellipsis">
@@ -101,7 +137,11 @@ function SearchResult({ remId, active, onHover, onOpen }: { remId: RemId; active
             </>
           )}
         </span>
-        {parent && <span className="faint ellipsis" style={{ fontSize: 12 }}>{parent}</span>}
+        {parent && (
+          <span className="faint ellipsis" style={{ fontSize: 12 }}>
+            {parent}
+          </span>
+        )}
       </span>
     </button>
   );

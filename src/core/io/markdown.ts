@@ -59,8 +59,18 @@ export function outlineToRems(
   const now = ctx.now ?? Date.now();
   const out: Rem[] = [];
 
-  const convert = (list: readonly OutlineNode[], parent: RemId | null, lo: string | null, hi: string | null, mcParent: string[] | null): void => {
-    const kept = ctx.keepEmpty ? list : list.filter((n) => n.text.trim() !== '' || n.children.length > 0 || n.block.divider || n.block.image);
+  const convert = (
+    list: readonly OutlineNode[],
+    parent: RemId | null,
+    lo: string | null,
+    hi: string | null,
+    mcParent: string[] | null,
+  ): void => {
+    const kept = ctx.keepEmpty
+      ? list
+      : list.filter(
+          (n) => n.text.trim() !== '' || n.children.length > 0 || n.block.divider || n.block.image,
+        );
     const orders = ordersBetween(lo, hi, kept.length);
     kept.forEach((node, index) => {
       const rem = nodeToRem(node, parent, orders[index]!, ctx, now);
@@ -85,14 +95,23 @@ function correctLettersOf(line: string): string[] {
 }
 
 /** Converts one outline node (without its children). */
-function nodeToRem(node: OutlineNode, parentId: RemId | null, order: string, ctx: ImportContext, now: Timestamp): Rem {
+function nodeToRem(
+  node: OutlineNode,
+  parentId: RemId | null,
+  order: string,
+  ctx: ImportContext,
+  now: Timestamp,
+): Rem {
   const id = newId();
   const block = node.block;
   if (block.code) {
     return createRem({ id, parentId, order, text: rt(node.text), code: block.code }, now);
   }
   if (block.latexBlock) {
-    return createRem({ id, parentId, order, text: [{ type: 'latex', source: node.text }], latexBlock: true }, now);
+    return createRem(
+      { id, parentId, order, text: [{ type: 'latex', source: node.text }], latexBlock: true },
+      now,
+    );
   }
 
   const line = node.text.replace(CORRECT_MARKER, ' ').trim();
@@ -140,7 +159,13 @@ function nodeToRem(node: OutlineNode, parentId: RemId | null, order: string, ctx
 /**
  * Parses RemNote/Markdown text into Rems (convenience wrapper).
  */
-export function importMarkdown(source: string, parentId: RemId | null, ctx: ImportContext, after: string | null = null, before: string | null = null): Rem[] {
+export function importMarkdown(
+  source: string,
+  parentId: RemId | null,
+  ctx: ImportContext,
+  after: string | null = null,
+  before: string | null = null,
+): Rem[] {
   return outlineToRems(parseOutline(source), parentId, ctx, after, before);
 }
 
@@ -163,7 +188,8 @@ export interface ExportOptions {
  * @param graph Graph used for reference names and MC options.
  */
 export function remToLine(rem: Rem, graph: RemGraph): string {
-  const refName = (id: RemId): string => toPlainText(graph.get(id)?.text ?? [], (r) => toPlainText(graph.get(r)?.text ?? [])) || id;
+  const refName = (id: RemId): string =>
+    toPlainText(graph.get(id)?.text ?? [], (r) => toPlainText(graph.get(r)?.text ?? [])) || id;
   const opts = { refName, ...(rem.clozeHints ? { clozeHints: rem.clozeHints } : {}) };
   if (rem.code) return '```' + rem.code.language + '\n' + toPlainText(rem.text) + '\n```';
   if (rem.latexBlock) return `$$${toPlainText(rem.text)}$$`;
@@ -175,7 +201,9 @@ export function remToLine(rem: Rem, graph: RemGraph): string {
   if (delim) {
     if (rem.answerMode === 'mc') {
       const options = mcOptions(graph.children(rem.id));
-      const correct = options.map((o, i) => (o.correct ? String.fromCharCode(65 + i) : null)).filter(Boolean);
+      const correct = options
+        .map((o, i) => (o.correct ? String.fromCharCode(65 + i) : null))
+        .filter(Boolean);
       const onlyFirst = correct.length === 1 && correct[0] === 'A';
       if (!onlyFirst && correct.length > 0) line += ` {CORRECT: ${correct.join(', ')}}`;
       line += ` ${delim}`;
@@ -201,7 +229,11 @@ export function remToLine(rem: Rem, graph: RemGraph): string {
  * @param rootIds Rems to export.
  * @param options Formatting options.
  */
-export function exportMarkdown(graph: RemGraph, rootIds: readonly RemId[], options: ExportOptions = {}): string {
+export function exportMarkdown(
+  graph: RemGraph,
+  rootIds: readonly RemId[],
+  options: ExportOptions = {},
+): string {
   const width = options.indent ?? 4;
   const lines: string[] = [];
   const emit = (rem: Rem, depth: number): void => {

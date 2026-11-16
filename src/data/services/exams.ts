@@ -11,7 +11,9 @@ export class ExamService {
 
   /** Creates an exam. */
   create(partial: Partial<Exam>): Exam {
-    return this.store.transact((tx) => tx.put('exams', createExam(partial, this.store.clock.now())));
+    return this.store.transact((tx) =>
+      tx.put('exams', createExam(partial, this.store.clock.now())),
+    );
   }
 
   /** Updates an exam. */

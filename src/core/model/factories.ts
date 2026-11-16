@@ -129,11 +129,28 @@ export function createRem(partial: Partial<Rem> = {}, now: Timestamp = Date.now(
   };
 }
 
+/** Fields set explicitly by {@link createRem}. */
+const CORE_KEYS = [
+  'id',
+  'parentId',
+  'order',
+  'text',
+  'back',
+  'kind',
+  'direction',
+  'answerMode',
+  'isDocument',
+  'isFolder',
+  'tags',
+  'aliases',
+  'createdAt',
+  'updatedAt',
+] as const;
+
 /** Removes the core fields handled explicitly by {@link createRem}. */
 function stripCore(partial: Partial<Rem>): Partial<Rem> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, parentId, order, text, back, kind, direction, answerMode, isDocument, isFolder, tags, aliases, createdAt, updatedAt, ...rest } =
-    partial;
+  const rest: Partial<Rem> = { ...partial };
+  for (const key of CORE_KEYS) delete rest[key];
   return rest;
 }
 

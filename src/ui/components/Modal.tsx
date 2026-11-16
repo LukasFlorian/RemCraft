@@ -18,7 +18,14 @@ export interface ModalProps {
 }
 
 /** A dialog that closes on Escape and backdrop click. */
-export function Modal({ title, onClose, children, footer, wide, headerExtra }: ModalProps): ReactNode {
+export function Modal({
+  title,
+  onClose,
+  children,
+  footer,
+  wide,
+  headerExtra,
+}: ModalProps): ReactNode {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -29,13 +36,21 @@ export function Modal({ title, onClose, children, footer, wide, headerExtra }: M
     };
     window.addEventListener('keydown', onKey, true);
     // Focus the first focusable element for keyboard users.
-    const first = ref.current?.querySelector<HTMLElement>('input, select, textarea, button:not(.modal-close)');
+    const first = ref.current?.querySelector<HTMLElement>(
+      'input, select, textarea, button:not(.modal-close)',
+    );
     first?.focus();
     return () => window.removeEventListener('keydown', onKey, true);
   }, [onClose]);
   return createPortal(
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className={`modal${wide ? ' modal-wide' : ''}`} role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}>
+      <div
+        ref={ref}
+        className={`modal${wide ? ' modal-wide' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={typeof title === 'string' ? title : undefined}
+      >
         <div className="modal-header">
           <h2>{title}</h2>
           {headerExtra}

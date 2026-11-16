@@ -17,7 +17,11 @@ export function GeneralSection(): ReactNode {
       <Field group label="Theme">
         <div className="segmented" style={{ maxWidth: 360 }}>
           {(['dark', 'light', 'system'] as Settings['theme'][]).map((t) => (
-            <button key={t} className={settings.theme === t ? 'active' : ''} onClick={() => app.settings.update({ theme: t })}>
+            <button
+              key={t}
+              className={settings.theme === t ? 'active' : ''}
+              onClick={() => app.settings.update({ theme: t })}
+            >
               {t[0]!.toUpperCase() + t.slice(1)}
             </button>
           ))}

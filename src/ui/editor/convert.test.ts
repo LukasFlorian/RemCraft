@@ -10,15 +10,37 @@ describe('editor conversion', () => {
       { type: 'ref', remId: 'r1' },
       { type: 'latex', source: 'a^2' },
     ];
-    const rem = createRem({ text, back: [{ type: 'text', text: 'answer', marks: { highlight: 'red' } }], kind: 'concept', direction: 'both' });
+    const rem = createRem({
+      text,
+      back: [{ type: 'text', text: 'answer', marks: { highlight: 'red' } }],
+      kind: 'concept',
+      direction: 'both',
+    });
     const patch = docToPatch(remToDoc(rem));
-    expect(patch).toEqual({ text, back: rem.back, kind: 'concept', direction: 'both', answerMode: 'inline' });
+    expect(patch).toEqual({
+      text,
+      back: rem.back,
+      kind: 'concept',
+      direction: 'both',
+      answerMode: 'inline',
+    });
     expect(patchEquals(patch, rem)).toBe(true);
   });
 
   it('handles plain Rems and multi-line separators', () => {
-    expect(docToPatch(remToDoc(createRem({ text: [{ type: 'text', text: 'plain' }] })))).toMatchObject({ back: null, direction: 'none' });
-    const mc = createRem({ text: [{ type: 'text', text: 'Q' }], back: [], direction: 'forward', answerMode: 'mc' });
-    expect(docToPatch(remToDoc(mc))).toMatchObject({ back: [], direction: 'forward', answerMode: 'mc' });
+    expect(
+      docToPatch(remToDoc(createRem({ text: [{ type: 'text', text: 'plain' }] }))),
+    ).toMatchObject({ back: null, direction: 'none' });
+    const mc = createRem({
+      text: [{ type: 'text', text: 'Q' }],
+      back: [],
+      direction: 'forward',
+      answerMode: 'mc',
+    });
+    expect(docToPatch(remToDoc(mc))).toMatchObject({
+      back: [],
+      direction: 'forward',
+      answerMode: 'mc',
+    });
   });
 });

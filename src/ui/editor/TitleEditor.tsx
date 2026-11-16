@@ -26,7 +26,12 @@ export interface TitleEditorProps {
 }
 
 /** Editable page title. */
-export function TitleEditor({ remId, placeholder = 'Untitled', onExit, autoFocus }: TitleEditorProps): ReactNode {
+export function TitleEditor({
+  remId,
+  placeholder = 'Untitled',
+  onExit,
+  autoFocus,
+}: TitleEditorProps): ReactNode {
   const app = useApp();
   const controller = useController();
   const dialogs = useDialogs();
@@ -47,17 +52,26 @@ export function TitleEditor({ remId, placeholder = 'Untitled', onExit, autoFocus
         latex: latexNodeView((source) => dialogs.prompt({ title: 'Edit LaTeX', initial: source })),
         separator: separatorNodeView,
       },
-      attributes: { class: 'pm-editor title-editor', 'aria-label': 'Title', 'data-placeholder': placeholder },
+      attributes: {
+        class: 'pm-editor title-editor',
+        'aria-label': 'Title',
+        'data-placeholder': placeholder,
+      },
       dispatchTransaction(tr) {
         view.updateState(view.state.apply(tr));
         if (tr.docChanged) {
           const patch = docToPatch(view.state.doc);
           const current = app.store.get(remId);
-          if (current && !patchEquals(patch, current)) app.rems.update(remId, patch, `text:${remId}`);
+          if (current && !patchEquals(patch, current))
+            app.rems.update(remId, patch, `text:${remId}`);
         }
-        host.classList.toggle('is-empty', view.state.doc.textContent === '' && view.state.doc.firstChild?.childCount === 0);
+        host.classList.toggle(
+          'is-empty',
+          view.state.doc.textContent === '' && view.state.doc.firstChild?.childCount === 0,
+        );
       },
-      handleTextInput: (v, from, to, text) => handleTextInput(v, from, to, text, (change) => app.rems.update(remId, change)),
+      handleTextInput: (v, from, to, text) =>
+        handleTextInput(v, from, to, text, (change) => app.rems.update(remId, change)),
       handleKeyDown(v, e) {
         if (isMod(e) && (e.key === 'z' || e.key === 'Z')) {
           e.preventDefault();
@@ -81,7 +95,10 @@ export function TitleEditor({ remId, placeholder = 'Untitled', onExit, autoFocus
       },
     });
     viewRef.current = view;
-    host.classList.toggle('is-empty', view.state.doc.textContent === '' && view.state.doc.firstChild?.childCount === 0);
+    host.classList.toggle(
+      'is-empty',
+      view.state.doc.textContent === '' && view.state.doc.firstChild?.childCount === 0,
+    );
     if (autoFocus) {
       view.focus();
       view.dispatch(view.state.tr.setSelection(TextSelection.atEnd(view.state.doc)));
@@ -100,8 +117,13 @@ export function TitleEditor({ remId, placeholder = 'Untitled', onExit, autoFocus
     const doc = remToDoc(rem);
     const pos = Math.min(view.state.selection.from, doc.content.size - 1);
     view.updateState(EditorState.create({ doc }));
-    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, Math.max(1, pos))));
-    hostRef.current?.classList.toggle('is-empty', doc.textContent === '' && doc.firstChild?.childCount === 0);
+    view.dispatch(
+      view.state.tr.setSelection(TextSelection.create(view.state.doc, Math.max(1, pos))),
+    );
+    hostRef.current?.classList.toggle(
+      'is-empty',
+      doc.textContent === '' && doc.firstChild?.childCount === 0,
+    );
   }, [rem]);
 
   return <div ref={hostRef} className="title-host block-editor" />;

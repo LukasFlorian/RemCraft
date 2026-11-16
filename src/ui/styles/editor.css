@@ -73,7 +73,9 @@
   color: var(--text-faint);
   opacity: 0;
   transform: rotate(90deg);
-  transition: transform 0.12s var(--ease), opacity 0.12s;
+  transition:
+    transform 0.12s var(--ease),
+    opacity 0.12s;
 }
 
 .collapse-btn.is-collapsed {

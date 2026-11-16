@@ -6,7 +6,20 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ChevronDown, ChevronLeft, ChevronRight, FilePlus, FileText, Folder, FolderPlus, Layers, MoreHorizontal, Redo2, Star, Undo2 } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  FilePlus,
+  FileText,
+  Folder,
+  FolderPlus,
+  Layers,
+  MoreHorizontal,
+  Redo2,
+  Star,
+  Undo2,
+} from 'lucide-react';
 import type { RemId } from '@core/model/types';
 import { selectDueCounts, selectInheritance } from '@data/selectors';
 import { DAY, isoDate, parseIsoDate } from '@core/util/time';
@@ -49,7 +62,9 @@ export function DocumentPage(): ReactNode {
 function Breadcrumbs({ remId }: { remId: RemId }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
-  const path = useSelector((s) => s.memo(`path:${remId}`, [s.collectionVersion('rems')], () => app.rems.path(remId)));
+  const path = useSelector((s) =>
+    s.memo(`path:${remId}`, [s.collectionVersion('rems')], () => app.rems.path(remId)),
+  );
   const title = useRemTitle(remId);
   return (
     <nav className="breadcrumbs" aria-label="Breadcrumbs">
@@ -90,7 +105,8 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   /** Moves the caret from the title into the outline. */
   const enterBody = (): void => {
     const first = app.store.children(remId)[0];
-    const instance = [...document.querySelectorAll<HTMLElement>('.doc-body > .outliner')][0]?.dataset.instance;
+    const instance = [...document.querySelectorAll<HTMLElement>('.doc-body > .outliner')][0]
+      ?.dataset.instance;
     if (!instance) return;
     if (first) controller.focus(instance, first.id, 'start');
     else {
@@ -100,10 +116,22 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   };
 
   const practiceEntries = (): MenuEntry[] => [
-    { label: 'Practice with spaced repetition', onSelect: () => navigate(`/practice?scope=${remId}&mode=srs`) },
-    { label: 'Practice all flashcards', onSelect: () => navigate(`/practice?scope=${remId}&mode=all`) },
-    { label: 'Practice all in order', onSelect: () => navigate(`/practice?scope=${remId}&mode=all-in-order`) },
-    { label: 'Cram (no scheduling)', onSelect: () => navigate(`/practice?scope=${remId}&mode=cram`) },
+    {
+      label: 'Practice with spaced repetition',
+      onSelect: () => navigate(`/practice?scope=${remId}&mode=srs`),
+    },
+    {
+      label: 'Practice all flashcards',
+      onSelect: () => navigate(`/practice?scope=${remId}&mode=all`),
+    },
+    {
+      label: 'Practice all in order',
+      onSelect: () => navigate(`/practice?scope=${remId}&mode=all-in-order`),
+    },
+    {
+      label: 'Cram (no scheduling)',
+      onSelect: () => navigate(`/practice?scope=${remId}&mode=cram`),
+    },
   ];
 
   return (
@@ -113,33 +141,68 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
         <PriorityBadge priority={priority} />
         {due > 0 && (
           <div className="split-btn">
-            <button className="btn btn-sm" onClick={() => navigate(`/practice?scope=${remId}&mode=srs`)} title="Practice due cards">
+            <button
+              className="btn btn-sm"
+              onClick={() => navigate(`/practice?scope=${remId}&mode=srs`)}
+              title="Practice due cards"
+            >
               <Layers size={14} /> {due} Due
             </button>
-            <button className="btn btn-sm" aria-label="Practice options" onClick={(e) => setMenu({ anchor: e.currentTarget, entries: practiceEntries() })}>
+            <button
+              className="btn btn-sm"
+              aria-label="Practice options"
+              onClick={(e) => setMenu({ anchor: e.currentTarget, entries: practiceEntries() })}
+            >
               <ChevronDown size={14} />
             </button>
           </div>
         )}
-        <button className="icon-btn" title="Undo (⌘Z)" aria-label="Undo" onClick={() => app.store.undo()}>
+        <button
+          className="icon-btn"
+          title="Undo (⌘Z)"
+          aria-label="Undo"
+          onClick={() => app.store.undo()}
+        >
           <Undo2 size={17} />
         </button>
-        <button className="icon-btn" title="Redo (⌘⇧Z)" aria-label="Redo" onClick={() => app.store.redo()}>
+        <button
+          className="icon-btn"
+          title="Redo (⌘⇧Z)"
+          aria-label="Redo"
+          onClick={() => app.store.redo()}
+        >
           <Redo2 size={17} />
         </button>
-        <button className={`icon-btn${rem.pinned ? ' active' : ''}`} title={rem.pinned ? 'Unpin' : 'Pin to sidebar'} aria-label="Pin" onClick={() => app.rems.update(remId, { pinned: rem.pinned ? undefined : true })}>
+        <button
+          className={`icon-btn${rem.pinned ? ' active' : ''}`}
+          title={rem.pinned ? 'Unpin' : 'Pin to sidebar'}
+          aria-label="Pin"
+          onClick={() => app.rems.update(remId, { pinned: rem.pinned ? undefined : true })}
+        >
           <Star size={17} fill={rem.pinned ? 'currentColor' : 'none'} />
         </button>
-        <button className="icon-btn" aria-label="More" onClick={(e) => setMenu({ anchor: e.currentTarget, entries: remMenu(remId) })}>
+        <button
+          className="icon-btn"
+          aria-label="More"
+          onClick={(e) => setMenu({ anchor: e.currentTarget, entries: remMenu(remId) })}
+        >
           <MoreHorizontal size={18} />
         </button>
       </div>
-      <div className="main-scroll" onMouseDown={(e) => e.target === e.currentTarget && controller.clearSelection()}>
+      <div
+        className="main-scroll"
+        onMouseDown={(e) => e.target === e.currentTarget && controller.clearSelection()}
+      >
         <div className="page doc-page">
           {rem.dailyDate && <DailyNav date={rem.dailyDate} />}
           <div className={`doc-title-row${rem.isFolder ? ' is-folder' : ''}`}>
             {rem.isFolder && <Folder size={26} className="icon-folder" />}
-            <TitleEditor remId={remId} onExit={enterBody} autoFocus={isNew} placeholder={rem.isFolder ? 'Folder name' : 'Untitled'} />
+            <TitleEditor
+              remId={remId}
+              onExit={enterBody}
+              autoFocus={isNew}
+              placeholder={rem.isFolder ? 'Folder name' : 'Untitled'}
+            />
           </div>
           {rem.back !== null && rem.direction !== 'none' && (
             <div className="doc-card-back">
@@ -147,11 +210,20 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
             </div>
           )}
           {rem.file && <FileView rem={rem} />}
-          <div className="doc-body">{rem.isFolder ? <FolderContents folderId={remId} /> : <Outliner rootId={remId} />}</div>
+          <div className="doc-body">
+            {rem.isFolder ? <FolderContents folderId={remId} /> : <Outliner rootId={remId} />}
+          </div>
           <ReferencesPanel remId={remId} />
         </div>
       </div>
-      {menu && <Menu anchor={menu.anchor} entries={menu.entries} onClose={() => setMenu(null)} align="end" />}
+      {menu && (
+        <Menu
+          anchor={menu.anchor}
+          entries={menu.entries}
+          onClose={() => setMenu(null)}
+          align="end"
+        />
+      )}
     </>
   );
 }
@@ -160,7 +232,10 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
 function DailyNav({ date }: { date: string }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
-  const go = (delta: number): void => void navigate(`/rem/${app.rems.ensureDaily(isoDate(parseIsoDate(date) + delta * DAY + 12 * 3600_000))}`);
+  const go = (delta: number): void =>
+    void navigate(
+      `/rem/${app.rems.ensureDaily(isoDate(parseIsoDate(date) + delta * DAY + 12 * 3600_000))}`,
+    );
   return (
     <div className="row" style={{ marginBottom: 8 }}>
       <button className="btn btn-sm" onClick={() => go(-1)}>
@@ -233,13 +308,18 @@ function FolderItem({ remId }: { remId: RemId }): ReactNode {
 
 /** Rems referencing or tagging this Rem. */
 function ReferencesPanel({ remId }: { remId: RemId }): ReactNode {
-  const ids = useSelector((s) => s.memo(`backlinks:${remId}`, [s.collectionVersion('rems')], () => s.backlinks(remId).filter((id) => id !== remId)));
+  const ids = useSelector((s) =>
+    s.memo(`backlinks:${remId}`, [s.collectionVersion('rems')], () =>
+      s.backlinks(remId).filter((id) => id !== remId),
+    ),
+  );
   const [open, setOpen] = useState(true);
   if (ids.length === 0) return null;
   return (
     <section className="references">
       <button className="references-header" onClick={() => setOpen(!open)}>
-        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />} {ids.length} Reference{ids.length > 1 ? 's' : ''}
+        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />} {ids.length} Reference
+        {ids.length > 1 ? 's' : ''}
       </button>
       {open && ids.map((id) => <ReferenceItem key={id} remId={id} />)}
     </section>
@@ -259,7 +339,11 @@ function ReferenceItem({ remId }: { remId: RemId }): ReactNode {
   const target = [...app.rems.path(remId)].reverse().find((r) => r.isDocument)?.id ?? remId;
   return (
     <div className="reference-item" onClick={() => navigate(`/rem/${target}`)}>
-      {docTitle && <div className="faint" style={{ fontSize: 12 }}>{docTitle}</div>}
+      {docTitle && (
+        <div className="faint" style={{ fontSize: 12 }}>
+          {docTitle}
+        </div>
+      )}
       <RemContent rem={rem} />
     </div>
   );

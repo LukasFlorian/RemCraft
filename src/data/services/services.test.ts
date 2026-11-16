@@ -10,7 +10,8 @@ async function makeApp(): Promise<RemCraftApp> {
   return RemCraftApp.create({ persistence: new MemoryAdapter(), backend: null, seed: false });
 }
 
-const titles = (app: RemCraftApp, parentId: string | null): string[] => app.store.children(parentId).map((r) => toPlainText(r.text));
+const titles = (app: RemCraftApp, parentId: string | null): string[] =>
+  app.store.children(parentId).map((r) => toPlainText(r.text));
 
 describe('RemService', () => {
   it('creates documents, folders and Rems in order', async () => {
@@ -28,7 +29,9 @@ describe('RemService', () => {
   it('indents, outdents and moves', async () => {
     const app = await makeApp();
     const doc = app.rems.createDocument(null, 'D');
-    const [a, b, c] = ['a', 'b', 'c'].map((t) => app.rems.create({ parentId: doc.id }, { text: rt(t) }));
+    const [a, b, c] = ['a', 'b', 'c'].map((t) =>
+      app.rems.create({ parentId: doc.id }, { text: rt(t) }),
+    );
     expect(app.rems.indent([b!.id, c!.id])).toBe(true);
     expect(titles(app, a!.id)).toEqual(['b', 'c']);
     expect(app.rems.outdent([b!.id], doc.id)).toBe(true);
@@ -63,7 +66,10 @@ describe('RemService', () => {
   it('deletes subtrees with their card states, undoably', async () => {
     const app = await makeApp();
     const doc = app.rems.createDocument(null, 'D');
-    const q = app.rems.create({ parentId: doc.id }, { text: rt('Q'), back: rt('A'), direction: 'forward' });
+    const q = app.rems.create(
+      { parentId: doc.id },
+      { text: rt('Q'), back: rt('A'), direction: 'forward' },
+    );
     app.practice.answer(`${q.id}/f`, 3, { now: Date.now(), durationMs: 1000, mode: 'srs' });
     expect(app.store.getRecord('cards', `${q.id}/f`)).toBeDefined();
     app.rems.delete([doc.id]);
@@ -104,7 +110,10 @@ describe('PracticeService', () => {
   it('answers, previews and undoes', async () => {
     const app = await makeApp();
     const doc = app.rems.createDocument(null, 'D');
-    const q = app.rems.create({ parentId: doc.id }, { text: rt('Q'), back: rt('A'), direction: 'forward' });
+    const q = app.rems.create(
+      { parentId: doc.id },
+      { text: rt('Q'), back: rt('A'), direction: 'forward' },
+    );
     const cardId = `${q.id}/f`;
     const now = Date.now();
     expect(selectGlobalQueue(app.store, now).map((c) => c.cardId)).toEqual([cardId]);
@@ -122,9 +131,14 @@ describe('PracticeService', () => {
   it('does not store cram reviews and supports disable/reset', async () => {
     const app = await makeApp();
     const doc = app.rems.createDocument(null, 'D');
-    const q = app.rems.create({ parentId: doc.id }, { text: rt('Q'), back: rt('A'), direction: 'forward' });
+    const q = app.rems.create(
+      { parentId: doc.id },
+      { text: rt('Q'), back: rt('A'), direction: 'forward' },
+    );
     const cardId = `${q.id}/f`;
-    expect(app.practice.answer(cardId, 3, { now: Date.now(), durationMs: 1, mode: 'cram' })!.log).toBeNull();
+    expect(
+      app.practice.answer(cardId, 3, { now: Date.now(), durationMs: 1, mode: 'cram' })!.log,
+    ).toBeNull();
     expect(app.store.count('logs')).toBe(0);
     app.practice.setDisabled([cardId], true);
     expect(selectGlobalQueue(app.store, Date.now())).toEqual([]);
@@ -136,25 +150,41 @@ describe('PracticeService', () => {
     const app = await makeApp();
     const folder = app.rems.createFolder(null, 'F');
     const doc = app.rems.createDocument(folder.id, 'D');
-    app.rems.create({ parentId: doc.id }, { text: [{ type: 'text', text: 'x', marks: { cloze: 'c1' } }] });
+    app.rems.create(
+      { parentId: doc.id },
+      { text: [{ type: 'text', text: 'x', marks: { cloze: 'c1' } }] },
+    );
     app.rems.create({ parentId: doc.id }, { text: rt('Q'), back: rt('A'), direction: 'both' });
     const now = Date.now();
     expect(selectCardIndex(app.store).specs).toHaveLength(3);
-    expect(app.practice.buildQueue({ kind: 'rem', remId: doc.id, mode: 'all-in-order' }, now)).toHaveLength(3);
+    expect(
+      app.practice.buildQueue({ kind: 'rem', remId: doc.id, mode: 'all-in-order' }, now),
+    ).toHaveLength(3);
     expect(selectDueCounts(app.store, now).get(folder.id)).toBe(3);
     app.rems.update(folder.id, { priority: 'paused' });
     expect(app.practice.buildQueue({ kind: 'global' }, now)).toEqual([]);
-    expect(app.practice.buildQueue({ kind: 'rem', remId: doc.id, mode: 'srs' }, now)).toHaveLength(3);
+    expect(app.practice.buildQueue({ kind: 'rem', remId: doc.id, mode: 'srs' }, now)).toHaveLength(
+      3,
+    );
   });
 
   it('applies exam planning to the global queue', async () => {
     const app = await makeApp();
     const doc = app.rems.createDocument(null, 'Exam doc');
-    for (let i = 0; i < 30; i++) app.rems.create({ parentId: doc.id }, { text: rt(`Q${i}`), back: rt('A'), direction: 'forward' });
+    for (let i = 0; i < 30; i++)
+      app.rems.create(
+        { parentId: doc.id },
+        { text: rt(`Q${i}`), back: rt('A'), direction: 'forward' },
+      );
     app.settings.update({ newCardsPerDay: 0 });
     const now = Date.now();
     expect(selectGlobalQueue(app.store, now)).toEqual([]);
-    const exam = app.exams.create({ name: 'Exam', date: now + 11 * DAY, scope: [doc.id], finalReviewDays: 1 });
+    const exam = app.exams.create({
+      name: 'Exam',
+      date: now + 11 * DAY,
+      scope: [doc.id],
+      finalReviewDays: 1,
+    });
     const plan = selectExamPlans(app.store, now)[0]!;
     expect(plan.totalCards).toBe(30);
     expect(plan.todayNewQuota).toBeGreaterThan(0);
@@ -172,7 +202,11 @@ describe('PracticeService', () => {
 describe('ImportExportService', () => {
   it('imports markdown as a document, pastes and exports', async () => {
     const app = await makeApp();
-    const { docId, count } = app.io.importAsDocument('Deck', '- Q1 >> A1\n- Q2 :: A2\n    - attr ;; v\n- see [[Other]]', 'markdown');
+    const { docId, count } = app.io.importAsDocument(
+      'Deck',
+      '- Q1 >> A1\n- Q2 :: A2\n    - attr ;; v\n- see [[Other]]',
+      'markdown',
+    );
     expect(count).toBe(4);
     expect(titles(app, docId)).toEqual(['Q1', 'Q2', 'see ']);
     expect(app.rems.findByName('Other')).toBeDefined();
@@ -187,7 +221,13 @@ describe('ImportExportService', () => {
 
   it('imports CSV and restores backups', async () => {
     const app = await makeApp();
-    const { docId } = app.io.importAsDocument('Quizlet', 'front\tback\nHund\tdog\nKatze\tcat', 'csv', null, { hasHeader: true });
+    const { docId } = app.io.importAsDocument(
+      'Quizlet',
+      'front\tback\nHund\tdog\nKatze\tcat',
+      'csv',
+      null,
+      { hasHeader: true },
+    );
     expect(titles(app, docId)).toEqual(['Hund', 'Katze']);
     const backup = JSON.stringify(app.io.exportBackup());
     const other = await makeApp();

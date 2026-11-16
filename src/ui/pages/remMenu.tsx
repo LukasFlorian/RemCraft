@@ -53,42 +53,76 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
     if (!rem) return [];
     const title = app.rems.title(remId) || 'Untitled';
     const entries: MenuEntry[] = [];
-    if (options.includeOpen) entries.push({ label: 'Open', icon: <FileText size={15} />, onSelect: () => navigate(`/rem/${remId}`) });
+    if (options.includeOpen)
+      entries.push({
+        label: 'Open',
+        icon: <FileText size={15} />,
+        onSelect: () => navigate(`/rem/${remId}`),
+      });
     entries.push(
       { heading: 'Practice' },
-      { label: 'Practice with spaced repetition', icon: <Play size={15} />, onSelect: () => navigate(`/practice?scope=${remId}&mode=srs`) },
-      { label: 'Practice all flashcards', icon: <Shuffle size={15} />, onSelect: () => navigate(`/practice?scope=${remId}&mode=all`) },
-      { label: 'Practice all in order', icon: <ListOrdered size={15} />, onSelect: () => navigate(`/practice?scope=${remId}&mode=all-in-order`) },
-      { label: 'Cram (does not affect scheduling)', icon: <Zap size={15} />, onSelect: () => navigate(`/practice?scope=${remId}&mode=cram`) },
-      { label: 'Create exam for this…', icon: <GraduationCap size={15} />, onSelect: () => modals.open({ kind: 'exam', scope: [remId] }) },
+      {
+        label: 'Practice with spaced repetition',
+        icon: <Play size={15} />,
+        onSelect: () => navigate(`/practice?scope=${remId}&mode=srs`),
+      },
+      {
+        label: 'Practice all flashcards',
+        icon: <Shuffle size={15} />,
+        onSelect: () => navigate(`/practice?scope=${remId}&mode=all`),
+      },
+      {
+        label: 'Practice all in order',
+        icon: <ListOrdered size={15} />,
+        onSelect: () => navigate(`/practice?scope=${remId}&mode=all-in-order`),
+      },
+      {
+        label: 'Cram (does not affect scheduling)',
+        icon: <Zap size={15} />,
+        onSelect: () => navigate(`/practice?scope=${remId}&mode=cram`),
+      },
+      {
+        label: 'Create exam for this…',
+        icon: <GraduationCap size={15} />,
+        onSelect: () => modals.open({ kind: 'exam', scope: [remId] }),
+      },
       { heading: 'Priority' },
-      ...(Object.keys(PRIORITY_LABELS) as Priority[]).map(
-        (p): MenuEntry => ({
-          label: `${(rem.priority ?? 'none') === p ? '✓ ' : ''}${PRIORITY_LABELS[p]}`,
-          icon: p === 'paused' ? <Pause size={15} /> : <Layers size={15} />,
-          onSelect: () => app.rems.update(remId, { priority: p === 'none' ? undefined : p }),
-        }),
-      ),
+      ...(Object.keys(PRIORITY_LABELS) as Priority[]).map((p): MenuEntry => ({
+        label: `${(rem.priority ?? 'none') === p ? '✓ ' : ''}${PRIORITY_LABELS[p]}`,
+        icon: p === 'paused' ? <Pause size={15} /> : <Layers size={15} />,
+        onSelect: () => app.rems.update(remId, { priority: p === 'none' ? undefined : p }),
+      })),
       { heading: 'Scheduler' },
-      ...selectSchedulers(app.store).map(
-        (s): MenuEntry => ({
-          label: `${rem.schedulerId === s.id ? '✓ ' : ''}${s.name}`,
-          icon: <Wrench size={15} />,
-          onSelect: () => app.rems.update(remId, { schedulerId: rem.schedulerId === s.id ? undefined : s.id }),
-        }),
-      ),
+      ...selectSchedulers(app.store).map((s): MenuEntry => ({
+        label: `${rem.schedulerId === s.id ? '✓ ' : ''}${s.name}`,
+        icon: <Wrench size={15} />,
+        onSelect: () =>
+          app.rems.update(remId, { schedulerId: rem.schedulerId === s.id ? undefined : s.id }),
+      })),
       { separator: true },
       {
         label: rem.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
         icon: rem.pinned ? <PinOff size={15} /> : <Pin size={15} />,
         onSelect: () => app.rems.update(remId, { pinned: rem.pinned ? undefined : true }),
       },
-      { label: rem.editLater ? 'Remove from Edit Later' : 'Edit later', icon: <Clock3 size={15} />, onSelect: () => app.rems.update(remId, { editLater: rem.editLater ? undefined : true }) },
-      { label: 'Move to…', icon: <ArrowRightLeft size={15} />, onSelect: () => modals.open({ kind: 'move', remIds: [remId] }) },
+      {
+        label: rem.editLater ? 'Remove from Edit Later' : 'Edit later',
+        icon: <Clock3 size={15} />,
+        onSelect: () => app.rems.update(remId, { editLater: rem.editLater ? undefined : true }),
+      },
+      {
+        label: 'Move to…',
+        icon: <ArrowRightLeft size={15} />,
+        onSelect: () => modals.open({ kind: 'move', remIds: [remId] }),
+      },
       {
         label: rem.isFolder ? 'Convert to document' : 'Convert to folder',
         icon: rem.isFolder ? <FileText size={15} /> : <Folder size={15} />,
-        onSelect: () => app.rems.update(remId, { isFolder: rem.isFolder ? undefined : true, isDocument: true } as never),
+        onSelect: () =>
+          app.rems.update(remId, {
+            isFolder: rem.isFolder ? undefined : true,
+            isDocument: true,
+          } as never),
       },
       {
         label: 'Duplicate',
@@ -101,7 +135,12 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
       {
         label: 'Export as Markdown',
         icon: <Download size={15} />,
-        onSelect: () => downloadText(`${title.replace(/[\\/:*?"<>|]+/g, '_')}.md`, app.io.exportMarkdown([remId], false), 'text/markdown'),
+        onSelect: () =>
+          downloadText(
+            `${title.replace(/[\\/:*?"<>|]+/g, '_')}.md`,
+            app.io.exportMarkdown([remId], false),
+            'text/markdown',
+          ),
       },
       { separator: true },
       {
@@ -109,7 +148,12 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
         icon: <Trash2 size={15} />,
         danger: true,
         onSelect: async () => {
-          const ok = await dialogs.confirm({ title: `Delete “${title}”?`, message: 'The Rem and everything inside it will be deleted. You can undo with ⌘Z.', confirmLabel: 'Delete', danger: true });
+          const ok = await dialogs.confirm({
+            title: `Delete “${title}”?`,
+            message: 'The Rem and everything inside it will be deleted. You can undo with ⌘Z.',
+            confirmLabel: 'Delete',
+            danger: true,
+          });
           if (!ok) return;
           const parent = rem.parentId;
           app.rems.delete([remId]);
@@ -125,6 +169,17 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
 /** Badge for a priority. */
 export function PriorityBadge({ priority }: { priority: Priority | 'exam' }): ReactNode {
   if (priority === 'none') return null;
-  const cls = priority === 'exam' ? 'badge-danger' : priority === 'active' ? 'badge-success' : priority === 'paused' ? '' : 'badge-accent';
-  return <span className={`badge ${cls}`}>{priority === 'exam' ? 'Exam' : PRIORITY_LABELS[priority]}</span>;
+  const cls =
+    priority === 'exam'
+      ? 'badge-danger'
+      : priority === 'active'
+        ? 'badge-success'
+        : priority === 'paused'
+          ? ''
+          : 'badge-accent';
+  return (
+    <span className={`badge ${cls}`}>
+      {priority === 'exam' ? 'Exam' : PRIORITY_LABELS[priority]}
+    </span>
+  );
 }

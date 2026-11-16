@@ -34,7 +34,11 @@ export function isExamActive(exam: Exam, now: Timestamp): boolean {
  * @param exams All exams (inactive ones are ignored).
  * @param now Current time (decides which exams are active).
  */
-export function resolveInheritance(graph: RemGraph, exams: readonly Exam[], now: Timestamp): Map<RemId, InheritedInfo> {
+export function resolveInheritance(
+  graph: RemGraph,
+  exams: readonly Exam[],
+  now: Timestamp,
+): Map<RemId, InheritedInfo> {
   // Index active exam scopes: rem id -> exam ids rooted there.
   const scopeRoots = new Map<RemId, string[]>();
   for (const exam of exams) {
@@ -43,10 +47,20 @@ export function resolveInheritance(graph: RemGraph, exams: readonly Exam[], now:
   }
 
   const result = new Map<RemId, InheritedInfo>();
-  type Frame = { id: RemId; priority: Priority; schedulerId: string | undefined; examIds: readonly string[] };
+  type Frame = {
+    id: RemId;
+    priority: Priority;
+    schedulerId: string | undefined;
+    examIds: readonly string[];
+  };
   const stack: Frame[] = graph
     .children(null)
-    .map((r) => ({ id: r.id, priority: 'none' as Priority, schedulerId: undefined, examIds: [] as readonly string[] }));
+    .map((r) => ({
+      id: r.id,
+      priority: 'none' as Priority,
+      schedulerId: undefined,
+      examIds: [] as readonly string[],
+    }));
   // Reverse so that traversal happens in document order (not required, but deterministic).
   stack.reverse();
 
@@ -58,8 +72,11 @@ export function resolveInheritance(graph: RemGraph, exams: readonly Exam[], now:
     const priority = rem.priority ?? frame.priority;
     const schedulerId = rem.schedulerId ?? frame.schedulerId;
     const roots = scopeRoots.get(rem.id);
-    const examIds = roots ? [...frame.examIds, ...roots.filter((e) => !frame.examIds.includes(e))] : frame.examIds;
-    const effective: EffectivePriority = priority === 'paused' ? 'paused' : examIds.length > 0 ? 'exam' : priority;
+    const examIds = roots
+      ? [...frame.examIds, ...roots.filter((e) => !frame.examIds.includes(e))]
+      : frame.examIds;
+    const effective: EffectivePriority =
+      priority === 'paused' ? 'paused' : examIds.length > 0 ? 'exam' : priority;
     result.set(rem.id, { priority: effective, explicitPriority: priority, schedulerId, examIds });
     const children = graph.children(rem.id);
     for (let i = children.length - 1; i >= 0; i--) {

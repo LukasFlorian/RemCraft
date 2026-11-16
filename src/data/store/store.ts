@@ -61,7 +61,14 @@ interface UndoEntry {
 const EMPTY_CHILDREN: readonly Rem[] = Object.freeze([]);
 
 /** All collection names. */
-const COLLECTION_NAMES: readonly CollectionName[] = ['rems', 'cards', 'logs', 'exams', 'schedulers', 'settings'];
+const COLLECTION_NAMES: readonly CollectionName[] = [
+  'rems',
+  'cards',
+  'logs',
+  'exams',
+  'schedulers',
+  'settings',
+];
 
 /** Key of a record inside a transaction. */
 const keyOf = (c: CollectionName, id: string): string => `${c}\u0000${id}`;
@@ -100,12 +107,17 @@ export class Transaction {
    *
    * @returns The updated record, or `undefined` when it does not exist.
    */
-  update<K extends CollectionName>(collection: K, id: string, patch: Partial<RecordOf<K>>): RecordOf<K> | undefined {
+  update<K extends CollectionName>(
+    collection: K,
+    id: string,
+    patch: Partial<RecordOf<K>>,
+  ): RecordOf<K> | undefined {
     const current = this.get(collection, id);
     if (!current) return undefined;
     const next = { ...current, ...patch } as RecordOf<K>;
     // Remove keys explicitly set to undefined so records stay compact.
-    for (const [k, v] of Object.entries(patch)) if (v === undefined) delete (next as unknown as Record<string, unknown>)[k];
+    for (const [k, v] of Object.entries(patch))
+      if (v === undefined) delete (next as unknown as Record<string, unknown>)[k];
     return this.put(collection, next);
   }
 
@@ -131,7 +143,14 @@ export class Store implements RemGraph {
     settings: new Map(),
   };
   /** Per-collection change counters (for memoisation). */
-  private readonly versions: Record<CollectionName, number> = { rems: 0, cards: 0, logs: 0, exams: 0, schedulers: 0, settings: 0 };
+  private readonly versions: Record<CollectionName, number> = {
+    rems: 0,
+    cards: 0,
+    logs: 0,
+    exams: 0,
+    schedulers: 0,
+    settings: 0,
+  };
   /** Global change counter (the React snapshot). */
   private globalVersion = 0;
 
@@ -222,7 +241,8 @@ export class Store implements RemGraph {
    */
   memo<T>(key: string, deps: readonly unknown[], compute: () => T): T {
     const hit = this.memoCache.get(key);
-    if (hit && hit.deps.length === deps.length && hit.deps.every((d, i) => Object.is(d, deps[i]))) return hit.value as T;
+    if (hit && hit.deps.length === deps.length && hit.deps.every((d, i) => Object.is(d, deps[i])))
+      return hit.value as T;
     const value = compute();
     // Bound the cache (keys such as search queries are open-ended).
     if (this.memoCache.size > 1000) this.memoCache.clear();
@@ -243,11 +263,14 @@ export class Store implements RemGraph {
   transact<T>(fn: (tx: Transaction) => T, options: TransactOptions = {}): T {
     const pending = new Map<string, Change>();
     const result = fn(new Transaction(this, pending, options));
-    const changes = [...pending.values()].filter((c) => c.before !== undefined || c.after !== undefined);
+    const changes = [...pending.values()].filter(
+      (c) => c.before !== undefined || c.after !== undefined,
+    );
     if (changes.length === 0) return result;
     const origin = options.origin ?? 'local';
     this.applyChanges(changes);
-    if (origin === 'local' && options.undoable !== false) this.recordUndo(changes, options.coalesceKey);
+    if (origin === 'local' && options.undoable !== false)
+      this.recordUndo(changes, options.coalesceKey);
     this.emit({ changes, origin });
     return result;
   }
@@ -260,7 +283,12 @@ export class Store implements RemGraph {
     const changes: Change[] = [];
     for (const name of COLLECTION_NAMES) {
       for (const record of (records[name] ?? []) as RecordOf<CollectionName>[]) {
-        changes.push({ collection: name, id: record.id, before: this.getRecord(name, record.id), after: record } as Change);
+        changes.push({
+          collection: name,
+          id: record.id,
+          before: this.getRecord(name, record.id),
+          after: record,
+        } as Change);
         this.clock.observe(record.updatedAt);
       }
     }
@@ -278,7 +306,12 @@ export class Store implements RemGraph {
    * @returns The changes that were applied.
    */
   applyExternal(
-    items: readonly { collection: CollectionName; id: string; record: RecordOf<CollectionName> | undefined; updatedAt: number }[],
+    items: readonly {
+      collection: CollectionName;
+      id: string;
+      record: RecordOf<CollectionName> | undefined;
+      updatedAt: number;
+    }[],
     origin: 'remote' | 'tab',
   ): Change[] {
     return this.transact(
@@ -301,7 +334,13 @@ export class Store implements RemGraph {
   clear(): void {
     const changes: Change[] = [];
     for (const name of COLLECTION_NAMES) {
-      for (const record of this.data[name].values()) changes.push({ collection: name, id: record.id, before: record, after: undefined } as Change);
+      for (const record of this.data[name].values())
+        changes.push({
+          collection: name,
+          id: record.id,
+          before: record,
+          after: undefined,
+        } as Change);
     }
     this.undoStack = [];
     this.redoStack = [];
@@ -417,7 +456,8 @@ export class Store implements RemGraph {
       if (change.after) map.set(change.id, change.after);
       else map.delete(change.id);
       this.versions[change.collection]++;
-      if (change.collection === 'rems') this.indexRem(current as Rem | undefined, change.after as Rem | undefined);
+      if (change.collection === 'rems')
+        this.indexRem(current as Rem | undefined, change.after as Rem | undefined);
       if (change.collection === 'cards') this.indexCard(change.id, change.after !== undefined);
     }
   }
@@ -459,7 +499,12 @@ export class Store implements RemGraph {
   }
 
   private linksOf(rem: Rem): RemId[] {
-    return [...referencedRemIds(rem.text), ...referencedRemIds(rem.back), ...rem.tags, ...(rem.portalOf ? [rem.portalOf] : [])];
+    return [
+      ...referencedRemIds(rem.text),
+      ...referencedRemIds(rem.back),
+      ...rem.tags,
+      ...(rem.portalOf ? [rem.portalOf] : []),
+    ];
   }
 
   private indexCard(cardId: CardId, exists: boolean): void {

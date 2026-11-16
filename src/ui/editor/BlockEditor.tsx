@@ -22,7 +22,14 @@ import { useApp, useRem } from '../app/context';
 import { isMod } from '../hooks/useHotkeys';
 import { renderLatex } from '../richtext/Latex';
 import { useDialogs } from '../components/Confirm';
-import { backspaceAtStart, deleteRems, indent, outdent, splitRem, toggleCollapsed } from './actions';
+import {
+  backspaceAtStart,
+  deleteRems,
+  indent,
+  outdent,
+  splitRem,
+  toggleCollapsed,
+} from './actions';
 import type { EditorEnv } from './actions';
 import type { CaretRequest } from './controller';
 import { useController } from './controller';
@@ -46,7 +53,8 @@ export function applyCaret(view: EditorView, caret: CaretRequest): void {
   let sel: TextSelection;
   if (caret === 'start') sel = TextSelection.atStart(doc) as TextSelection;
   else if (caret === 'end') sel = TextSelection.atEnd(doc) as TextSelection;
-  else if (typeof caret === 'number') sel = TextSelection.create(doc, Math.min(Math.max(1, caret + 1), doc.content.size - 1));
+  else if (typeof caret === 'number')
+    sel = TextSelection.create(doc, Math.min(Math.max(1, caret + 1), doc.content.size - 1));
   else {
     const rect = view.dom.getBoundingClientRect();
     const top = 'y' in caret ? caret.y : caret.edge === 'top' ? rect.top + 8 : rect.bottom - 8;
@@ -71,7 +79,9 @@ export function refNodeView(app: RemCraftApp, navigate: (id: RemId) => void) {
     const id = node.attrs.remId as string;
     const render = (): void => {
       const rem = app.store.get(id);
-      dom.textContent = rem ? toPlainText(rem.text, (r) => toPlainText(app.store.get(r)?.text ?? [])) || 'Untitled' : 'deleted reference';
+      dom.textContent = rem
+        ? toPlainText(rem.text, (r) => toPlainText(app.store.get(r)?.text ?? [])) || 'Untitled'
+        : 'deleted reference';
       dom.classList.toggle('ref-missing', !rem);
     };
     render();
@@ -113,13 +123,28 @@ export function separatorNodeView(node: PMNode): NodeView {
   const spec = DELIMITERS.find((d) => d.token === node.attrs.token);
   dom.className = `separator separator-${spec?.kind ?? 'plain'} separator-${spec?.answerMode ?? 'inline'}`;
   dom.contentEditable = 'false';
-  dom.textContent = spec ? separatorGlyph(spec.kind, spec.direction) + (spec.answerMode === 'inline' ? '' : spec.answerMode === 'mc' ? ' A)' : spec.answerMode === 'list' ? ' 1.' : ' ⋯') : '→';
+  dom.textContent = spec
+    ? separatorGlyph(spec.kind, spec.direction) +
+      (spec.answerMode === 'inline'
+        ? ''
+        : spec.answerMode === 'mc'
+          ? ' A)'
+          : spec.answerMode === 'list'
+            ? ' 1.'
+            : ' ⋯')
+    : '→';
   dom.title = `${spec?.label ?? 'Flashcard'} (${node.attrs.token as string}) - Backspace turns it back into text`;
   return { dom, ignoreMutation: () => true };
 }
 
 /** The ProseMirror editor of one Rem. */
-export function BlockEditor({ remId, instance, caret, nonce, placeholder }: BlockEditorProps): ReactNode {
+export function BlockEditor({
+  remId,
+  instance,
+  caret,
+  nonce,
+  placeholder,
+}: BlockEditorProps): ReactNode {
   const app = useApp();
   const controller = useController();
   const dialogs = useDialogs();
@@ -138,11 +163,16 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
     const navigate = (id: RemId): void => {
       window.location.hash = `#/rem/${id}`;
     };
-    const editLatex = (source: string): Promise<string | null> => dialogs.prompt({ title: 'Edit LaTeX', initial: source, confirmLabel: 'Save' });
+    const editLatex = (source: string): Promise<string | null> =>
+      dialogs.prompt({ title: 'Edit LaTeX', initial: source, confirmLabel: 'Save' });
 
     const view: EditorView = new EditorView(host, {
       state: EditorState.create({ doc: remToDoc(initial) }),
-      nodeViews: { ref: refNodeView(app, navigate), latex: latexNodeView(editLatex), separator: separatorNodeView },
+      nodeViews: {
+        ref: refNodeView(app, navigate),
+        latex: latexNodeView(editLatex),
+        separator: separatorNodeView,
+      },
       attributes: { class: 'pm-editor', spellcheck: 'true', 'data-placeholder': placeholder ?? '' },
       dispatchTransaction(tr: Transaction) {
         const next = view.state.apply(tr);
@@ -150,10 +180,14 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
         if (tr.docChanged) {
           const patch = docToPatch(next.doc);
           const current = app.store.get(remId);
-          if (current && !patchEquals(patch, current)) app.rems.update(remId, patch, `text:${remId}`);
+          if (current && !patchEquals(patch, current))
+            app.rems.update(remId, patch, `text:${remId}`);
         }
         updatePopup(view);
-        host.classList.toggle('is-empty', next.doc.textContent === '' && next.doc.firstChild?.childCount === 0);
+        host.classList.toggle(
+          'is-empty',
+          next.doc.textContent === '' && next.doc.firstChild?.childCount === 0,
+        );
       },
       handleTextInput(v, from, to, text) {
         return handleTextInput(v, from, to, text, (change) => app.rems.update(remId, change));
@@ -168,7 +202,8 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
         blur() {
           // Close popups when focus leaves the editor (but not when clicking into a popup).
           setTimeout(() => {
-            if (!document.activeElement?.closest('.menu, .slash-menu, .autocomplete')) controller.setPopup(null);
+            if (!document.activeElement?.closest('.menu, .slash-menu, .autocomplete'))
+              controller.setPopup(null);
           }, 150);
           return false;
         },
@@ -176,7 +211,10 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
     });
     viewRef.current = view;
     controller.activeView = { view, remId, instance };
-    host.classList.toggle('is-empty', view.state.doc.textContent === '' && view.state.doc.firstChild?.childCount === 0);
+    host.classList.toggle(
+      'is-empty',
+      view.state.doc.textContent === '' && view.state.doc.firstChild?.childCount === 0,
+    );
 
     /** Opens/updates/closes the caret popup. */
     function updatePopup(v: EditorView): void {
@@ -186,14 +224,28 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
         return;
       }
       const coords = v.coordsAtPos(trigger.from);
-      controller.setPopup({ ...trigger, left: coords.left, top: coords.top, bottom: coords.bottom, remId, instance });
+      controller.setPopup({
+        ...trigger,
+        left: coords.left,
+        top: coords.top,
+        bottom: coords.bottom,
+        remId,
+        instance,
+      });
     }
 
     /** Keyboard handling. */
     function onKeyDown(v: EditorView, e: KeyboardEvent): boolean {
       const e2 = envRef.current;
       const popup = controller.getState().popup;
-      if (popup && popup.remId === remId && controller.popupKeys && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab', 'Escape'].includes(e.key)) {
+      if (
+        popup &&
+        popup.remId === remId &&
+        controller.popupKeys &&
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab', 'Escape'].includes(
+          e.key,
+        )
+      ) {
         if (controller.popupKeys(e.key)) {
           e.preventDefault();
           return true;
@@ -237,7 +289,9 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
           const nodeBefore = sel.empty ? sel.$from.nodeBefore : null;
           if (nodeBefore?.type === schema.nodes.separator) {
             const pos = sel.from - 1;
-            v.dispatch(state.tr.replaceWith(pos, sel.from, schema.text(nodeBefore!.attrs.token as string)));
+            v.dispatch(
+              state.tr.replaceWith(pos, sel.from, schema.text(nodeBefore!.attrs.token as string)),
+            );
             return true;
           }
           if (atStart) return backspaceAtStart(e2, remId);
@@ -261,7 +315,8 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
           if (mod && e.shiftKey) {
             e.preventDefault();
             const offset = caretOffset(v);
-            if (up ? app.rems.moveUp(remId) : app.rems.moveDown(remId)) controller.focus(instance, remId, offset);
+            if (up ? app.rems.moveUp(remId) : app.rems.moveDown(remId))
+              controller.focus(instance, remId, offset);
             return true;
           }
           if (mod) {
@@ -269,7 +324,10 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
             toggleCollapsed(e2, remId, up);
             return true;
           }
-          if (e.shiftKey && (up ? atStart || v.endOfTextblock('up') : atEnd || v.endOfTextblock('down'))) {
+          if (
+            e.shiftKey &&
+            (up ? atStart || v.endOfTextblock('up') : atEnd || v.endOfTextblock('down'))
+          ) {
             e.preventDefault();
             controller.select(instance, [remId]);
             controller.extendSelection(up ? -1 : 1);
@@ -277,7 +335,12 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
           }
           if (!e.shiftKey && v.endOfTextblock(up ? 'up' : 'down')) {
             const x = v.coordsAtPos(sel.head).left;
-            if (controller.focusSibling(instance, remId, up ? -1 : 1, { x, edge: up ? 'bottom' : 'top' })) {
+            if (
+              controller.focusSibling(instance, remId, up ? -1 : 1, {
+                x,
+                edge: up ? 'bottom' : 'top',
+              })
+            ) {
               e.preventDefault();
               return true;
             }
@@ -303,7 +366,12 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
     /** Formatting shortcuts. */
     function onFormatKey(v: EditorView, e: KeyboardEvent): boolean {
       const key = e.key.toLowerCase();
-      const markFor: Record<string, keyof typeof schema.marks> = { b: 'bold', i: 'italic', u: 'underline', e: 'code' };
+      const markFor: Record<string, keyof typeof schema.marks> = {
+        b: 'bold',
+        i: 'italic',
+        u: 'underline',
+        e: 'code',
+      };
       let markName = !e.shiftKey ? markFor[key] : undefined;
       if (e.shiftKey && key === 's') markName = 'strike';
       if (e.shiftKey && key === 'h') markName = 'highlight';
@@ -384,7 +452,10 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
     view.updateState(state);
     const pos = Math.min(Math.max(1, offset), doc.content.size - 1);
     view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, pos)));
-    hostRef.current?.classList.toggle('is-empty', doc.textContent === '' && doc.firstChild?.childCount === 0);
+    hostRef.current?.classList.toggle(
+      'is-empty',
+      doc.textContent === '' && doc.firstChild?.childCount === 0,
+    );
   }, [rem]);
 
   return <div ref={hostRef} className="block-editor" />;
@@ -394,14 +465,24 @@ export function BlockEditor({ remId, instance, caret, nonce, placeholder }: Bloc
  * Toggles a mark on the selection (or the stored marks when the selection is
  * empty). Clozes get a fresh id; highlights use yellow.
  */
-export function toggleMark(view: EditorView, name: keyof typeof schema.marks, attrs?: Record<string, unknown>): void {
+export function toggleMark(
+  view: EditorView,
+  name: keyof typeof schema.marks,
+  attrs?: Record<string, unknown>,
+): void {
   const type = schema.marks[name]!;
   const { state } = view;
   const { from, to, empty } = state.selection;
-  const markAttrs = attrs ?? (name === 'cloze' ? { id: newId(8) } : name === 'highlight' ? { color: 'yellow' } : undefined);
+  const markAttrs =
+    attrs ??
+    (name === 'cloze' ? { id: newId(8) } : name === 'highlight' ? { color: 'yellow' } : undefined);
   if (empty) {
-    const active = (state.storedMarks ?? state.selection.$from.marks()).some((m) => m.type === type);
-    view.dispatch(active ? state.tr.removeStoredMark(type) : state.tr.addStoredMark(type.create(markAttrs)));
+    const active = (state.storedMarks ?? state.selection.$from.marks()).some(
+      (m) => m.type === type,
+    );
+    view.dispatch(
+      active ? state.tr.removeStoredMark(type) : state.tr.addStoredMark(type.create(markAttrs)),
+    );
     return;
   }
   const has = state.doc.rangeHasMark(from, to, type);

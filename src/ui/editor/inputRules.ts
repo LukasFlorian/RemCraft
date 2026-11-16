@@ -14,7 +14,9 @@ import { ATOM_CHAR, schema } from './schema';
 const TOKENS = [...new Set(DELIMITERS.map((d) => d.token))].sort((a, b) => b.length - a.length);
 
 /** Block-level change requested by a typed prefix. */
-export type BlockShortcut = Partial<Pick<Rem, 'heading' | 'todo' | 'quote' | 'divider' | 'code' | 'latexBlock'>>;
+export type BlockShortcut = Partial<
+  Pick<Rem, 'heading' | 'todo' | 'quote' | 'divider' | 'code' | 'latexBlock'>
+>;
 
 /** Prefixes typed at the start of a Rem followed by a space. */
 const BLOCK_PREFIXES: Record<string, BlockShortcut> = {
@@ -46,7 +48,13 @@ function hasSeparator(view: EditorView): boolean {
  * @param text Typed text.
  * @param onBlock Applies a block-level shortcut to the Rem.
  */
-export function handleTextInput(view: EditorView, from: number, to: number, text: string, onBlock: (change: BlockShortcut) => void): boolean {
+export function handleTextInput(
+  view: EditorView,
+  from: number,
+  to: number,
+  text: string,
+  onBlock: (change: BlockShortcut) => void,
+): boolean {
   const { state } = view;
   const $from = state.doc.resolve(from);
   const offset = $from.parentOffset;
@@ -58,12 +66,19 @@ export function handleTextInput(view: EditorView, from: number, to: number, text
   // --- clozes ---------------------------------------------------------------
   if (text === '{' && from < to) {
     // A single brace wraps the selection in a cloze.
-    view.dispatch(state.tr.addMark(from, to, schema.marks.cloze!.create({ id: newId(8) })).setSelection(TextSelection.create(state.doc, to)));
+    view.dispatch(
+      state.tr
+        .addMark(from, to, schema.marks.cloze!.create({ id: newId(8) }))
+        .setSelection(TextSelection.create(state.doc, to)),
+    );
     return true;
   }
   if (text === '{' && before.endsWith('{') && !inCode) {
     const tr = state.tr.delete(from - 1, to);
-    tr.setStoredMarks([...activeMarks.filter((m) => m.type !== schema.marks.cloze), schema.marks.cloze!.create({ id: newId(8) })]);
+    tr.setStoredMarks([
+      ...activeMarks.filter((m) => m.type !== schema.marks.cloze),
+      schema.marks.cloze!.create({ id: newId(8) }),
+    ]);
     view.dispatch(tr);
     return true;
   }
@@ -98,7 +113,11 @@ export function handleTextInput(view: EditorView, from: number, to: number, text
       // Only the 2-3 character tokens can be typed directly; longer ones are upgrades.
       if (token.length > 3) continue;
       const consumed = token.length - text.length;
-      const tr = state.tr.replaceWith(from - consumed, to, schema.nodes.separator!.create({ token }));
+      const tr = state.tr.replaceWith(
+        from - consumed,
+        to,
+        schema.nodes.separator!.create({ token }),
+      );
       view.dispatch(tr);
       return true;
     }
@@ -168,14 +187,21 @@ export function handleTextInput(view: EditorView, from: number, to: number, text
  * If the caret follows a separator (optionally with a few typed characters
  * after it), returns the separator's position, token and that text.
  */
-function separatorBefore(view: EditorView, pos: number): { pos: number; token: string; textAfter: string } | null {
+function separatorBefore(
+  view: EditorView,
+  pos: number,
+): { pos: number; token: string; textAfter: string } | null {
   const $pos = view.state.doc.resolve(pos);
   const parent = $pos.parent;
   const offset = $pos.parentOffset;
   let found: { pos: number; token: string; textAfter: string } | null = null;
   parent.forEach((node, nodeOffset) => {
     if (node.type.name === 'separator' && nodeOffset < offset) {
-      found = { pos: $pos.start() + nodeOffset, token: node.attrs.token as string, textAfter: parent.textBetween(nodeOffset + 1, offset, undefined, ATOM_CHAR) };
+      found = {
+        pos: $pos.start() + nodeOffset,
+        token: node.attrs.token as string,
+        textAfter: parent.textBetween(nodeOffset + 1, offset, undefined, ATOM_CHAR),
+      };
     }
   });
   const match = found as { pos: number; token: string; textAfter: string } | null;
@@ -207,9 +233,16 @@ export function detectTrigger(view: EditorView): TriggerMatch | null {
   const { selection } = view.state;
   if (!selection.empty) return null;
   const $from = selection.$from;
-  const inCode = (view.state.storedMarks ?? $from.marks()).some((m) => m.type === schema.marks.code);
+  const inCode = (view.state.storedMarks ?? $from.marks()).some(
+    (m) => m.type === schema.marks.code,
+  );
   if (inCode) return null;
-  const text = $from.parent.textBetween(Math.max(0, $from.parentOffset - 60), $from.parentOffset, undefined, ATOM_CHAR);
+  const text = $from.parent.textBetween(
+    Math.max(0, $from.parentOffset - 60),
+    $from.parentOffset,
+    undefined,
+    ATOM_CHAR,
+  );
   for (const { kind, re } of TRIGGERS) {
     const m = re.exec(text);
     if (!m) continue;

@@ -1,7 +1,15 @@
 /**
  * React bindings for the data layer: the app context and store hooks.
  */
-import { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import type { RemCraftApp } from '@data/app';
 import type { Store } from '@data/store/store';
 import type { Rem, RemId } from '@core/model/types';
@@ -37,7 +45,8 @@ export function useSelector<T>(selector: (store: Store) => T): T {
   // so selectors may return fresh arrays/objects without causing re-render loops.
   const getSnapshot = useCallback(() => {
     const next = selectorRef.current(store);
-    if (lastRef.current !== undefined && shallowEqual(lastRef.current, next)) return lastRef.current;
+    if (lastRef.current !== undefined && shallowEqual(lastRef.current, next))
+      return lastRef.current;
     lastRef.current = next;
     return next;
   }, [store]);
@@ -49,10 +58,14 @@ export function shallowEqual(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) return true;
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
   if (Array.isArray(a) !== Array.isArray(b)) return false;
-  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
+  if (Array.isArray(a) && Array.isArray(b))
+    return a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
   const ka = Object.keys(a);
   const kb = Object.keys(b);
-  return ka.length === kb.length && ka.every((k) => Object.is((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+  return (
+    ka.length === kb.length &&
+    ka.every((k) => Object.is((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]))
+  );
 }
 
 /** Subscribes to one Rem (re-renders only when that record changes). */

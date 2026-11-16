@@ -28,7 +28,14 @@ export interface BarChartProps {
 }
 
 /** Vertical (stacked) bar chart. */
-export function BarChart({ labels, series, height = 160, goal, labelEvery = 1, ariaLabel }: BarChartProps): ReactNode {
+export function BarChart({
+  labels,
+  series,
+  height = 160,
+  goal,
+  labelEvery = 1,
+  ariaLabel,
+}: BarChartProps): ReactNode {
   const [hover, setHover] = useState<number | null>(null);
   const n = labels.length;
   const totals = labels.map((_, i) => series.reduce((s, x) => s + (x.values[i] ?? 0), 0));
@@ -54,7 +61,13 @@ export function BarChart({ labels, series, height = 160, goal, labelEvery = 1, a
         </div>
       )}
       <div className="chart-plot">
-        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ariaLabel} preserveAspectRatio="none" style={{ height }}>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label={ariaLabel}
+          preserveAspectRatio="none"
+          style={{ height }}
+        >
           {ticks.map((t) => (
             <g key={t}>
               <line x1={left} x2={width} y1={y(t)} y2={y(t)} className="chart-grid" />
@@ -63,7 +76,9 @@ export function BarChart({ labels, series, height = 160, goal, labelEvery = 1, a
               </text>
             </g>
           ))}
-          {goal !== undefined && goal > 0 && <line x1={left} x2={width} y1={y(goal)} y2={y(goal)} className="chart-goal" />}
+          {goal !== undefined && goal > 0 && (
+            <line x1={left} x2={width} y1={y(goal)} y2={y(goal)} className="chart-goal" />
+          )}
           {labels.map((label, i) => {
             const x = left + i * slot + (slot - barW) / 2;
             let acc = 0;
@@ -83,9 +98,22 @@ export function BarChart({ labels, series, height = 160, goal, labelEvery = 1, a
                   // 2px surface gap between stacked fills.
                   const h = Math.max(1, s.y0 - s.y1 - (k > 0 ? 2 : 0));
                   return isTop ? (
-                    <path key={k} d={roundedTop(x, s.y1, barW, h, Math.min(4, barW / 2, h))} fill={s.color} opacity={hover === null || hover === i ? 1 : 0.55} />
+                    <path
+                      key={k}
+                      d={roundedTop(x, s.y1, barW, h, Math.min(4, barW / 2, h))}
+                      fill={s.color}
+                      opacity={hover === null || hover === i ? 1 : 0.55}
+                    />
                   ) : (
-                    <rect key={k} x={x} y={s.y1} width={barW} height={h} fill={s.color} opacity={hover === null || hover === i ? 1 : 0.55} />
+                    <rect
+                      key={k}
+                      x={x}
+                      y={s.y1}
+                      width={barW}
+                      height={h}
+                      fill={s.color}
+                      opacity={hover === null || hover === i ? 1 : 0.55}
+                    />
                   );
                 })}
                 {i % labelEvery === 0 && (
@@ -98,7 +126,10 @@ export function BarChart({ labels, series, height = 160, goal, labelEvery = 1, a
           })}
         </svg>
         {hover !== null && (
-          <div className="chart-tooltip" style={{ left: `${((left + hover * slot + slot / 2) / width) * 100}%` }}>
+          <div
+            className="chart-tooltip"
+            style={{ left: `${((left + hover * slot + slot / 2) / width) * 100}%` }}
+          >
             <strong>{labels[hover]}</strong>
             {series.map((s) => (
               <div key={s.name}>
@@ -128,7 +159,8 @@ export interface HeatmapProps {
 export function Heatmap({ days, ariaLabel }: HeatmapProps): ReactNode {
   const [hover, setHover] = useState<{ date: string; count: number } | null>(null);
   const max = Math.max(1, ...days.map((d) => d.count));
-  const level = (c: number): number => (c === 0 ? 0 : Math.min(4, 1 + Math.floor((c / max) * 3.999)));
+  const level = (c: number): number =>
+    c === 0 ? 0 : Math.min(4, 1 + Math.floor((c / max) * 3.999));
   const first = new Date(days[0]?.date ?? Date.now());
   const offset = (first.getDay() + 6) % 7; // Monday first
   const cells = [...Array<null>(offset).fill(null), ...days];
@@ -137,7 +169,12 @@ export function Heatmap({ days, ariaLabel }: HeatmapProps): ReactNode {
   const gap = 2;
   return (
     <div className="chart">
-      <svg viewBox={`0 0 ${weeks * (size + gap)} ${7 * (size + gap)}`} role="img" aria-label={ariaLabel} className="heatmap">
+      <svg
+        viewBox={`0 0 ${weeks * (size + gap)} ${7 * (size + gap)}`}
+        role="img"
+        aria-label={ariaLabel}
+        className="heatmap"
+      >
         {cells.map((d, i) =>
           d ? (
             <rect
@@ -157,7 +194,11 @@ export function Heatmap({ days, ariaLabel }: HeatmapProps): ReactNode {
       <div className="row faint" style={{ fontSize: 12, justifyContent: 'space-between' }}>
         <span>{hover ? `${hover.date}: ${hover.count} reviews` : 'Hover a day for details'}</span>
         <span className="row" style={{ gap: 3 }}>
-          Less {[0, 1, 2, 3, 4].map((l) => <i key={l} className="heat-key" style={{ background: `var(--seq-${l})` }} />)} More
+          Less{' '}
+          {[0, 1, 2, 3, 4].map((l) => (
+            <i key={l} className="heat-key" style={{ background: `var(--seq-${l})` }} />
+          ))}{' '}
+          More
         </span>
       </div>
     </div>
@@ -165,7 +206,15 @@ export function Heatmap({ days, ariaLabel }: HeatmapProps): ReactNode {
 }
 
 /** A big number with a label (stat tile). */
-export function StatTile({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }): ReactNode {
+export function StatTile({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: ReactNode;
+  hint?: ReactNode;
+}): ReactNode {
   return (
     <div className="stat-tile">
       <div className="stat-label">{label}</div>

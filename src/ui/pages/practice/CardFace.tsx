@@ -50,7 +50,13 @@ function ContextTitle({ id }: { id: RemId }): ReactNode {
 }
 
 /** The card face. */
-export function CardFace({ view, revealed, onReveal, onSuggest, grading }: CardFaceProps): ReactNode {
+export function CardFace({
+  view,
+  revealed,
+  onReveal,
+  onSuggest,
+  grading,
+}: CardFaceProps): ReactNode {
   const [typed, setTyped] = useState('');
   const [result, setResult] = useState<TypeInResult | null>(null);
   const [chosen, setChosen] = useState<RemId[]>([]);
@@ -88,10 +94,18 @@ export function CardFace({ view, revealed, onReveal, onSuggest, grading }: CardF
         if (!revealed) submitTyped();
       }}
     >
-      <input className="input" autoFocus placeholder="Type your answer and press Enter" value={typed} disabled={revealed} onChange={(e) => setTyped(e.target.value)} />
+      <input
+        className="input"
+        autoFocus
+        placeholder="Type your answer and press Enter"
+        value={typed}
+        disabled={revealed}
+        onChange={(e) => setTyped(e.target.value)}
+      />
       {result && (
         <div className={`type-result ${result.correct ? 'ok' : 'bad'}`}>
-          {result.correct ? '✓ Correct' : '✗ Not quite'} · {Math.round(result.similarity * 100)} % match
+          {result.correct ? '✓ Correct' : '✗ Not quite'} · {Math.round(result.similarity * 100)} %
+          match
         </div>
       )}
     </form>
@@ -120,7 +134,18 @@ export function CardFace({ view, revealed, onReveal, onSuggest, grading }: CardF
         <div className="card-face">
           <Context ids={view.context} />
           <div className="card-question">
-            <RichTextView value={view.text} cloze={revealed ? { kind: 'reveal', clozeId: view.clozeId } : { kind: 'hide', clozeId: view.clozeId, ...(view.hint ? { hint: view.hint } : {}) }} />
+            <RichTextView
+              value={view.text}
+              cloze={
+                revealed
+                  ? { kind: 'reveal', clozeId: view.clozeId }
+                  : {
+                      kind: 'hide',
+                      clozeId: view.clozeId,
+                      ...(view.hint ? { hint: view.hint } : {}),
+                    }
+              }
+            />
           </div>
           {typeBox}
           {revealed && view.back && view.back.length > 0 && (
@@ -190,7 +215,8 @@ export function CardFace({ view, revealed, onReveal, onSuggest, grading }: CardF
       const correctIds = options.filter((o) => o.correct).map((o) => o.remId);
       const multi = correctIds.length > 1;
       const check = (ids: RemId[]): void => {
-        const right = ids.length === correctIds.length && ids.every((id) => correctIds.includes(id));
+        const right =
+          ids.length === correctIds.length && ids.every((id) => correctIds.includes(id));
         onSuggest(right ? 3 : 1);
         onReveal();
       };
@@ -200,18 +226,33 @@ export function CardFace({ view, revealed, onReveal, onSuggest, grading }: CardF
           <div className="card-question">
             <RichTextView value={view.question} />
           </div>
-          {multi && !revealed && <div className="faint" style={{ fontSize: 13 }}>Select all correct answers ({correctIds.length}).</div>}
+          {multi && !revealed && (
+            <div className="faint" style={{ fontSize: 13 }}>
+              Select all correct answers ({correctIds.length}).
+            </div>
+          )}
           <div className="mc-options">
             {options.map((o, i) => {
               const picked = chosen.includes(o.remId);
-              const state = revealed ? (o.correct ? 'is-correct' : picked ? 'is-wrong' : '') : picked ? 'is-picked' : '';
+              const state = revealed
+                ? o.correct
+                  ? 'is-correct'
+                  : picked
+                    ? 'is-wrong'
+                    : ''
+                : picked
+                  ? 'is-picked'
+                  : '';
               return (
                 <button
                   key={o.remId}
                   className={`mc-option ${state}`}
                   disabled={revealed}
                   onClick={() => {
-                    if (multi) setChosen((c) => (c.includes(o.remId) ? c.filter((x) => x !== o.remId) : [...c, o.remId]));
+                    if (multi)
+                      setChosen((c) =>
+                        c.includes(o.remId) ? c.filter((x) => x !== o.remId) : [...c, o.remId],
+                      );
                     else {
                       setChosen([o.remId]);
                       check([o.remId]);

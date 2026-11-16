@@ -62,7 +62,11 @@ export function ancestors(graph: RemGraph, id: RemId): Rem[] {
  * @param id Root of the subtree.
  * @param visit Callback; return `false` to skip the children of a Rem.
  */
-export function walkSubtree(graph: RemGraph, id: RemId, visit: (rem: Rem, depth: number) => boolean | void): void {
+export function walkSubtree(
+  graph: RemGraph,
+  id: RemId,
+  visit: (rem: Rem, depth: number) => boolean | void,
+): void {
   const root = graph.get(id);
   if (!root) return;
   const stack: [Rem, number][] = [[root, 0]];

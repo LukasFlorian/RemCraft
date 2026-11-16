@@ -60,7 +60,8 @@ export class RemService {
     let best: Rem | undefined;
     let bestScore = -1;
     for (const rem of this.store.all('rems')) {
-      const matches = fold(toPlainText(rem.text)) === target || rem.aliases.some((a) => fold(a) === target);
+      const matches =
+        fold(toPlainText(rem.text)) === target || rem.aliases.some((a) => fold(a) === target);
       if (!matches) continue;
       const score = (rem.isDocument || rem.isFolder ? 2 : 0) + (rem.parentId === null ? 1 : 0);
       if (score > bestScore) {
@@ -98,7 +99,8 @@ export class RemService {
   /** Order key for inserting at a position. */
   private orderAt(tx: Transaction | null, pos: InsertPosition): string {
     const siblings = this.store.children(pos.parentId);
-    if (pos.afterId === undefined) return orderBetween(siblings[siblings.length - 1]?.order ?? null, null);
+    if (pos.afterId === undefined)
+      return orderBetween(siblings[siblings.length - 1]?.order ?? null, null);
     if (pos.afterId === null) return orderBetween(null, siblings[0]?.order ?? null);
     const i = siblings.findIndex((r) => r.id === pos.afterId);
     const after = tx?.get('rems', pos.afterId) ?? siblings[i];
@@ -122,7 +124,10 @@ export class RemService {
   /** Creates a Rem inside an existing transaction. */
   createIn(tx: Transaction, pos: InsertPosition, partial: Partial<Rem> = {}): Rem {
     const now = this.store.clock.now();
-    const rem = createRem({ ...partial, parentId: pos.parentId, order: this.orderAt(tx, pos) }, now);
+    const rem = createRem(
+      { ...partial, parentId: pos.parentId, order: this.orderAt(tx, pos) },
+      now,
+    );
     return tx.put('rems', rem);
   }
 
@@ -143,7 +148,8 @@ export class RemService {
   ensureByName(name: string, tx?: Transaction): RemId {
     const existing = this.findByName(name);
     if (existing) return existing.id;
-    const create = (t: Transaction): RemId => this.createIn(t, { parentId: null }, { text: rt(name.trim()), isDocument: true }).id;
+    const create = (t: Transaction): RemId =>
+      this.createIn(t, { parentId: null }, { text: rt(name.trim()), isDocument: true }).id;
     return tx ? create(tx) : this.store.transact(create);
   }
 
@@ -157,11 +163,37 @@ export class RemService {
     if (this.store.get(id)) return id;
     this.store.transact((tx) => {
       if (!tx.get('rems', DAILY_FOLDER_ID)) {
-        tx.put('rems', createRem({ id: DAILY_FOLDER_ID, parentId: null, order: this.orderAt(tx, { parentId: null }), text: rt('Daily Documents'), isFolder: true, isDocument: true }, this.store.clock.now()));
+        tx.put(
+          'rems',
+          createRem(
+            {
+              id: DAILY_FOLDER_ID,
+              parentId: null,
+              order: this.orderAt(tx, { parentId: null }),
+              text: rt('Daily Documents'),
+              isFolder: true,
+              isDocument: true,
+            },
+            this.store.clock.now(),
+          ),
+        );
       }
       // Daily documents are ordered newest first.
       const order = `z${String(99999999 - Number(date.replace(/-/g, ''))).padStart(8, '0')}`;
-      tx.put('rems', createRem({ id, parentId: DAILY_FOLDER_ID, order, text: rt(formatLongDate(parseIsoDate(date))), isDocument: true, dailyDate: date }, this.store.clock.now()));
+      tx.put(
+        'rems',
+        createRem(
+          {
+            id,
+            parentId: DAILY_FOLDER_ID,
+            order,
+            text: rt(formatLongDate(parseIsoDate(date))),
+            isDocument: true,
+            dailyDate: date,
+          },
+          this.store.clock.now(),
+        ),
+      );
     });
     return id;
   }
@@ -178,7 +210,10 @@ export class RemService {
    * @param coalesceKey Merge consecutive edits into one undo step.
    */
   update(id: RemId, patch: Partial<Rem>, coalesceKey?: string): void {
-    this.store.transact((tx) => void tx.update('rems', id, patch), coalesceKey ? { coalesceKey } : {});
+    this.store.transact(
+      (tx) => void tx.update('rems', id, patch),
+      coalesceKey ? { coalesceKey } : {},
+    );
   }
 
   /** Updates many Rems in one undo step. */
@@ -210,7 +245,11 @@ export class RemService {
   move(ids: readonly RemId[], pos: InsertPosition): boolean {
     // A Rem cannot be moved into its own subtree.
     for (const id of ids) {
-      if (pos.parentId === id || (pos.parentId && ancestors(this.store, pos.parentId).some((a) => a.id === id))) return false;
+      if (
+        pos.parentId === id ||
+        (pos.parentId && ancestors(this.store, pos.parentId).some((a) => a.id === id))
+      )
+        return false;
     }
     this.store.transact((tx) => {
       const moving = ids.filter((id) => tx.get('rems', id));
@@ -230,7 +269,9 @@ export class RemService {
         hi = siblings[i + 1]?.order ?? null;
       }
       const orders = ordersBetween(lo, hi, moving.length);
-      moving.forEach((id, k) => tx.update('rems', id, { parentId: pos.parentId, order: orders[k]! }));
+      moving.forEach((id, k) =>
+        tx.update('rems', id, { parentId: pos.parentId, order: orders[k]! }),
+      );
     });
     return true;
   }
@@ -242,7 +283,10 @@ export class RemService {
     const prev = this.previousSibling(first);
     if (!prev) return false;
     const children = this.store.children(prev.id);
-    const ok = this.move(ids, { parentId: prev.id, afterId: children[children.length - 1]?.id ?? null });
+    const ok = this.move(ids, {
+      parentId: prev.id,
+      afterId: children[children.length - 1]?.id ?? null,
+    });
     if (ok && prev.collapsed) this.update(prev.id, { collapsed: undefined });
     return ok;
   }
@@ -287,7 +331,9 @@ export class RemService {
     return this.store.transact((tx) => {
       tx.update('rems', id, { text: before });
       const asChild = children.length > 0 && !rem.collapsed;
-      const pos: InsertPosition = asChild ? { parentId: id, afterId: null } : { parentId: rem.parentId, afterId: id };
+      const pos: InsertPosition = asChild
+        ? { parentId: id, afterId: null }
+        : { parentId: rem.parentId, afterId: id };
       return this.createIn(tx, pos, { text: after, ...inherit });
     });
   }
@@ -349,10 +395,29 @@ export class RemService {
     return this.store.transact((tx) => this.copyIn(tx, rootId, pos, overrides));
   }
 
-  private copyIn(tx: Transaction, rootId: RemId, pos: InsertPosition, overrides: Partial<Rem>, now: Timestamp = this.store.clock.now()): RemId {
+  private copyIn(
+    tx: Transaction,
+    rootId: RemId,
+    pos: InsertPosition,
+    overrides: Partial<Rem>,
+    now: Timestamp = this.store.clock.now(),
+  ): RemId {
     const root = this.store.get(rootId)!;
-    const { id: _id, parentId: _p, order: _o, createdAt: _c, updatedAt: _u, pinned: _pin, dailyDate: _d, ...content } = root;
-    const copy = this.createIn(tx, pos, { ...structuredClone(content), ...overrides, createdAt: now });
+    const {
+      id: _id,
+      parentId: _p,
+      order: _o,
+      createdAt: _c,
+      updatedAt: _u,
+      pinned: _pin,
+      dailyDate: _d,
+      ...content
+    } = root;
+    const copy = this.createIn(tx, pos, {
+      ...structuredClone(content),
+      ...overrides,
+      createdAt: now,
+    });
     let after: RemId | null = null;
     for (const child of this.store.children(rootId)) {
       after = this.copyIn(tx, child.id, { parentId: copy.id, afterId: after }, {}, now);

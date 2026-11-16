@@ -3,7 +3,15 @@
  */
 import type { Mark, Node as PMNode } from 'prosemirror-model';
 import { canonicalDelimiter, DELIMITERS } from '@core/cards/delimiters';
-import type { AnswerMode, CardDirection, Rem, RemKind, RichText, Segment, TextMarks } from '@core/model/types';
+import type {
+  AnswerMode,
+  CardDirection,
+  Rem,
+  RemKind,
+  RichText,
+  Segment,
+  TextMarks,
+} from '@core/model/types';
 import { normalize } from '@core/richtext/ops';
 import { schema } from './schema';
 
@@ -70,9 +78,24 @@ export function nodesToRichText(nodes: readonly PMNode[]): RichText {
   const out: Segment[] = [];
   for (const node of nodes) {
     const marks = fromPmMarks(node.marks);
-    if (node.isText) out.push(marks ? { type: 'text', text: node.text ?? '', marks } : { type: 'text', text: node.text ?? '' });
-    else if (node.type.name === 'ref') out.push(marks ? { type: 'ref', remId: node.attrs.remId as string, marks } : { type: 'ref', remId: node.attrs.remId as string });
-    else if (node.type.name === 'latex') out.push(marks ? { type: 'latex', source: node.attrs.source as string, marks } : { type: 'latex', source: node.attrs.source as string });
+    if (node.isText)
+      out.push(
+        marks
+          ? { type: 'text', text: node.text ?? '', marks }
+          : { type: 'text', text: node.text ?? '' },
+      );
+    else if (node.type.name === 'ref')
+      out.push(
+        marks
+          ? { type: 'ref', remId: node.attrs.remId as string, marks }
+          : { type: 'ref', remId: node.attrs.remId as string },
+      );
+    else if (node.type.name === 'latex')
+      out.push(
+        marks
+          ? { type: 'latex', source: node.attrs.source as string, marks }
+          : { type: 'latex', source: node.attrs.source as string },
+      );
   }
   return normalize(out);
 }
@@ -87,9 +110,18 @@ export interface RemContentPatch {
 }
 
 /** Builds the PM document for a Rem. */
-export function remToDoc(rem: Pick<Rem, 'text' | 'back' | 'kind' | 'direction' | 'answerMode'>): PMNode {
+export function remToDoc(
+  rem: Pick<Rem, 'text' | 'back' | 'kind' | 'direction' | 'answerMode'>,
+): PMNode {
   const content = richTextToNodes(rem.text);
-  const token = rem.back !== null ? canonicalDelimiter(rem.kind, rem.direction === 'none' ? 'forward' : rem.direction, rem.answerMode) : null;
+  const token =
+    rem.back !== null
+      ? canonicalDelimiter(
+          rem.kind,
+          rem.direction === 'none' ? 'forward' : rem.direction,
+          rem.answerMode,
+        )
+      : null;
   if (token) {
     content.push(schema.nodes.separator!.create({ token }));
     content.push(...richTextToNodes(rem.back ?? []));

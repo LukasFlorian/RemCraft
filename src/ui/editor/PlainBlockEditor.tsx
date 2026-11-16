@@ -23,7 +23,13 @@ export function PlainBlockEditor({ remId, instance, nonce }: PlainBlockEditorPro
   const controller = useController();
   const rem = useRem(remId);
   const ref = useRef<HTMLTextAreaElement>(null);
-  const source = rem ? (rem.latexBlock ? rem.text.map((s) => (s.type === 'latex' ? s.source : s.type === 'text' ? s.text : '')).join('') : toPlainText(rem.text)) : '';
+  const source = rem
+    ? rem.latexBlock
+      ? rem.text
+          .map((s) => (s.type === 'latex' ? s.source : s.type === 'text' ? s.text : ''))
+          .join('')
+      : toPlainText(rem.text)
+    : '';
   const [value, setValue] = useState(source);
 
   // Keep in sync with external changes.

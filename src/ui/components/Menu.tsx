@@ -32,7 +32,11 @@ export interface MenuProps {
 }
 
 /** Computes a viewport-clamped position. */
-function place(anchor: MenuAnchor, el: HTMLElement, align: 'start' | 'end'): { left: number; top: number } {
+function place(
+  anchor: MenuAnchor,
+  el: HTMLElement,
+  align: 'start' | 'end',
+): { left: number; top: number } {
   const w = el.offsetWidth;
   const h = el.offsetHeight;
   let left: number;
@@ -79,7 +83,12 @@ export function Menu({ anchor, entries, onClose, align = 'start' }: MenuProps): 
     <div ref={ref} className="menu" role="menu" style={pos}>
       {entries.map((entry, i) => {
         if ('separator' in entry) return <div key={i} className="menu-sep" />;
-        if ('heading' in entry) return <div key={i} className="menu-label">{entry.heading}</div>;
+        if ('heading' in entry)
+          return (
+            <div key={i} className="menu-label">
+              {entry.heading}
+            </div>
+          );
         return (
           <button
             key={i}

@@ -60,7 +60,11 @@ export function normalizeAnswer(s: string): string {
  * @param typed User input.
  * @param mode Grading mode.
  */
-export function gradeTypedAnswer(expected: string, typed: string, mode: 'exact' | 'lenient' = 'lenient'): TypeInResult {
+export function gradeTypedAnswer(
+  expected: string,
+  typed: string,
+  mode: 'exact' | 'lenient' = 'lenient',
+): TypeInResult {
   if (mode === 'exact') {
     const correct = expected.trim() === typed.trim();
     return { similarity: correct ? 1 : 0, correct, suggestedRating: correct ? 3 : 1 };

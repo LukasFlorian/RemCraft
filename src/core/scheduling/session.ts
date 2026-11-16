@@ -74,7 +74,8 @@ export class PracticeSession {
     this.remove(cardId);
     this.done++;
     this.answered.push(cardId);
-    if (nextDue !== null && nextDue - now <= this.requeueWindowMs) this.waiting.push({ cardId, due: nextDue });
+    if (nextDue !== null && nextDue - now <= this.requeueWindowMs)
+      this.waiting.push({ cardId, due: nextDue });
   }
 
   /** Moves a card to the end of the session without answering it. */
@@ -123,7 +124,12 @@ export class PracticeSession {
   }
 
   private snapshot(): void {
-    this.history.push({ queue: [...this.queue], waiting: [...this.waiting], done: this.done, answered: [...this.answered] });
+    this.history.push({
+      queue: [...this.queue],
+      waiting: [...this.waiting],
+      done: this.done,
+      answered: [...this.answered],
+    });
     if (this.history.length > 200) this.history.shift();
   }
 }

@@ -15,7 +15,14 @@ export interface Backup {
 }
 
 /** All collection names in dependency order. */
-export const COLLECTIONS: readonly CollectionName[] = ['settings', 'schedulers', 'rems', 'cards', 'logs', 'exams'];
+export const COLLECTIONS: readonly CollectionName[] = [
+  'settings',
+  'schedulers',
+  'rems',
+  'cards',
+  'logs',
+  'exams',
+];
 
 /**
  * Creates a backup object.
@@ -23,7 +30,10 @@ export const COLLECTIONS: readonly CollectionName[] = ['settings', 'schedulers',
  * @param collections Records per collection.
  * @param now Export time.
  */
-export function createBackup(collections: Backup['collections'], now: Timestamp = Date.now()): Backup {
+export function createBackup(
+  collections: Backup['collections'],
+  now: Timestamp = Date.now(),
+): Backup {
   return { format: 'remcraft-backup', version: BACKUP_VERSION, exportedAt: now, collections };
 }
 
@@ -41,11 +51,18 @@ export function parseBackup(json: string): Backup {
   const collections = data.collections ?? ({} as Backup['collections']);
   for (const name of COLLECTIONS) {
     const list = (collections as Record<string, unknown>)[name];
-    if (list !== undefined && !Array.isArray(list)) throw new Error(`Invalid collection "${name}".`);
+    if (list !== undefined && !Array.isArray(list))
+      throw new Error(`Invalid collection "${name}".`);
     (collections as Record<string, unknown>)[name] = list ?? [];
   }
   for (const rem of collections.rems) {
-    if (typeof rem.id !== 'string' || !Array.isArray(rem.text)) throw new Error('Invalid Rem in backup.');
+    if (typeof rem.id !== 'string' || !Array.isArray(rem.text))
+      throw new Error('Invalid Rem in backup.');
   }
-  return { format: 'remcraft-backup', version: data.version, exportedAt: data.exportedAt ?? 0, collections };
+  return {
+    format: 'remcraft-backup',
+    version: data.version,
+    exportedAt: data.exportedAt ?? 0,
+    collections,
+  };
 }

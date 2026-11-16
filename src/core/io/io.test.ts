@@ -53,7 +53,8 @@ describe('parseOutline', () => {
   });
 
   it('nests content under Markdown headings and detects blocks', () => {
-    const md = '# Title\nintro\n## Sub\n- [ ] todo\n- [x] done\n> quote\n---\n```js\nconst a = 1;\n```\n# Next\n$$x^2$$\n![alt](a.png)';
+    const md =
+      '# Title\nintro\n## Sub\n- [ ] todo\n- [x] done\n> quote\n---\n```js\nconst a = 1;\n```\n# Next\n$$x^2$$\n![alt](a.png)';
     const tree = parseOutline(md);
     expect(tree.map((n) => n.text)).toEqual(['Title', 'Next']);
     const title = tree[0]!;
@@ -68,7 +69,10 @@ describe('parseOutline', () => {
       { code: { language: 'js' } },
     ]);
     expect(sub.children[4]!.text).toBe('const a = 1;');
-    expect(tree[1]!.children.map((c) => c.block)).toEqual([{ latexBlock: true }, { image: { alt: 'alt', src: 'a.png' } }]);
+    expect(tree[1]!.children.map((c) => c.block)).toEqual([
+      { latexBlock: true },
+      { image: { alt: 'alt', src: 'a.png' } },
+    ]);
     expect(countNodes(tree)).toBe(11);
   });
 });
@@ -125,7 +129,10 @@ describe('importMarkdown', () => {
   it('resolves references and tags through the context', () => {
     const c = ctx();
     const [rem] = importMarkdown('- see [[Other]] #[[Book]]', null, c);
-    expect(rem!.text).toEqual([{ type: 'text', text: 'see ' }, { type: 'ref', remId: 'ref:Other' }]);
+    expect(rem!.text).toEqual([
+      { type: 'text', text: 'see ' },
+      { type: 'ref', remId: 'ref:Other' },
+    ]);
     expect(rem!.tags).toEqual(['tag:Book']);
   });
 });
@@ -139,7 +146,10 @@ describe('CSV', () => {
     ]);
   });
   it('creates cards', () => {
-    const rems = csvToCardRems(parseCsv('front;back\nQ1;A1\n{{x}} y;'), { parentId: 'p', hasHeader: true });
+    const rems = csvToCardRems(parseCsv('front;back\nQ1;A1\n{{x}} y;'), {
+      parentId: 'p',
+      hasHeader: true,
+    });
     expect(rems).toHaveLength(2);
     expect(rems[0]).toMatchObject({ parentId: 'p', direction: 'forward' });
     expect(rems[1]).toMatchObject({ direction: 'none', back: null });
@@ -148,7 +158,8 @@ describe('CSV', () => {
 
 describe('OPML', () => {
   it('parses nested outlines with notes and entities', () => {
-    const xml = '<opml><body><outline text="A &amp; B"><outline text="child" _note="note"/></outline><outline text="C" _complete="true"/></body></opml>';
+    const xml =
+      '<opml><body><outline text="A &amp; B"><outline text="child" _note="note"/></outline><outline text="C" _complete="true"/></body></opml>';
     const nodes = parseOpml(xml);
     expect(nodes.map((n) => n.text)).toEqual(['A & B', 'C']);
     expect(nodes[0]!.children[0]!.children[0]!.text).toBe('note');
@@ -158,9 +169,14 @@ describe('OPML', () => {
 
 describe('backup', () => {
   it('round-trips and validates', () => {
-    const b = createBackup({ settings: [], schedulers: [], rems: [], cards: [], logs: [], exams: [] }, 5);
+    const b = createBackup(
+      { settings: [], schedulers: [], rems: [], cards: [], logs: [], exams: [] },
+      5,
+    );
     expect(parseBackup(JSON.stringify(b))).toEqual(b);
     expect(() => parseBackup('{"format":"x"}')).toThrow(/Not a RemCraft backup/);
-    expect(parseBackup('{"format":"remcraft-backup","version":1,"collections":{}}').collections.rems).toEqual([]);
+    expect(
+      parseBackup('{"format":"remcraft-backup","version":1,"collections":{}}').collections.rems,
+    ).toEqual([]);
   });
 });

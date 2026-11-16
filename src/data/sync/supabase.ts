@@ -37,13 +37,19 @@ export class SupabaseBackend implements RemoteBackend {
       .order('seq', { ascending: true })
       .limit(limit);
     if (error) throw new Error(`Pull failed: ${error.message}`);
-    return (data ?? []).map((r) => ({ ...r, updated_at: Number(r.updated_at), seq: Number(r.seq) })) as PulledRow[];
+    return (data ?? []).map((r) => ({
+      ...r,
+      updated_at: Number(r.updated_at),
+      seq: Number(r.seq),
+    })) as PulledRow[];
   }
 
   async push(rows: readonly RemoteRow[]): Promise<void> {
     if (rows.length === 0) return;
     const payload = rows.map((r) => ({ ...r, user_id: this.userId }));
-    const { error } = await this.client.from('records').upsert(payload, { onConflict: 'user_id,collection,id' });
+    const { error } = await this.client
+      .from('records')
+      .upsert(payload, { onConflict: 'user_id,collection,id' });
     if (error) throw new Error(`Push failed: ${error.message}`);
   }
 
@@ -51,11 +57,15 @@ export class SupabaseBackend implements RemoteBackend {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const channel = this.client
       .channel(`records-${this.userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${this.userId}` }, () => {
-        // Debounce bursts (a push from another device touches many rows).
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(onChange, 400);
-      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${this.userId}` },
+        () => {
+          // Debounce bursts (a push from another device touches many rows).
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(onChange, 400);
+        },
+      )
       .subscribe();
     return () => {
       if (timer) clearTimeout(timer);
@@ -64,12 +74,16 @@ export class SupabaseBackend implements RemoteBackend {
   }
 
   async uploadFile(id: string, blob: Blob, mimeType: string): Promise<void> {
-    const { error } = await this.client.storage.from(FILE_BUCKET).upload(`${this.userId}/${id}`, blob, { contentType: mimeType, upsert: true });
+    const { error } = await this.client.storage
+      .from(FILE_BUCKET)
+      .upload(`${this.userId}/${id}`, blob, { contentType: mimeType, upsert: true });
     if (error) throw new Error(`Upload failed: ${error.message}`);
   }
 
   async downloadFile(id: string): Promise<Blob> {
-    const { data, error } = await this.client.storage.from(FILE_BUCKET).download(`${this.userId}/${id}`);
+    const { data, error } = await this.client.storage
+      .from(FILE_BUCKET)
+      .download(`${this.userId}/${id}`);
     if (error || !data) throw new Error(`Download failed: ${error?.message ?? 'no data'}`);
     return data;
   }
@@ -93,7 +107,9 @@ export class AuthService {
 
   /** Subscribes to sign-in/sign-out events. */
   onChange(listener: (user: AuthUser | null) => void): () => void {
-    const { data } = this.client.auth.onAuthStateChange((_event, session) => listener(toUser(session)));
+    const { data } = this.client.auth.onAuthStateChange((_event, session) =>
+      listener(toUser(session)),
+    );
     return () => data.subscription.unsubscribe();
   }
 
@@ -105,26 +121,38 @@ export class AuthService {
 
   /** Creates an account (Supabase may require email confirmation). */
   async signUp(email: string, password: string): Promise<{ needsConfirmation: boolean }> {
-    const { data, error } = await this.client.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl() } });
+    const { data, error } = await this.client.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: redirectUrl() },
+    });
     if (error) throw new Error(error.message);
     return { needsConfirmation: !data.session };
   }
 
   /** Sends a passwordless magic link. */
   async sendMagicLink(email: string): Promise<void> {
-    const { error } = await this.client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl() } });
+    const { error } = await this.client.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectUrl() },
+    });
     if (error) throw new Error(error.message);
   }
 
   /** OAuth sign-in (provider must be enabled in the Supabase dashboard). */
   async signInWithProvider(provider: 'github' | 'google'): Promise<void> {
-    const { error } = await this.client.auth.signInWithOAuth({ provider, options: { redirectTo: redirectUrl() } });
+    const { error } = await this.client.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: redirectUrl() },
+    });
     if (error) throw new Error(error.message);
   }
 
   /** Sends a password-reset email. */
   async resetPassword(email: string): Promise<void> {
-    const { error } = await this.client.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl() });
+    const { error } = await this.client.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl(),
+    });
     if (error) throw new Error(error.message);
   }
 

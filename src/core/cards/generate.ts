@@ -49,7 +49,8 @@ export function answerChildren(children: readonly Rem[]): Rem[] {
  * "`==` then Enter" multi-line cards work.
  */
 export function effectiveAnswerMode(rem: Rem, children: readonly Rem[]): AnswerMode {
-  if (rem.answerMode === 'inline' && isEmpty(rem.back) && answerChildren(children).length > 0) return 'set';
+  if (rem.answerMode === 'inline' && isEmpty(rem.back) && answerChildren(children).length > 0)
+    return 'set';
   return rem.answerMode;
 }
 
@@ -74,7 +75,8 @@ function hasAnswer(rem: Rem, mode: AnswerMode, children: readonly Rem[]): boolea
  * @returns Card descriptions in a stable order.
  */
 export function generateCards(rem: Rem, children: readonly Rem[]): CardSpec[] {
-  if (rem.direction === 'disabled' || rem.extraCardDetail || rem.isFolder || rem.isProperty) return [];
+  if (rem.direction === 'disabled' || rem.extraCardDetail || rem.isFolder || rem.isProperty)
+    return [];
   const cards: CardSpec[] = [];
 
   // Cloze deletions: one card per distinct cloze id (merged clozes share an id).
@@ -97,7 +99,12 @@ export function generateCards(rem: Rem, children: readonly Rem[]): CardSpec[] {
 
   // Image occlusion.
   for (const occ of rem.image?.occlusions ?? []) {
-    cards.push({ id: makeCardId(rem.id, `o:${occ.id}`), remId: rem.id, kind: 'occlusion', occlusionId: occ.id });
+    cards.push({
+      id: makeCardId(rem.id, `o:${occ.id}`),
+      remId: rem.id,
+      kind: 'occlusion',
+      occlusionId: occ.id,
+    });
   }
   return cards;
 }

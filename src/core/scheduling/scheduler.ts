@@ -41,7 +41,11 @@ export function createScheduler(config: SchedulerConfig): Scheduler {
  * Previews the next state for every rating (used to label the answer buttons
  * with intervals). Fuzz is disabled so previews are stable.
  */
-export function previewRatings(scheduler: Scheduler, state: CardState, now: Timestamp): Record<Rating, CardState> {
+export function previewRatings(
+  scheduler: Scheduler,
+  state: CardState,
+  now: Timestamp,
+): Record<Rating, CardState> {
   const noFuzz: Rng = () => 0.5;
   return {
     1: scheduler.review(state, 1, now, noFuzz),

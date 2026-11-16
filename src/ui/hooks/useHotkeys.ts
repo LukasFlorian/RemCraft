@@ -4,7 +4,8 @@
 import { useEffect, useRef } from 'react';
 
 /** True on macOS (Cmd) - otherwise Ctrl is the primary modifier. */
-export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+export const IS_MAC =
+  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
 /** True when the primary modifier (Cmd on macOS, Ctrl elsewhere) is pressed. */
 export function isMod(e: KeyboardEvent | React.KeyboardEvent): boolean {
@@ -31,7 +32,12 @@ export function eventCombo(e: KeyboardEvent): string {
 export function isEditableTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
   if (!el) return false;
-  return el.isContentEditable || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT';
+  return (
+    el.isContentEditable ||
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT'
+  );
 }
 
 /**
@@ -40,7 +46,10 @@ export function isEditableTarget(target: EventTarget | null): boolean {
  * @param map Combination -> handler.
  * @param options `allowInInputs`: also fire while typing in inputs.
  */
-export function useHotkeys(map: HotkeyMap, options: { allowInInputs?: boolean; enabled?: boolean } = {}): void {
+export function useHotkeys(
+  map: HotkeyMap,
+  options: { allowInInputs?: boolean; enabled?: boolean } = {},
+): void {
   const ref = useRef(map);
   ref.current = map;
   useEffect(() => {

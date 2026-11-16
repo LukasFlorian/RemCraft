@@ -27,17 +27,23 @@ describe('parseInline', () => {
 
   it('parses LaTeX but not prices', () => {
     expect(parseInline('$x^2$').text).toEqual([{ type: 'latex', source: 'x^2' }]);
-    expect(parseInline('costs $5 and $10').text).toEqual([{ type: 'text', text: 'costs $5 and $10' }]);
+    expect(parseInline('costs $5 and $10').text).toEqual([
+      { type: 'text', text: 'costs $5 and $10' },
+    ]);
   });
 
   it('parses clozes with hints', () => {
-    const { text, clozeHints } = parseInline('The {{TLB}}{({small cache})} caches {{PTEs}}', { newClozeId: counter() });
+    const { text, clozeHints } = parseInline('The {{TLB}}{({small cache})} caches {{PTEs}}', {
+      newClozeId: counter(),
+    });
     expect(clozeIds(text)).toEqual(['z1', 'z2']);
     expect(clozeHints).toEqual({ z1: 'small cache' });
   });
 
   it('merges Anki-style cloze groups', () => {
-    const { text, clozeHints } = parseInline('{{c1::a}} and {{c1::b::hint}} and {{c2::c}}', { newClozeId: counter() });
+    const { text, clozeHints } = parseInline('{{c1::a}} and {{c1::b::hint}} and {{c2::c}}', {
+      newClozeId: counter(),
+    });
     expect(clozeIds(text)).toEqual(['z1', 'z2']);
     expect(clozeHints).toEqual({ z1: 'hint' });
   });
@@ -72,7 +78,10 @@ describe('parseInline', () => {
 
 describe('serializeInline', () => {
   const roundTrip = (value: RichText): RichText =>
-    parseInline(serializeInline(value, { refName: (id) => id }), { resolveRef: (n) => n, newClozeId: counter() }).text;
+    parseInline(serializeInline(value, { refName: (id) => id }), {
+      resolveRef: (n) => n,
+      newClozeId: counter(),
+    }).text;
 
   it('round-trips formatting, latex and references', () => {
     const value: RichText = [

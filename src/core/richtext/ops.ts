@@ -14,7 +14,9 @@ export type RefResolver = (remId: RemId) => string | undefined;
  */
 export function rt(text: string, marks?: TextMarks): RichText {
   if (text === '') return [];
-  return [marks && Object.keys(marks).length > 0 ? { type: 'text', text, marks } : { type: 'text', text }];
+  return [
+    marks && Object.keys(marks).length > 0 ? { type: 'text', text, marks } : { type: 'text', text },
+  ];
 }
 
 /** True when the rich text contains no visible content. */
@@ -132,7 +134,10 @@ export function referencedRemIds(value: RichText | null | undefined): RemId[] {
  * Applies `fn` to the marks of every segment, returning new rich text.
  * Useful for bulk operations like removing a cloze or a highlight.
  */
-export function mapMarks(value: RichText, fn: (marks: TextMarks | undefined, seg: Segment) => TextMarks | undefined): RichText {
+export function mapMarks(
+  value: RichText,
+  fn: (marks: TextMarks | undefined, seg: Segment) => TextMarks | undefined,
+): RichText {
   return normalize(value.map((seg) => ({ ...seg, marks: fn(seg.marks, seg) }) as Segment));
 }
 

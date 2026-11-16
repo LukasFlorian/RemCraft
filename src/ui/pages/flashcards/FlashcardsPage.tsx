@@ -25,7 +25,12 @@ export function FlashcardsPage(): ReactNode {
         </div>
         <nav className="tabs" style={{ marginBottom: 22 }}>
           {tabs.map((t) => (
-            <NavLink key={t.id} to={t.to} end className={() => `tab${tab === t.id ? ' active' : ''}`}>
+            <NavLink
+              key={t.id}
+              to={t.to}
+              end
+              className={() => `tab${tab === t.id ? ' active' : ''}`}
+            >
               {t.label}
             </NavLink>
           ))}

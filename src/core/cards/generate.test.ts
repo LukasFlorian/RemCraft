@@ -1,7 +1,13 @@
 import { createRem } from '../model/factories';
 import type { Rem } from '../model/types';
 import { rt } from '../richtext/ops';
-import { cardTypeLabel, effectiveAnswerMode, generateCards, makeCardId, parseCardId } from './generate';
+import {
+  cardTypeLabel,
+  effectiveAnswerMode,
+  generateCards,
+  makeCardId,
+  parseCardId,
+} from './generate';
 
 const base = (p: Partial<Rem>): Rem => createRem({ id: 'r', text: rt('Q'), ...p });
 
@@ -50,7 +56,9 @@ describe('generateCards', () => {
 
   it('disabled and extra-detail Rems create no cards', () => {
     expect(generateCards(base({ direction: 'disabled', back: rt('A') }), [])).toEqual([]);
-    expect(generateCards(base({ direction: 'forward', back: rt('A'), extraCardDetail: true }), [])).toEqual([]);
+    expect(
+      generateCards(base({ direction: 'forward', back: rt('A'), extraCardDetail: true }), []),
+    ).toEqual([]);
   });
 
   it('labels card types', () => {

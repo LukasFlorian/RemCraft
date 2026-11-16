@@ -16,11 +16,16 @@ export function useToast(): ToastFn {
 
 /** Provides toasts to the tree. */
 export function ToastProvider({ children }: { children: ReactNode }): ReactNode {
-  const [toasts, setToasts] = useState<{ id: number; message: string; kind: 'info' | 'error' }[]>([]);
+  const [toasts, setToasts] = useState<{ id: number; message: string; kind: 'info' | 'error' }[]>(
+    [],
+  );
   const show = useCallback<ToastFn>((message, kind = 'info') => {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, message, kind }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'error' ? 6000 : 3000);
+    setTimeout(
+      () => setToasts((t) => t.filter((x) => x.id !== id)),
+      kind === 'error' ? 6000 : 3000,
+    );
   }, []);
   return (
     <ToastContext.Provider value={show}>

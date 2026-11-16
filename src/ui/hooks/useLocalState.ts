@@ -9,7 +9,10 @@ import { useCallback, useState } from 'react';
  * @param key Storage key (prefixed with `remcraft.ui.`).
  * @param initial Value used when nothing is stored.
  */
-export function useLocalState<T>(key: string, initial: T): [T, (value: T | ((prev: T) => T)) => void] {
+export function useLocalState<T>(
+  key: string,
+  initial: T,
+): [T, (value: T | ((prev: T) => T)) => void] {
   const fullKey = `remcraft.ui.${key}`;
   const [value, setValue] = useState<T>(() => {
     try {

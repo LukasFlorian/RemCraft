@@ -22,7 +22,9 @@ export class SettingsService {
 
   /** Creates a custom scheduler. */
   createScheduler(partial: Partial<SchedulerConfig> = {}): SchedulerConfig {
-    return this.store.transact((tx) => tx.put('schedulers', createSchedulerConfig(partial, this.store.clock.now())));
+    return this.store.transact((tx) =>
+      tx.put('schedulers', createSchedulerConfig(partial, this.store.clock.now())),
+    );
   }
 
   /** Updates (or creates) a scheduler configuration. */
@@ -39,9 +41,11 @@ export class SettingsService {
     if (id === DEFAULT_SCHEDULER_ID) return false;
     this.store.transact((tx) => {
       tx.delete('schedulers', id);
-      for (const rem of this.store.all('rems')) if (rem.schedulerId === id) tx.update('rems', rem.id, { schedulerId: undefined });
+      for (const rem of this.store.all('rems'))
+        if (rem.schedulerId === id) tx.update('rems', rem.id, { schedulerId: undefined });
       const settings = this.get();
-      if (settings.defaultSchedulerId === id) tx.put('settings', { ...settings, defaultSchedulerId: DEFAULT_SCHEDULER_ID });
+      if (settings.defaultSchedulerId === id)
+        tx.put('settings', { ...settings, defaultSchedulerId: DEFAULT_SCHEDULER_ID });
     });
     return true;
   }

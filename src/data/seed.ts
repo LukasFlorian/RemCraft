@@ -53,7 +53,11 @@ const WELCOME_MARKDOWN = `- # Writing notes
 function deterministic(rems: Rem[], prefix: string): Rem[] {
   const map = new Map<RemId, RemId>();
   rems.forEach((r, i) => map.set(r.id, `${prefix}-${String(i).padStart(3, '0')}`));
-  return rems.map((r) => ({ ...r, id: map.get(r.id)!, parentId: r.parentId ? (map.get(r.parentId) ?? r.parentId) : null }));
+  return rems.map((r) => ({
+    ...r,
+    id: map.get(r.id)!,
+    parentId: r.parentId ? (map.get(r.parentId) ?? r.parentId) : null,
+  }));
 }
 
 /**
@@ -67,10 +71,24 @@ export function seedStore(store: Store, now = 1): void {
     (tx) => {
       tx.put('settings', createDefaultSettings(now));
       tx.put('schedulers', createDefaultScheduler(now));
-      const welcome = createRem({ id: WELCOME_DOC_ID, parentId: null, order: 'a0', text: rt('Getting Started'), isDocument: true, pinned: true }, now);
+      const welcome = createRem(
+        {
+          id: WELCOME_DOC_ID,
+          parentId: null,
+          order: 'a0',
+          text: rt('Getting Started'),
+          isDocument: true,
+          pinned: true,
+        },
+        now,
+      );
       tx.put('rems', welcome);
       const unresolved = (name: string): RemId => name;
-      const rems = importMarkdown(WELCOME_MARKDOWN, WELCOME_DOC_ID, { resolveRef: unresolved, resolveTag: unresolved, now });
+      const rems = importMarkdown(WELCOME_MARKDOWN, WELCOME_DOC_ID, {
+        resolveRef: unresolved,
+        resolveTag: unresolved,
+        now,
+      });
       for (const r of deterministic(rems, WELCOME_DOC_ID)) tx.put('rems', r);
     },
     { keepTimestamps: true, undoable: false },

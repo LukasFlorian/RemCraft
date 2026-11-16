@@ -10,7 +10,13 @@ import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 
 /** The recorder dialog. */
-export function AudioRecorder({ remId, onClose }: { remId: RemId; onClose: () => void }): ReactNode {
+export function AudioRecorder({
+  remId,
+  onClose,
+}: {
+  remId: RemId;
+  onClose: () => void;
+}): ReactNode {
   const app = useApp();
   const toast = useToast();
   const [recording, setRecording] = useState(false);
@@ -44,7 +50,10 @@ export function AudioRecorder({ remId, onClose }: { remId: RemId; onClose: () =>
       rec.start();
       setRecording(true);
     } catch (err) {
-      toast(`Microphone not available: ${err instanceof Error ? err.message : String(err)}`, 'error');
+      toast(
+        `Microphone not available: ${err instanceof Error ? err.message : String(err)}`,
+        'error',
+      );
     }
   };
 
@@ -52,7 +61,8 @@ export function AudioRecorder({ remId, onClose }: { remId: RemId; onClose: () =>
     <Modal title="Record audio" onClose={onClose}>
       <div className="col" style={{ alignItems: 'center', padding: 20 }}>
         <div className="mono" style={{ fontSize: 32 }}>
-          {String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}
+          {String(Math.floor(seconds / 60)).padStart(2, '0')}:
+          {String(seconds % 60).padStart(2, '0')}
         </div>
         {recording ? (
           <button className="btn btn-danger btn-lg" onClick={() => recorder.current?.stop()}>

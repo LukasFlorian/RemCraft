@@ -16,7 +16,8 @@ import type { Store } from '@data/store/store';
  * offset, a viewport point (mouse click) or a horizontal position on the
  * block's first/last line (arrow-key navigation).
  */
-export type CaretRequest = 'start' | 'end' | number | { x: number; y: number } | { x: number; edge: 'top' | 'bottom' };
+export type CaretRequest =
+  'start' | 'end' | number | { x: number; y: number } | { x: number; edge: 'top' | 'bottom' };
 
 /** Focus target: a Rem inside a specific outliner instance. */
 export interface FocusState {
@@ -72,7 +73,13 @@ type PopupKeyHandler = (key: string) => boolean;
 
 /** Global editor state container. */
 export class EditorController {
-  private state: ControllerState = { focus: null, selection: null, popup: null, dragging: null, drop: null };
+  private state: ControllerState = {
+    focus: null,
+    selection: null,
+    popup: null,
+    dragging: null,
+    drop: null,
+  };
   private readonly listeners = new Set<() => void>();
   private nonce = 0;
   /** Root Rem per outliner instance (for visible-order navigation). */
@@ -134,7 +141,11 @@ export class EditorController {
 
   /** Focuses a Rem for editing. */
   focus(instance: string, remId: RemId, caret: CaretRequest = 'end'): void {
-    this.set({ focus: { instance, remId, caret, nonce: ++this.nonce }, selection: null, popup: null });
+    this.set({
+      focus: { instance, remId, caret, nonce: ++this.nonce },
+      selection: null,
+      popup: null,
+    });
   }
 
   /** Clears the focus (keeps the block selection). */
@@ -156,7 +167,11 @@ export class EditorController {
 
   /** Selects blocks (exits text editing). */
   select(instance: string, ids: RemId[], anchor: RemId = ids[0]!): void {
-    this.set({ selection: ids.length ? { instance, ids, anchor } : null, focus: null, popup: null });
+    this.set({
+      selection: ids.length ? { instance, ids, anchor } : null,
+      focus: null,
+      popup: null,
+    });
   }
 
   /** Extends the block selection by one visible Rem. */
@@ -199,7 +214,15 @@ export class EditorController {
   setPopup(popup: PopupState | null): void {
     const cur = this.state.popup;
     if (cur === popup) return;
-    if (cur && popup && cur.kind === popup.kind && cur.query === popup.query && cur.from === popup.from && cur.to === popup.to) return;
+    if (
+      cur &&
+      popup &&
+      cur.kind === popup.kind &&
+      cur.query === popup.query &&
+      cur.from === popup.from &&
+      cur.to === popup.to
+    )
+      return;
     this.set({ popup });
   }
 

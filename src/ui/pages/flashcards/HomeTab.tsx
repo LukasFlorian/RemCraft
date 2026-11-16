@@ -5,10 +5,38 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertTriangle, ChevronRight, FileText, Folder, GraduationCap, MoreHorizontal, Target, Triangle, Minus, Pause, Repeat } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronRight,
+  FileText,
+  Folder,
+  GraduationCap,
+  MoreHorizontal,
+  Target,
+  Triangle,
+  Minus,
+  Pause,
+  Repeat,
+} from 'lucide-react';
 import type { Priority, RemId } from '@core/model/types';
-import { averageAnswerTime, computeDailyGoal, computeStreak, lastDaysCounts, reviewsPerDay } from '@core/stats/stats';
-import { countsTowardsGoal, selectCardIndex, selectDueCounts, selectExamPlans, selectGlobalQueue, selectInheritance, selectLogs, selectSettings, selectTodayLogs } from '@data/selectors';
+import {
+  averageAnswerTime,
+  computeDailyGoal,
+  computeStreak,
+  lastDaysCounts,
+  reviewsPerDay,
+} from '@core/stats/stats';
+import {
+  countsTowardsGoal,
+  selectCardIndex,
+  selectDueCounts,
+  selectExamPlans,
+  selectGlobalQueue,
+  selectInheritance,
+  selectLogs,
+  selectSettings,
+  selectTodayLogs,
+} from '@data/selectors';
 import type { Store } from '@data/store/store';
 import { useNow, useSelector } from '../../app/context';
 import { BarChart } from '../../components/Charts';
@@ -43,11 +71,18 @@ export function HomeTab(): ReactNode {
   const queue = useSelector((s) => selectGlobalQueue(s, now));
   const todayLogs = useSelector((s) => selectTodayLogs(s, now));
   const logs = useSelector(selectLogs);
-  const plans = useSelector((s) => selectExamPlans(s, now)).filter((p) => p.status !== 'past' && p.status !== 'archived');
+  const plans = useSelector((s) => selectExamPlans(s, now)).filter(
+    (p) => p.status !== 'past' && p.status !== 'archived',
+  );
 
   const correctToday = todayLogs.filter((l) => l.rating > 1).length;
   const forGoal = queue.filter((q) => countsTowardsGoal(q.bucket, settings.dailyGoalMode)).length;
-  const goal = computeDailyGoal(settings.dailyGoalMode, forGoal, correctToday, settings.dailyGoalNumber);
+  const goal = computeDailyGoal(
+    settings.dailyGoalMode,
+    forGoal,
+    correctToday,
+    settings.dailyGoalNumber,
+  );
   const minutes = Math.max(1, Math.round((queue.length * averageAnswerTime(logs)) / 60000));
   const perDay = reviewsPerDay(logs, settings.dayStartHour);
   const streak = computeStreak(perDay, settings.streakGoal, now, settings.dayStartHour);
@@ -68,8 +103,14 @@ export function HomeTab(): ReactNode {
             <div className="faint" style={{ fontSize: 13 }}>
               {goal.done} of {goal.target} done today
             </div>
-            <button className="btn btn-primary btn-lg" disabled={queue.length === 0} onClick={() => navigate('/practice?scope=global')}>
-              {queue.length === 0 ? 'All done for today 🎉' : `Practice ${queue.length} Cards · ${minutes} min`}
+            <button
+              className="btn btn-primary btn-lg"
+              disabled={queue.length === 0}
+              onClick={() => navigate('/practice?scope=global')}
+            >
+              {queue.length === 0
+                ? 'All done for today 🎉'
+                : `Practice ${queue.length} Cards · ${minutes} min`}
             </button>
           </div>
           <div className="card streak-card">
@@ -80,7 +121,8 @@ export function HomeTab(): ReactNode {
                 </div>
                 {!streak.hitToday ? (
                   <span className="badge badge-warning">
-                    <AlertTriangle size={12} /> Practice {Math.max(0, settings.streakGoal - streak.today)} cards
+                    <AlertTriangle size={12} /> Practice{' '}
+                    {Math.max(0, settings.streakGoal - streak.today)} cards
                   </span>
                 ) : (
                   <span className="badge badge-success">Streak goal reached</span>
@@ -92,8 +134,12 @@ export function HomeTab(): ReactNode {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <BarChart
                   ariaLabel="Reviews in the last 7 days"
-                  labels={week.map((d) => new Date(d.day).toLocaleDateString(undefined, { weekday: 'narrow' }))}
-                  series={[{ name: 'Reviews', color: 'var(--series-1)', values: week.map((d) => d.count) }]}
+                  labels={week.map((d) =>
+                    new Date(d.day).toLocaleDateString(undefined, { weekday: 'narrow' }),
+                  )}
+                  series={[
+                    { name: 'Reviews', color: 'var(--series-1)', values: week.map((d) => d.count) },
+                  ]}
                   goal={settings.streakGoal}
                   height={120}
                 />
@@ -110,15 +156,22 @@ export function HomeTab(): ReactNode {
           </h2>
           <div className="grid-2">
             {plans.map((p) => (
-              <button key={p.exam.id} className="card exam-mini" onClick={() => navigate(`/flashcards/exams/${p.exam.id}`)}>
+              <button
+                key={p.exam.id}
+                className="card exam-mini"
+                onClick={() => navigate(`/flashcards/exams/${p.exam.id}`)}
+              >
                 <div className="row">
                   <strong className="ellipsis" style={{ flex: 1 }}>
                     {p.exam.name}
                   </strong>
-                  <span className={`badge ${p.onTrack ? 'badge-success' : 'badge-warning'}`}>{p.onTrack ? 'On track' : 'Behind'}</span>
+                  <span className={`badge ${p.onTrack ? 'badge-success' : 'badge-warning'}`}>
+                    {p.onTrack ? 'On track' : 'Behind'}
+                  </span>
                 </div>
                 <div className="muted" style={{ fontSize: 13 }}>
-                  {p.daysLeft === 0 ? 'Today' : `in ${p.daysLeft} day${p.daysLeft > 1 ? 's' : ''}`} · {p.totalCards} cards · {p.newRemaining} new left
+                  {p.daysLeft === 0 ? 'Today' : `in ${p.daysLeft} day${p.daysLeft > 1 ? 's' : ''}`}{' '}
+                  · {p.totalCards} cards · {p.newRemaining} new left
                 </div>
                 <ProgressBar value={p.todayTarget ? p.todayDone / p.todayTarget : 1} />
                 <div className="faint" style={{ fontSize: 12 }}>
@@ -159,7 +212,13 @@ function PrioritySection({ priority, now }: { priority: Priority; now: number })
           let p = r.parentId;
           while (p) {
             const parent = s.get(p);
-            if (parent && (parent.isDocument || parent.isFolder) && info.get(p)?.explicitPriority === priority && (counts.get(p) ?? 0) > 0) return false;
+            if (
+              parent &&
+              (parent.isDocument || parent.isFolder) &&
+              info.get(p)?.explicitPriority === priority &&
+              (counts.get(p) ?? 0) > 0
+            )
+              return false;
             p = parent?.parentId ?? null;
           }
           return true;
@@ -183,7 +242,17 @@ function PrioritySection({ priority, now }: { priority: Priority; now: number })
 }
 
 /** A document/folder row with due count and nested children. */
-function PriorityItem({ remId, depth, now, priority }: { remId: RemId; depth: number; now: number; priority: Priority }): ReactNode {
+function PriorityItem({
+  remId,
+  depth,
+  now,
+  priority,
+}: {
+  remId: RemId;
+  depth: number;
+  now: number;
+  priority: Priority;
+}): ReactNode {
   const navigate = useNavigate();
   const remMenu = useRemMenu();
   const [menu, setMenu] = useState<{ anchor: HTMLElement; entries: MenuEntry[] } | null>(null);
@@ -194,7 +263,15 @@ function PriorityItem({ remId, depth, now, priority }: { remId: RemId; depth: nu
   const kids = useSelector((s) =>
     s.memo(`prioKids:${remId}`, [s.collectionVersion('rems')], () => {
       const counts = selectCardCounts(s);
-      return s.children(remId).filter((c) => (c.isDocument || c.isFolder) && (counts.get(c.id) ?? 0) > 0 && (c.priority === undefined || c.priority === priority)).map((c) => c.id);
+      return s
+        .children(remId)
+        .filter(
+          (c) =>
+            (c.isDocument || c.isFolder) &&
+            (counts.get(c.id) ?? 0) > 0 &&
+            (c.priority === undefined || c.priority === priority),
+        )
+        .map((c) => c.id);
     }),
   );
   if (!rem) return null;
@@ -203,7 +280,11 @@ function PriorityItem({ remId, depth, now, priority }: { remId: RemId; depth: nu
     <>
       <div className="priority-row" style={{ paddingLeft: 8 + depth * 22 }}>
         {kids.length > 0 ? (
-          <button className={`tree-toggle${open ? ' open' : ''}`} onClick={() => setOpen(!open)} aria-label="Expand">
+          <button
+            className={`tree-toggle${open ? ' open' : ''}`}
+            onClick={() => setOpen(!open)}
+            aria-label="Expand"
+          >
             <ChevronRight size={13} />
           </button>
         ) : (
@@ -215,17 +296,36 @@ function PriorityItem({ remId, depth, now, priority }: { remId: RemId; depth: nu
         </button>
         <span className="spacer" />
         {priority !== 'paused' && (
-          <button className="btn btn-sm due-btn" onClick={() => navigate(`/practice?scope=${remId}&mode=srs`)}>
+          <button
+            className="btn btn-sm due-btn"
+            onClick={() => navigate(`/practice?scope=${remId}&mode=srs`)}
+          >
             {due} Due
           </button>
         )}
         {priority === 'paused' && <span className="badge">Paused</span>}
-        <button className="icon-btn" aria-label="More" onClick={(e) => setMenu({ anchor: e.currentTarget, entries: remMenu(remId, { includeOpen: true }) })}>
+        <button
+          className="icon-btn"
+          aria-label="More"
+          onClick={(e) =>
+            setMenu({ anchor: e.currentTarget, entries: remMenu(remId, { includeOpen: true }) })
+          }
+        >
           <MoreHorizontal size={16} />
         </button>
       </div>
-      {open && kids.map((k) => <PriorityItem key={k} remId={k} depth={depth + 1} now={now} priority={priority} />)}
-      {menu && <Menu anchor={menu.anchor} entries={menu.entries} onClose={() => setMenu(null)} align="end" />}
+      {open &&
+        kids.map((k) => (
+          <PriorityItem key={k} remId={k} depth={depth + 1} now={now} priority={priority} />
+        ))}
+      {menu && (
+        <Menu
+          anchor={menu.anchor}
+          entries={menu.entries}
+          onClose={() => setMenu(null)}
+          align="end"
+        />
+      )}
     </>
   );
 }

@@ -144,9 +144,21 @@ export class SyncEngine {
       const rows: RemoteRow[] = entries.map((e) => {
         const record = this.store.getRecord(e.collection, e.id);
         if (!record || e.deleted) {
-          return { collection: e.collection, id: e.id, data: null, deleted: true, updated_at: e.updatedAt };
+          return {
+            collection: e.collection,
+            id: e.id,
+            data: null,
+            deleted: true,
+            updated_at: e.updatedAt,
+          };
         }
-        return { collection: e.collection, id: e.id, data: record, deleted: false, updated_at: record.updatedAt };
+        return {
+          collection: e.collection,
+          id: e.id,
+          data: record,
+          deleted: false,
+          updated_at: record.updatedAt,
+        };
       });
       await this.remote.push(rows);
       await this.persistence.removeFromOutbox(entries);
@@ -161,7 +173,9 @@ export class SyncEngine {
       const rows = await this.remote.pull(since, BATCH);
       if (rows.length === 0) return;
       // Never overwrite local changes that are still waiting for upload.
-      const pending = new Map((await this.persistence.outbox(100_000)).map((e) => [e.key, e.updatedAt]));
+      const pending = new Map(
+        (await this.persistence.outbox(100_000)).map((e) => [e.key, e.updatedAt]),
+      );
       const items = rows
         .filter((r) => (pending.get(`${r.collection}:${r.id}`) ?? -1) < r.updated_at)
         .map((r) => ({

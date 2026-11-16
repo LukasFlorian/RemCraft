@@ -73,7 +73,10 @@ export interface GlobalQueueOptions {
 
 /** True when a (re)learning card is due within the learn-ahead window. */
 export function isLearningDue(state: CardState, now: Timestamp, learnAheadMinutes = 20): boolean {
-  return (state.phase === 'learning' || state.phase === 'relearning') && state.due <= now + learnAheadMinutes * MINUTE;
+  return (
+    (state.phase === 'learning' || state.phase === 'relearning') &&
+    state.due <= now + learnAheadMinutes * MINUTE
+  );
 }
 
 /** True when a review-phase card is due by the end of the study day. */
@@ -97,7 +100,10 @@ export function shuffle<T>(items: readonly T[], rng: Rng = Math.random): T[] {
  * @param entries All enabled cards with their resolved priority.
  * @param opts Limits, quotas and ordering options.
  */
-export function buildGlobalQueue(entries: readonly QueueEntry[], opts: GlobalQueueOptions): QueuedCard[] {
+export function buildGlobalQueue(
+  entries: readonly QueueEntry[],
+  opts: GlobalQueueOptions,
+): QueuedCard[] {
   const { now, dayStartHour } = opts;
   const learnAhead = opts.learnAheadMinutes ?? 20;
   const byRisk = (a: QueueEntry, b: QueueEntry): number =>
@@ -133,7 +139,12 @@ export function buildGlobalQueue(entries: readonly QueueEntry[], opts: GlobalQue
       .slice(0, q.newQuota)
       .forEach((e) => push(e, 'exam-new', examId));
     inExam
-      .filter((e) => e.state.phase === 'review' && (e.state.lastReview ?? 0) < q.finalReviewStart && !taken.has(e.cardId))
+      .filter(
+        (e) =>
+          e.state.phase === 'review' &&
+          (e.state.lastReview ?? 0) < q.finalReviewStart &&
+          !taken.has(e.cardId),
+      )
       .sort(byRisk)
       .slice(0, q.finalReviewQuota)
       .forEach((e) => push(e, 'exam-final', examId));
@@ -141,14 +152,21 @@ export function buildGlobalQueue(entries: readonly QueueEntry[], opts: GlobalQue
 
   // 3.-5. Regular priorities.
   let newLeft = Math.max(0, opts.newCardsPerDay - opts.newIntroducedToday);
-  const regular = (priority: EffectivePriority, reviewBucket: QueueBucket, newBucket: QueueBucket | null): void => {
+  const regular = (
+    priority: EffectivePriority,
+    reviewBucket: QueueBucket,
+    newBucket: QueueBucket | null,
+  ): void => {
     const group = live.filter((e) => e.priority === priority);
     group
       .filter((e) => isReviewDue(e.state, now, dayStartHour))
       .sort(byRisk)
       .forEach((e) => push(e, reviewBucket));
     if (newBucket && newLeft > 0) {
-      const fresh = group.filter((e) => e.state.phase === 'new').sort(byDoc).slice(0, newLeft);
+      const fresh = group
+        .filter((e) => e.state.phase === 'new')
+        .sort(byDoc)
+        .slice(0, newLeft);
       fresh.forEach((e) => push(e, newBucket));
       newLeft -= fresh.length;
     }
@@ -160,7 +178,10 @@ export function buildGlobalQueue(entries: readonly QueueEntry[], opts: GlobalQue
   if (opts.shuffle) {
     // Keep learning cards first; shuffle the rest.
     const learning = out.filter((q) => q.bucket === 'learning');
-    const rest = shuffle(out.filter((q) => q.bucket !== 'learning'), opts.rng);
+    const rest = shuffle(
+      out.filter((q) => q.bucket !== 'learning'),
+      opts.rng,
+    );
     return [...learning, ...rest];
   }
   return out;
@@ -180,13 +201,27 @@ export type DocumentPracticeMode = 'srs' | 'all' | 'all-in-order' | 'cram';
 export function buildDocumentQueue(
   entries: readonly QueueEntry[],
   mode: DocumentPracticeMode,
-  opts: { now: Timestamp; dayStartHour: number; retrievability: (e: QueueEntry) => number; rng?: Rng },
+  opts: {
+    now: Timestamp;
+    dayStartHour: number;
+    retrievability: (e: QueueEntry) => number;
+    rng?: Rng;
+  },
 ): QueuedCard[] {
   const live = entries.filter((e) => !e.state.disabled);
-  const toQueued = (e: QueueEntry, bucket: QueueBucket): QueuedCard => ({ cardId: e.cardId, bucket });
-  if (mode === 'all-in-order') return [...live].sort((a, b) => a.docOrder - b.docOrder).map((e) => toQueued(e, 'active-review'));
-  if (mode === 'all' || mode === 'cram') return shuffle(live, opts.rng).map((e) => toQueued(e, 'active-review'));
-  const learning = live.filter((e) => isLearningDue(e.state, opts.now)).sort((a, b) => a.state.due - b.state.due);
+  const toQueued = (e: QueueEntry, bucket: QueueBucket): QueuedCard => ({
+    cardId: e.cardId,
+    bucket,
+  });
+  if (mode === 'all-in-order')
+    return [...live]
+      .sort((a, b) => a.docOrder - b.docOrder)
+      .map((e) => toQueued(e, 'active-review'));
+  if (mode === 'all' || mode === 'cram')
+    return shuffle(live, opts.rng).map((e) => toQueued(e, 'active-review'));
+  const learning = live
+    .filter((e) => isLearningDue(e.state, opts.now))
+    .sort((a, b) => a.state.due - b.state.due);
   const due = live
     .filter((e) => isReviewDue(e.state, opts.now, opts.dayStartHour))
     .sort((a, b) => opts.retrievability(a) - opts.retrievability(b));
@@ -202,11 +237,21 @@ export function buildDocumentQueue(
  * Counts cards due today - the number shown on "N Due" badges. Like RemNote,
  * cards that were never practiced count as due by default.
  */
-export function countDue(entries: readonly QueueEntry[], now: Timestamp, dayStartHour: number, includeNew = true): number {
+export function countDue(
+  entries: readonly QueueEntry[],
+  now: Timestamp,
+  dayStartHour: number,
+  includeNew = true,
+): number {
   let n = 0;
   for (const e of entries) {
     if (e.state.disabled) continue;
-    if (isReviewDue(e.state, now, dayStartHour) || isLearningDue(e.state, now) || (includeNew && e.state.phase === 'new')) n++;
+    if (
+      isReviewDue(e.state, now, dayStartHour) ||
+      isLearningDue(e.state, now) ||
+      (includeNew && e.state.phase === 'new')
+    )
+      n++;
   }
   return n;
 }

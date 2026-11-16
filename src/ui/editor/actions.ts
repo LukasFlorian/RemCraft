@@ -20,7 +20,16 @@ export interface EditorEnv {
 
 /** True when a Rem has no visible content. */
 export function isBlank(rem: Rem): boolean {
-  return isEmpty(rem.text) && (rem.back === null || isEmpty(rem.back)) && !rem.image && !rem.divider && !rem.portalOf && !rem.searchQuery && !rem.file && !rem.embed;
+  return (
+    isEmpty(rem.text) &&
+    (rem.back === null || isEmpty(rem.back)) &&
+    !rem.image &&
+    !rem.divider &&
+    !rem.portalOf &&
+    !rem.searchQuery &&
+    !rem.file &&
+    !rem.embed
+  );
 }
 
 /**
@@ -40,7 +49,12 @@ export function splitRem(env: EditorEnv, remId: RemId, before: PMNode, after: PM
   const root = controller.rootOf(instance);
 
   // Enter on an empty nested Rem outdents it (common outliner behaviour).
-  if (isBlank(rem) && rem.parentId !== root && rem.parentId !== null && app.store.children(remId).length === 0) {
+  if (
+    isBlank(rem) &&
+    rem.parentId !== root &&
+    rem.parentId !== null &&
+    app.store.children(remId).length === 0
+  ) {
     app.rems.outdent([remId], root ?? null);
     controller.focus(instance, remId, 'start');
     return;
@@ -50,10 +64,16 @@ export function splitRem(env: EditorEnv, remId: RemId, before: PMNode, after: PM
   const asFirstChild = children.length > 0 && !rem.collapsed;
   const newRem = app.store.transact((tx) => {
     tx.update('rems', remId, head);
-    return app.rems.createIn(tx, asFirstChild ? { parentId: remId, afterId: null } : { parentId: rem.parentId, afterId: remId }, {
-      ...tail,
-      ...(rem.todo ? { todo: 'unfinished' as const } : {}),
-    });
+    return app.rems.createIn(
+      tx,
+      asFirstChild
+        ? { parentId: remId, afterId: null }
+        : { parentId: rem.parentId, afterId: remId },
+      {
+        ...tail,
+        ...(rem.todo ? { todo: 'unfinished' as const } : {}),
+      },
+    );
   });
   controller.focus(instance, newRem.id, 'start');
 }
@@ -99,20 +119,25 @@ export function backspaceAtStart(env: EditorEnv, remId: RemId): boolean {
 
 /** Indents the given Rems and keeps the caret. */
 export function indent(env: EditorEnv, ids: RemId[], caret: CaretRequest | null): void {
-  if (env.app.rems.indent(ids) && caret !== null && ids[0]) env.controller.focus(env.instance, ids[0], caret);
+  if (env.app.rems.indent(ids) && caret !== null && ids[0])
+    env.controller.focus(env.instance, ids[0], caret);
 }
 
 /** Outdents the given Rems (never above the outliner root) and keeps the caret. */
 export function outdent(env: EditorEnv, ids: RemId[], caret: CaretRequest | null): void {
   const root = env.controller.rootOf(env.instance) ?? null;
-  if (env.app.rems.outdent(ids, root) && caret !== null && ids[0]) env.controller.focus(env.instance, ids[0], caret);
+  if (env.app.rems.outdent(ids, root) && caret !== null && ids[0])
+    env.controller.focus(env.instance, ids[0], caret);
 }
 
 /** Deletes Rems and focuses the Rem above. */
 export function deleteRems(env: EditorEnv, ids: RemId[]): void {
   const visible = env.controller.visibleIds(env.instance);
   const first = visible.indexOf(ids[0] ?? '');
-  const prev = visible.slice(0, Math.max(0, first)).reverse().find((id) => !ids.includes(id));
+  const prev = visible
+    .slice(0, Math.max(0, first))
+    .reverse()
+    .find((id) => !ids.includes(id));
   env.app.rems.delete(ids);
   if (prev) env.controller.focus(env.instance, prev, 'end');
   else env.controller.blur();

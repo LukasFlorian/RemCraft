@@ -43,7 +43,11 @@ type Pending =
 export function DialogProvider({ children }: { children: ReactNode }): ReactNode {
   const [pending, setPending] = useState<Pending | null>(null);
   const [text, setText] = useState('');
-  const confirm = useCallback((options: ConfirmOptions) => new Promise<boolean>((resolve) => setPending({ kind: 'confirm', options, resolve })), []);
+  const confirm = useCallback(
+    (options: ConfirmOptions) =>
+      new Promise<boolean>((resolve) => setPending({ kind: 'confirm', options, resolve })),
+    [],
+  );
   const prompt = useCallback(
     (options: PromptOptions) =>
       new Promise<string | null>((resolve) => {
@@ -70,7 +74,10 @@ export function DialogProvider({ children }: { children: ReactNode }): ReactNode
               <button className="btn" onClick={() => close(false)}>
                 Cancel
               </button>
-              <button className={`btn ${pending.kind === 'confirm' && pending.options.danger ? 'btn-danger' : 'btn-primary'}`} onClick={() => close(true)}>
+              <button
+                className={`btn ${pending.kind === 'confirm' && pending.options.danger ? 'btn-danger' : 'btn-primary'}`}
+                onClick={() => close(true)}
+              >
                 {pending.options.confirmLabel ?? 'OK'}
               </button>
             </>
@@ -87,7 +94,12 @@ export function DialogProvider({ children }: { children: ReactNode }): ReactNode
               className="field"
             >
               {pending.options.label && <label>{pending.options.label}</label>}
-              <input className="input" autoFocus value={text} onChange={(e) => setText(e.target.value)} />
+              <input
+                className="input"
+                autoFocus
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
             </form>
           )}
         </Modal>

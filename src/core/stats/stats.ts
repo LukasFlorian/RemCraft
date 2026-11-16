@@ -3,10 +3,19 @@
  * retention, card maturity, due forecast and the daily goal.
  */
 import type { CardState, DailyGoalMode, ReviewLog, Timestamp } from '../model/types';
-import { addStudyDays, isoDate, parseIsoDate, startOfStudyDay, studyDaysBetween } from '../util/time';
+import {
+  addStudyDays,
+  isoDate,
+  parseIsoDate,
+  startOfStudyDay,
+  studyDaysBetween,
+} from '../util/time';
 
 /** Reviews per study day, keyed by ISO date of the study day's start. */
-export function reviewsPerDay(logs: readonly ReviewLog[], dayStartHour: number): Map<string, number> {
+export function reviewsPerDay(
+  logs: readonly ReviewLog[],
+  dayStartHour: number,
+): Map<string, number> {
   const out = new Map<string, number>();
   for (const log of logs) {
     const key = isoDate(startOfStudyDay(log.reviewedAt, dayStartHour));
@@ -16,7 +25,12 @@ export function reviewsPerDay(logs: readonly ReviewLog[], dayStartHour: number):
 }
 
 /** Counts for the last `days` study days ending today (oldest first). */
-export function lastDaysCounts(perDay: ReadonlyMap<string, number>, now: Timestamp, days: number, dayStartHour: number): { day: Timestamp; count: number }[] {
+export function lastDaysCounts(
+  perDay: ReadonlyMap<string, number>,
+  now: Timestamp,
+  days: number,
+  dayStartHour: number,
+): { day: Timestamp; count: number }[] {
   const out: { day: Timestamp; count: number }[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const day = addStudyDays(now, -i, dayStartHour);
@@ -43,7 +57,12 @@ export interface StreakInfo {
  * @param now Current time.
  * @param dayStartHour Study-day boundary.
  */
-export function computeStreak(perDay: ReadonlyMap<string, number>, goal: number, now: Timestamp, dayStartHour: number): StreakInfo {
+export function computeStreak(
+  perDay: ReadonlyMap<string, number>,
+  goal: number,
+  now: Timestamp,
+  dayStartHour: number,
+): StreakInfo {
   const hit = (t: Timestamp): boolean => (perDay.get(isoDate(t)) ?? 0) >= Math.max(1, goal);
   const today = perDay.get(isoDate(startOfStudyDay(now, dayStartHour))) ?? 0;
   const hitToday = today >= Math.max(1, goal);
@@ -55,13 +74,20 @@ export function computeStreak(perDay: ReadonlyMap<string, number>, goal: number,
     cursor--;
   }
   // Longest streak over all recorded days.
-  const days = [...perDay.entries()].filter(([, n]) => n >= Math.max(1, goal)).map(([d]) => d).sort();
+  const days = [...perDay.entries()]
+    .filter(([, n]) => n >= Math.max(1, goal))
+    .map(([d]) => d)
+    .sort();
   let longest = 0;
   let run = 0;
   let prev: string | null = null;
   for (const d of days) {
     // Keys are local calendar dates; compare them at local noon to be DST-safe.
-    if (prev !== null && studyDaysBetween(parseIsoDate(prev) + 12 * 3600_000, parseIsoDate(d) + 12 * 3600_000, 0) === 1) run++;
+    if (
+      prev !== null &&
+      studyDaysBetween(parseIsoDate(prev) + 12 * 3600_000, parseIsoDate(d) + 12 * 3600_000, 0) === 1
+    )
+      run++;
     else run = 1;
     longest = Math.max(longest, run);
     prev = d;
@@ -99,7 +125,14 @@ export interface CardCounts {
 
 /** Counts cards per maturity bucket. */
 export function cardCounts(states: readonly CardState[]): CardCounts {
-  const c: CardCounts = { new: 0, learning: 0, young: 0, mature: 0, disabled: 0, total: states.length };
+  const c: CardCounts = {
+    new: 0,
+    learning: 0,
+    young: 0,
+    mature: 0,
+    disabled: 0,
+    total: states.length,
+  };
   for (const s of states) {
     if (s.disabled) c.disabled++;
     else if (s.phase === 'new') c.new++;
@@ -114,7 +147,12 @@ export function cardCounts(states: readonly CardState[]): CardCounts {
  * Number of reviews due on each of the next `days` study days (today first;
  * overdue cards count for today).
  */
-export function dueForecast(states: readonly CardState[], now: Timestamp, days: number, dayStartHour: number): number[] {
+export function dueForecast(
+  states: readonly CardState[],
+  now: Timestamp,
+  days: number,
+  dayStartHour: number,
+): number[] {
   const out = new Array<number>(days).fill(0);
   for (const s of states) {
     if (s.disabled || s.phase === 'new') continue;
@@ -156,9 +194,18 @@ export interface DailyGoal {
  * @param correctToday Correct answers today.
  * @param customNumber Target for `custom-number` mode.
  */
-export function computeDailyGoal(mode: DailyGoalMode, queuedForGoal: number, correctToday: number, customNumber: number): DailyGoal {
+export function computeDailyGoal(
+  mode: DailyGoalMode,
+  queuedForGoal: number,
+  correctToday: number,
+  customNumber: number,
+): DailyGoal {
   if (mode === 'custom-number') {
-    return { target: customNumber, done: correctToday, remaining: Math.max(0, customNumber - correctToday) };
+    return {
+      target: customNumber,
+      done: correctToday,
+      remaining: Math.max(0, customNumber - correctToday),
+    };
   }
   return { target: correctToday + queuedForGoal, done: correctToday, remaining: queuedForGoal };
 }

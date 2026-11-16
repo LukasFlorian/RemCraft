@@ -4,18 +4,35 @@
  */
 import { createCardState } from '@core/model/factories';
 import { isInSubtree } from '@core/model/graph';
-import type { CardId, CardState, PracticeMode, Rating, RemId, ReviewLog, Timestamp } from '@core/model/types';
+import type {
+  CardId,
+  CardState,
+  PracticeMode,
+  Rating,
+  RemId,
+  ReviewLog,
+  Timestamp,
+} from '@core/model/types';
 import { applyExamPolicy } from '@core/scheduling/exam';
 import type { DocumentPracticeMode, QueuedCard } from '@core/scheduling/queue';
 import { buildDocumentQueue } from '@core/scheduling/queue';
 import { previewRatings } from '@core/scheduling/scheduler';
 import { newId } from '@core/util/ids';
 import { DAY, HOUR } from '@core/util/time';
-import { cardStateOf, schedulerById, selectCardIndex, selectGlobalQueue, selectInheritance, selectQueueEntries, selectSettings } from '../selectors';
+import {
+  cardStateOf,
+  schedulerById,
+  selectCardIndex,
+  selectGlobalQueue,
+  selectInheritance,
+  selectQueueEntries,
+  selectSettings,
+} from '../selectors';
 import type { Store } from '../store/store';
 
 /** Where a practice session draws its cards from. */
-export type PracticeScope = { kind: 'global' } | { kind: 'rem'; remId: RemId; mode: DocumentPracticeMode };
+export type PracticeScope =
+  { kind: 'global' } | { kind: 'rem'; remId: RemId; mode: DocumentPracticeMode };
 
 /** Result of answering a card. */
 export interface AnswerResult {
@@ -37,11 +54,14 @@ export class PracticeService {
     if (scope.kind === 'global') return selectGlobalQueue(this.store, now);
     const settings = selectSettings(this.store);
     const inherited = selectInheritance(this.store, now);
-    const entries = selectQueueEntries(this.store, now).filter((e) => isInSubtree(this.store, e.remId, scope.remId));
+    const entries = selectQueueEntries(this.store, now).filter((e) =>
+      isInSubtree(this.store, e.remId, scope.remId),
+    );
     return buildDocumentQueue(entries, scope.mode, {
       now,
       dayStartHour: settings.dayStartHour,
-      retrievability: (e) => schedulerById(this.store, inherited.get(e.remId)?.schedulerId).retrievability(e.state, now),
+      retrievability: (e) =>
+        schedulerById(this.store, inherited.get(e.remId)?.schedulerId).retrievability(e.state, now),
     });
   }
 
@@ -58,9 +78,17 @@ export class PracticeService {
   previews(cardId: CardId, now: Timestamp): Record<Rating, number> | undefined {
     const state = this.stateOf(cardId);
     if (!state) return undefined;
-    const scheduler = schedulerById(this.store, selectInheritance(this.store, now).get(state.remId)?.schedulerId);
+    const scheduler = schedulerById(
+      this.store,
+      selectInheritance(this.store, now).get(state.remId)?.schedulerId,
+    );
     const next = previewRatings(scheduler, state, now);
-    return { 1: next[1].due - now, 2: next[2].due - now, 3: next[3].due - now, 4: next[4].due - now };
+    return {
+      1: next[1].due - now,
+      2: next[2].due - now,
+      3: next[3].due - now,
+      4: next[4].due - now,
+    };
   }
 
   /**
@@ -70,7 +98,11 @@ export class PracticeService {
    * @param rating Self-assessment.
    * @param opts Time, duration and mode. In `cram` mode nothing is stored.
    */
-  answer(cardId: CardId, rating: Rating, opts: { now: Timestamp; durationMs: number; mode: PracticeMode }): AnswerResult | undefined {
+  answer(
+    cardId: CardId,
+    rating: Rating,
+    opts: { now: Timestamp; durationMs: number; mode: PracticeMode },
+  ): AnswerResult | undefined {
     const before = this.stateOf(cardId);
     if (!before) return undefined;
     const { now } = opts;
@@ -131,7 +163,9 @@ export class PracticeService {
   skip(cardId: CardId, now: Timestamp): void {
     const state = this.stateOf(cardId);
     if (!state || state.phase === 'new') return;
-    this.store.transact((tx) => void tx.put('cards', { ...state, due: now + HOUR }), { undoable: false });
+    this.store.transact((tx) => void tx.put('cards', { ...state, due: now + HOUR }), {
+      undoable: false,
+    });
   }
 
   /** Enables/disables cards. */
@@ -149,7 +183,11 @@ export class PracticeService {
     this.store.transact((tx) => {
       for (const id of cardIds) {
         const state = this.stateOf(id);
-        if (state) tx.put('cards', { ...createCardState(id, state.remId, state.createdAt), ...(state.disabled ? { disabled: true } : {}) });
+        if (state)
+          tx.put('cards', {
+            ...createCardState(id, state.remId, state.createdAt),
+            ...(state.disabled ? { disabled: true } : {}),
+          });
       }
     });
   }

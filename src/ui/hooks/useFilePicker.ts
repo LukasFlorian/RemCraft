@@ -19,7 +19,11 @@ export function pickFiles(accept: string, multiple = false): Promise<File[]> {
       input.remove();
     });
     // Resolve with nothing if the dialog is dismissed (focus returns to the window).
-    window.addEventListener('focus', () => setTimeout(() => !input.files?.length && resolve([]), 500), { once: true });
+    window.addEventListener(
+      'focus',
+      () => setTimeout(() => !input.files?.length && resolve([]), 500),
+      { once: true },
+    );
     document.body.appendChild(input);
     input.click();
   });

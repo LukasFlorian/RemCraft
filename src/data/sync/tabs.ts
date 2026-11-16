@@ -21,7 +21,8 @@ export class TabSync {
   private readonly unsubscribe: () => void;
 
   constructor(store: Store, channelName = 'remcraft') {
-    this.channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(channelName);
+    this.channel =
+      typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(channelName);
     this.unsubscribe = store.onCommit((event) => {
       if (!this.channel || event.origin === 'tab' || event.origin === 'load') return;
       const items: TabMessageItem[] = event.changes.map((c) => ({
@@ -33,7 +34,8 @@ export class TabSync {
       this.channel.postMessage(items);
     });
     if (this.channel) {
-      this.channel.onmessage = (msg: MessageEvent<TabMessageItem[]>) => store.applyExternal(msg.data, 'tab');
+      this.channel.onmessage = (msg: MessageEvent<TabMessageItem[]>) =>
+        store.applyExternal(msg.data, 'tab');
     }
   }
 

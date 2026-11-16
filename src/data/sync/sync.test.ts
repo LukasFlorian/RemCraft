@@ -8,7 +8,12 @@ const USER: AuthUser = { id: 'user-1', email: 'u@example.com' };
 
 /** A "device": an app with its own local storage, connected to the server. */
 async function device(server: FakeServer, seed = false): Promise<RemCraftApp> {
-  const app = await RemCraftApp.create({ persistence: new MemoryAdapter(), backend: null, seed, remoteFactory: () => server.client() });
+  const app = await RemCraftApp.create({
+    persistence: new MemoryAdapter(),
+    backend: null,
+    seed,
+    remoteFactory: () => server.client(),
+  });
   await app.handleUser(USER);
   await app.syncNow();
   return app;
@@ -63,9 +68,17 @@ describe('multi-device sync', () => {
 
   it('syncs reviews and uploads pre-existing local data on first sign-in', async () => {
     const server = new FakeServer();
-    const offline = await RemCraftApp.create({ persistence: new MemoryAdapter(), backend: null, seed: false, remoteFactory: () => server.client() });
+    const offline = await RemCraftApp.create({
+      persistence: new MemoryAdapter(),
+      backend: null,
+      seed: false,
+      remoteFactory: () => server.client(),
+    });
     const doc = offline.rems.createDocument(null, 'Made offline');
-    const q = offline.rems.create({ parentId: doc.id }, { text: rt('Q'), back: rt('A'), direction: 'forward' });
+    const q = offline.rems.create(
+      { parentId: doc.id },
+      { text: rt('Q'), back: rt('A'), direction: 'forward' },
+    );
     offline.practice.answer(`${q.id}/f`, 3, { now: Date.now(), durationMs: 1, mode: 'srs' });
     await offline.flush();
     await offline.handleUser(USER);

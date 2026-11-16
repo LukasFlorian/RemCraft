@@ -26,7 +26,15 @@ export class FileService {
    */
   async save(file: Blob, name = 'file'): Promise<string> {
     const id = newId();
-    await this.persistence.putFile({ id, name, mimeType: file.type || 'application/octet-stream', size: file.size, blob: file, uploaded: false, createdAt: Date.now() });
+    await this.persistence.putFile({
+      id,
+      name,
+      mimeType: file.type || 'application/octet-stream',
+      size: file.size,
+      blob: file,
+      uploaded: false,
+      createdAt: Date.now(),
+    });
     return FILE_PREFIX + id;
   }
 
@@ -43,7 +51,15 @@ export class FileService {
     if (!stored && this.remote) {
       try {
         const blob = await this.remote.downloadFile(id);
-        stored = { id, name: id, mimeType: blob.type, size: blob.size, blob, uploaded: true, createdAt: Date.now() };
+        stored = {
+          id,
+          name: id,
+          mimeType: blob.type,
+          size: blob.size,
+          blob,
+          uploaded: true,
+          createdAt: Date.now(),
+        };
         await this.persistence.putFile(stored);
       } catch {
         return null;

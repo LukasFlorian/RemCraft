@@ -16,7 +16,8 @@ export class MemoryAdapter implements PersistenceAdapter {
 
   async loadAll(): Promise<CollectionData> {
     const data = emptyData();
-    for (const [name, map] of this.records) (data[name] as RecordOf<CollectionName>[]).push(...map.values());
+    for (const [name, map] of this.records)
+      (data[name] as RecordOf<CollectionName>[]).push(...map.values());
     return data;
   }
 
@@ -46,7 +47,13 @@ export class MemoryAdapter implements PersistenceAdapter {
   async enqueueAll(): Promise<void> {
     for (const [collection, map] of this.records) {
       for (const r of map.values()) {
-        this.box.set(`${collection}:${r.id}`, { key: `${collection}:${r.id}`, collection, id: r.id, updatedAt: r.updatedAt, deleted: false });
+        this.box.set(`${collection}:${r.id}`, {
+          key: `${collection}:${r.id}`,
+          collection,
+          id: r.id,
+          updatedAt: r.updatedAt,
+          deleted: false,
+        });
       }
     }
   }

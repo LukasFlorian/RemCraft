@@ -26,7 +26,8 @@ export function useCommandContextFactory(): (remId: RemId, instance: string) => 
     remId,
     view: controller.activeView?.remId === remId ? controller.activeView.view : null,
     navigate: (path) => navigate(path),
-    prompt: (title, initial) => dialogs.prompt({ title, ...(initial !== undefined ? { initial } : {}) }),
+    prompt: (title, initial) =>
+      dialogs.prompt({ title, ...(initial !== undefined ? { initial } : {}) }),
     pickFile: async (accept) => (await pickFiles(accept))[0] ?? null,
     toast: (m) => toast(m),
     openOcclusion: (id) => modals.open({ kind: 'occlusion', remId: id }),

@@ -8,7 +8,13 @@ import { ancestors } from '../model/graph';
 import type { RemGraph } from '../model/graph';
 import type { CardId, Rem, RemId, RemImage, RemKind, RichText } from '../model/types';
 import { toPlainText } from '../richtext/ops';
-import { answerChildren, effectiveAnswerMode, parseCardId, SLOT_BACKWARD, SLOT_FORWARD } from './generate';
+import {
+  answerChildren,
+  effectiveAnswerMode,
+  parseCardId,
+  SLOT_BACKWARD,
+  SLOT_FORWARD,
+} from './generate';
 
 /** Fields shared by all card views. */
 interface CommonView {
@@ -83,7 +89,11 @@ export type CardView = BasicView | SetView | ListView | McView | ClozeView | Occ
 /**
  * Whether a powerup flag is set on the Rem or any ancestor.
  */
-function inherited(rem: Rem, chain: readonly Rem[], key: 'typeInAnswer' | 'hideContextInQueue'): boolean {
+function inherited(
+  rem: Rem,
+  chain: readonly Rem[],
+  key: 'typeInAnswer' | 'hideContextInQueue',
+): boolean {
   if (rem[key]) return true;
   return chain.some((a) => a[key]);
 }
@@ -95,7 +105,10 @@ function inherited(rem: Rem, chain: readonly Rem[], key: 'typeInAnswer' | 'hideC
 export function mcOptions(children: readonly Rem[]): { remId: RemId; correct: boolean }[] {
   const options = answerChildren(children);
   const anyMarked = options.some((o) => o.mcCorrect !== undefined);
-  return options.map((o, i) => ({ remId: o.id, correct: anyMarked ? o.mcCorrect === true : i === 0 }));
+  return options.map((o, i) => ({
+    remId: o.id,
+    correct: anyMarked ? o.mcCorrect === true : i === 0,
+  }));
 }
 
 /**
@@ -141,7 +154,14 @@ export function buildCardView(cardId: CardId, graph: RemGraph): CardView | undef
     const occlusionId = slot.slice(2);
     if (!rem.image?.occlusions?.some((o) => o.id === occlusionId)) return undefined;
     const label = rem.image.occlusions.find((o) => o.id === occlusionId)?.label ?? '';
-    return { ...common, type: 'occlusion', question: rem.text, image: rem.image, occlusionId, expectedAnswer: label };
+    return {
+      ...common,
+      type: 'occlusion',
+      question: rem.text,
+      image: rem.image,
+      occlusionId,
+      expectedAnswer: label,
+    };
   }
 
   if (slot !== SLOT_FORWARD && slot !== SLOT_BACKWARD) return undefined;

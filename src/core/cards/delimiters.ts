@@ -81,7 +81,9 @@ export const DELIMITERS: readonly DelimiterSpec[] = Object.freeze([
 ]);
 
 /** Delimiters sorted by token length (longest first) for greedy matching. */
-const BY_LENGTH: readonly DelimiterSpec[] = [...DELIMITERS].sort((a, b) => b.token.length - a.token.length);
+const BY_LENGTH: readonly DelimiterSpec[] = [...DELIMITERS].sort(
+  (a, b) => b.token.length - a.token.length,
+);
 
 /** Characters any delimiter starts with (fast pre-check). */
 const START_CHARS = new Set(DELIMITERS.map((s) => s.token[0]));
@@ -124,7 +126,13 @@ export function findSeparator(line: string): SeparatorMatch | null {
         if (!rest.startsWith(spec.token)) continue;
         const after = rest.slice(spec.token.length);
         if (spec.endOnly && after.trim() !== '') continue;
-        if (spec.token.endsWith('-') && spec.token.length === 2 && after !== '' && !/^\s/.test(after)) continue;
+        if (
+          spec.token.endsWith('-') &&
+          spec.token.length === 2 &&
+          after !== '' &&
+          !/^\s/.test(after)
+        )
+          continue;
         return { index: i, spec };
       }
     }
@@ -160,12 +168,20 @@ export function splitCardLine(line: string): SplitLine {
  * Returns the canonical delimiter for a combination of card settings, or
  * `null` when the combination has no delimiter (plain Rem).
  */
-export function canonicalDelimiter(kind: RemKind, direction: CardDirection, answerMode: AnswerMode): string | null {
+export function canonicalDelimiter(
+  kind: RemKind,
+  direction: CardDirection,
+  answerMode: AnswerMode,
+): string | null {
   if (direction === 'none') return null;
-  const exact = DELIMITERS.find((s) => s.kind === kind && s.direction === direction && s.answerMode === answerMode);
+  const exact = DELIMITERS.find(
+    (s) => s.kind === kind && s.direction === direction && s.answerMode === answerMode,
+  );
   if (exact) return exact.token;
   // Fall back to the inline delimiter of the same kind/direction.
-  const inline = DELIMITERS.find((s) => s.kind === kind && s.direction === direction && s.answerMode === 'inline');
+  const inline = DELIMITERS.find(
+    (s) => s.kind === kind && s.direction === direction && s.answerMode === 'inline',
+  );
   return inline?.token ?? '>>';
 }
 

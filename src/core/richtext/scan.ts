@@ -66,7 +66,12 @@ export function protectedRegionEnd(line: string, i: number): number {
     const end = line.indexOf(')', i + 2);
     return end === -1 ? -1 : end + 1;
   }
-  if (line.startsWith('<mark', i) || line.startsWith('</mark', i) || line.startsWith('<u>', i) || line.startsWith('</u>', i)) {
+  if (
+    line.startsWith('<mark', i) ||
+    line.startsWith('</mark', i) ||
+    line.startsWith('<u>', i) ||
+    line.startsWith('</u>', i)
+  ) {
     const end = line.indexOf('>', i);
     return end === -1 ? -1 : end + 1;
   }

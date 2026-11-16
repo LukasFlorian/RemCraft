@@ -54,7 +54,8 @@ export function PracticePage(): ReactNode {
   }, [app, scopeParam, modeParam]);
   const session = useMemo(() => new PracticeSession(initial.map((q) => q.cardId)), [initial]);
 
-  const mode: PracticeMode = scopeParam === 'global' || scopeParam.startsWith('exam:') ? 'srs' : modeParam;
+  const mode: PracticeMode =
+    scopeParam === 'global' || scopeParam.startsWith('exam:') ? 'srs' : modeParam;
   const [tick, setTick] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [suggested, setSuggested] = useState<Rating | null>(null);
@@ -65,10 +66,14 @@ export function PracticePage(): ReactNode {
 
   const cardId = session.current(Date.now());
   // Re-render when the card's Rem changes (e.g. edited during practice).
-  const view = useSelector((s) => (cardId ? s.memo(`view:${cardId}`, [s.collectionVersion('rems')], () => selectCardView(s, cardId)) : undefined));
-  const previews = useMemo(() => (cardId && revealed ? app.practice.previews(cardId, Date.now()) : undefined), [app, cardId, revealed, tick]); // eslint-disable-line react-hooks/exhaustive-deps
+  const view = useSelector((s) =>
+    cardId
+      ? s.memo(`view:${cardId}`, [s.collectionVersion('rems')], () => selectCardView(s, cardId))
+      : undefined,
+  );
+  // Computed on reveal; cheap, so no memoisation is needed.
+  const previews = cardId && revealed ? app.practice.previews(cardId, Date.now()) : undefined;
   const progress = session.progress();
-  void tick;
 
   useEffect(() => {
     shownAt.current = Date.now();
@@ -92,13 +97,21 @@ export function PracticePage(): ReactNode {
   const answer = (rating: Rating): void => {
     if (!cardId || !revealed) return;
     const now = Date.now();
-    const result = app.practice.answer(cardId, rating, { now, durationMs: now - shownAt.current, mode });
+    const result = app.practice.answer(cardId, rating, {
+      now,
+      durationMs: now - shownAt.current,
+      mode,
+    });
     if (!result) return;
     logIds.current.push(result.log?.id ?? null);
     // In cram mode, forgotten cards come back; everything else is done.
     const nextDue = mode === 'cram' ? (rating === 1 ? now + 60_000 : null) : result.state.due;
     session.answer(cardId, nextDue, now);
-    setStats((s) => ({ ...s, answered: s.answered + 1, correct: s.correct + (rating > 1 ? 1 : 0) }));
+    setStats((s) => ({
+      ...s,
+      answered: s.answered + 1,
+      correct: s.correct + (rating > 1 ? 1 : 0),
+    }));
     advance();
   };
 
@@ -145,8 +158,13 @@ export function PracticePage(): ReactNode {
     { enabled: !editing },
   );
 
-  const title = useRemTitle(scopeParam !== 'global' && !scopeParam.startsWith('exam:') ? scopeParam : null, '');
-  const examName = useSelector((s) => (scopeParam.startsWith('exam:') ? s.getRecord('exams', scopeParam.slice(5))?.name : undefined));
+  const title = useRemTitle(
+    scopeParam !== 'global' && !scopeParam.startsWith('exam:') ? scopeParam : null,
+    '',
+  );
+  const examName = useSelector((s) =>
+    scopeParam.startsWith('exam:') ? s.getRecord('exams', scopeParam.slice(5))?.name : undefined,
+  );
 
   return (
     <div className="practice">
@@ -159,13 +177,34 @@ export function PracticePage(): ReactNode {
             {examName ?? (title || 'Daily queue')}
           </div>
           <div className="faint" style={{ fontSize: 12 }}>
-            {MODE_LABELS[scopeParam === 'global' ? 'global' : scopeParam.startsWith('exam:') ? 'exam' : modeParam]} · {progress.done} / {progress.total}
+            {
+              MODE_LABELS[
+                scopeParam === 'global'
+                  ? 'global'
+                  : scopeParam.startsWith('exam:')
+                    ? 'exam'
+                    : modeParam
+              ]
+            }{' '}
+            · {progress.done} / {progress.total}
           </div>
         </div>
-        <button className="icon-btn" aria-label="Undo last answer" title="Undo (U)" disabled={logIds.current.length === 0} onClick={undo}>
+        <button
+          className="icon-btn"
+          aria-label="Undo last answer"
+          title="Undo (U)"
+          disabled={logIds.current.length === 0}
+          onClick={undo}
+        >
           <Undo2 size={18} />
         </button>
-        <button className="icon-btn" aria-label="Edit card" title="Edit (E)" disabled={!cardId} onClick={() => setEditing(true)}>
+        <button
+          className="icon-btn"
+          aria-label="Edit card"
+          title="Edit (E)"
+          disabled={!cardId}
+          onClick={() => setEditing(true)}
+        >
           <Pencil size={18} />
         </button>
       </div>
@@ -173,26 +212,46 @@ export function PracticePage(): ReactNode {
 
       <div className="practice-body">
         {!cardId || !view ? (
-          <Finished answered={stats.answered} correct={stats.correct} startedAt={stats.startedAt} onDone={() => navigate('/flashcards')} />
+          <Finished
+            answered={stats.answered}
+            correct={stats.correct}
+            startedAt={stats.startedAt}
+            onDone={() => navigate('/flashcards')}
+          />
         ) : (
           <>
-            <CardFace view={view} revealed={revealed} onReveal={() => setRevealed(true)} onSuggest={setSuggested} grading={settings.typeInAnswerGrading} />
+            <CardFace
+              view={view}
+              revealed={revealed}
+              onReveal={() => setRevealed(true)}
+              onSuggest={setSuggested}
+              grading={settings.typeInAnswerGrading}
+            />
             <div className="practice-actions">
               {!revealed ? (
                 <div className="row" style={{ justifyContent: 'center' }}>
                   <button className="btn btn-ghost" onClick={skip} title="Skip (S)">
                     <SkipForward size={16} /> Skip
                   </button>
-                  <button className="btn btn-primary btn-lg show-answer" onClick={() => setRevealed(true)}>
+                  <button
+                    className="btn btn-primary btn-lg show-answer"
+                    onClick={() => setRevealed(true)}
+                  >
                     Show answer <Kbd>Space</Kbd>
                   </button>
                 </div>
               ) : (
                 <div className="rating-bar">
                   {RATINGS.map((r) => (
-                    <button key={r} className={`rating rating-${r}${suggested === r ? ' is-suggested' : ''}`} onClick={() => answer(r)}>
+                    <button
+                      key={r}
+                      className={`rating rating-${r}${suggested === r ? ' is-suggested' : ''}`}
+                      onClick={() => answer(r)}
+                    >
                       <span className="rating-label">{RATING_LABELS[r]}</span>
-                      <span className="rating-interval">{previews ? formatInterval(previews[r]) : ''}</span>
+                      <span className="rating-interval">
+                        {previews ? formatInterval(previews[r]) : ''}
+                      </span>
                       <Kbd>{r}</Kbd>
                     </button>
                   ))}
@@ -214,12 +273,25 @@ export function PracticePage(): ReactNode {
 /** Outliner around the card's Rem for quick edits. */
 function EditCard({ remId }: { remId: string }): ReactNode {
   const parentId = useSelector((s) => s.get(remId)?.parentId ?? null);
-  if (!parentId) return <div className="muted">This card is a top-level Rem; open it from the sidebar to edit.</div>;
+  if (!parentId)
+    return (
+      <div className="muted">This card is a top-level Rem; open it from the sidebar to edit.</div>
+    );
   return <Outliner rootId={parentId} embedded />;
 }
 
 /** Session summary. */
-function Finished({ answered, correct, startedAt, onDone }: { answered: number; correct: number; startedAt: number; onDone: () => void }): ReactNode {
+function Finished({
+  answered,
+  correct,
+  startedAt,
+  onDone,
+}: {
+  answered: number;
+  correct: number;
+  startedAt: number;
+  onDone: () => void;
+}): ReactNode {
   const minutes = Math.max(1, Math.round((Date.now() - startedAt) / 60000));
   return (
     <div className="practice-done">

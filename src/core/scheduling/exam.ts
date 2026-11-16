@@ -86,7 +86,11 @@ function quota(remaining: number, days: number): number {
  *
  * @returns Exam day, start of the final review and number of final-review days.
  */
-export function examWindows(exam: Exam, now: Timestamp, dayStartHour: number): {
+export function examWindows(
+  exam: Exam,
+  now: Timestamp,
+  dayStartHour: number,
+): {
   today: Timestamp;
   examDay: Timestamp;
   daysLeft: number;
@@ -101,7 +105,8 @@ export function examWindows(exam: Exam, now: Timestamp, dayStartHour: number): {
     // On the exam day itself the remaining time is the final review.
     finalDays = daysLeft === 0 ? 1 : Math.min(exam.finalReviewDays, daysLeft);
   }
-  const finalReviewStart = daysLeft === 0 && finalDays > 0 ? today : addStudyDays(examDay, -finalDays, dayStartHour);
+  const finalReviewStart =
+    daysLeft === 0 && finalDays > 0 ? today : addStudyDays(examDay, -finalDays, dayStartHour);
   return { today, examDay, daysLeft, finalReviewStart, finalDays };
 }
 
@@ -124,12 +129,18 @@ export function planExam(
   dayStartHour: number,
   scheduler: Scheduler,
 ): ExamPlan {
-  const { today, examDay, daysLeft, finalReviewStart, finalDays } = examWindows(exam, now, dayStartHour);
+  const { today, examDay, daysLeft, finalReviewStart, finalDays } = examWindows(
+    exam,
+    now,
+    dayStartHour,
+  );
   const tomorrow = addStudyDays(today, 1, dayStartHour);
   const totalCards = cards.length;
   const newCards = cards.filter((c) => c.phase === 'new');
   const newRemaining = newCards.length;
-  const learnedCards = cards.filter((c) => c.phase === 'review' || (c.phase === 'relearning' && c.lapses > 0)).length;
+  const learnedCards = cards.filter(
+    (c) => c.phase === 'review' || (c.phase === 'relearning' && c.lapses > 0),
+  ).length;
   const overdueBacklog = cards.filter((c) => c.phase !== 'new' && c.due < today).length;
 
   let status: ExamStatus;
@@ -148,7 +159,10 @@ export function planExam(
     if (exam.newCardMode === 'due-now' || learningDays === 0) {
       todayNewQuota = newRemaining;
     } else {
-      todayNewQuota = Math.max(0, quota(newRemaining + activity.introducedToday, learningDays) - activity.introducedToday);
+      todayNewQuota = Math.max(
+        0,
+        quota(newRemaining + activity.introducedToday, learningDays) - activity.introducedToday,
+      );
       todayNewQuota = Math.min(todayNewQuota, newRemaining);
     }
   }
@@ -157,13 +171,27 @@ export function planExam(
 
   let todayFinalReviewQuota = 0;
   if (active && finalDays > 0 && today >= finalReviewStart) {
-    const finalDaysLeft = Math.max(1, studyDaysBetween(today, examDay, dayStartHour) + (daysLeft === 0 ? 1 : 0));
-    const pending = cards.filter((c) => c.phase !== 'new' && (c.lastReview ?? 0) < finalReviewStart && c.due >= tomorrow).length;
-    const doneInWindowToday = cards.filter((c) => c.phase !== 'new' && (c.lastReview ?? 0) >= today && (c.lastReview ?? 0) >= finalReviewStart).length;
-    todayFinalReviewQuota = Math.max(0, Math.min(pending, quota(pending + doneInWindowToday, finalDaysLeft) - doneInWindowToday));
+    const finalDaysLeft = Math.max(
+      1,
+      studyDaysBetween(today, examDay, dayStartHour) + (daysLeft === 0 ? 1 : 0),
+    );
+    const pending = cards.filter(
+      (c) => c.phase !== 'new' && (c.lastReview ?? 0) < finalReviewStart && c.due >= tomorrow,
+    ).length;
+    const doneInWindowToday = cards.filter(
+      (c) =>
+        c.phase !== 'new' &&
+        (c.lastReview ?? 0) >= today &&
+        (c.lastReview ?? 0) >= finalReviewStart,
+    ).length;
+    todayFinalReviewQuota = Math.max(
+      0,
+      Math.min(pending, quota(pending + doneInWindowToday, finalDaysLeft) - doneInWindowToday),
+    );
   }
 
-  const todayTarget = todayNewQuota + todayDueReviews + todayFinalReviewQuota + activity.correctToday;
+  const todayTarget =
+    todayNewQuota + todayDueReviews + todayFinalReviewQuota + activity.correctToday;
   const onTrack = overdueBacklog === 0;
 
   // --- projection ------------------------------------------------------------
@@ -202,14 +230,23 @@ export function planExam(
     for (let d = 0; d <= horizon && remaining > 0; d++) {
       const day = addStudyDays(today, d, dayStartHour);
       const left = Math.max(0, studyDaysBetween(day, finalReviewStart, dayStartHour));
-      const n = d === 0 ? todayNewQuota : exam.newCardMode === 'due-now' || left === 0 ? remaining : quota(remaining, left);
+      const n =
+        d === 0
+          ? todayNewQuota
+          : exam.newCardMode === 'due-now' || left === 0
+            ? remaining
+            : quota(remaining, left);
       newPerDay[d] = Math.min(n, remaining);
       for (let k = 0; k < newPerDay[d]!; k++) {
         const card = newQueue.shift();
         if (!card) break;
         // Learning steps happen on the day of introduction; projection starts with the first real review.
         const morning = day + 9 * 3600 * 1000;
-        const learned = scheduler.review(scheduler.review(card, 3, morning), 3, morning + 10 * MINUTE);
+        const learned = scheduler.review(
+          scheduler.review(card, 3, morning),
+          3,
+          morning + 10 * MINUTE,
+        );
         project(learned, learned.due);
       }
       remaining -= newPerDay[d]!;
@@ -222,7 +259,10 @@ export function planExam(
       let left = pendingFinal.length;
       for (let d = firstFinalIdx; d <= horizon && left > 0; d++) {
         const daysRemaining = Math.max(1, windowDays - (d - firstFinalIdx));
-        const n = d === 0 ? Math.min(left, todayFinalReviewQuota || quota(left, daysRemaining)) : quota(left, daysRemaining);
+        const n =
+          d === 0
+            ? Math.min(left, todayFinalReviewQuota || quota(left, daysRemaining))
+            : quota(left, daysRemaining);
         finalPerDay[d] = n;
         left -= n;
       }
@@ -275,7 +315,12 @@ export const EXTRA_PRACTICE_DELAY = 10 * MINUTE;
  * @param exam Exam the card belongs to.
  * @param now Review time.
  */
-export function applyExamPolicy(prev: CardState, next: CardState, exam: Exam, now: Timestamp): CardState {
+export function applyExamPolicy(
+  prev: CardState,
+  next: CardState,
+  exam: Exam,
+  now: Timestamp,
+): CardState {
   const leavingStepPhase = prev.phase !== 'review' && next.phase === 'review';
   if (exam.extraPractice && leavingStepPhase && next.streak < 2) {
     const phase = prev.phase === 'relearning' ? 'relearning' : 'learning';

@@ -85,13 +85,22 @@ export class FsrsModel {
     const hardPenalty = g === 2 ? this.p(15) : 1;
     const easyBonus = g === 4 ? this.p(16) : 1;
     const inc =
-      Math.exp(this.p(8)) * (11 - d) * Math.pow(s, -this.p(9)) * (Math.exp((1 - r) * this.p(10)) - 1) * hardPenalty * easyBonus;
+      Math.exp(this.p(8)) *
+      (11 - d) *
+      Math.pow(s, -this.p(9)) *
+      (Math.exp((1 - r) * this.p(10)) - 1) *
+      hardPenalty *
+      easyBonus;
     return clamp(round8(s * (1 + inc)), S_MIN, S_MAX);
   }
 
   /** Stability after forgetting (lapse). */
   nextForgetStability(d: number, s: number, r: number): number {
-    const v = this.p(11) * Math.pow(d, -this.p(12)) * (Math.pow(s + 1, this.p(13)) - 1) * Math.exp((1 - r) * this.p(14));
+    const v =
+      this.p(11) *
+      Math.pow(d, -this.p(12)) *
+      (Math.pow(s + 1, this.p(13)) - 1) *
+      Math.exp((1 - r) * this.p(14));
     return clamp(round8(v), S_MIN, S_MAX);
   }
 
@@ -153,20 +162,54 @@ export function createFsrsScheduler(params: FsrsParams): Scheduler {
 
   /** Memory of a card, `null` when never reviewed. */
   const memoryOf = (state: CardState): MemoryState | null =>
-    state.phase === 'new' || state.stability <= 0 ? null : { stability: state.stability, difficulty: Math.max(1, state.difficulty || 5) };
+    state.phase === 'new' || state.stability <= 0
+      ? null
+      : { stability: state.stability, difficulty: Math.max(1, state.difficulty || 5) };
 
   /** Puts a card into the review phase. */
-  const toReview = (state: CardState, mem: MemoryState, ivl: number, now: Timestamp, rating: Rating, rng?: Rng): CardState => {
+  const toReview = (
+    state: CardState,
+    mem: MemoryState,
+    ivl: number,
+    now: Timestamp,
+    rating: Rating,
+    rng?: Rng,
+  ): CardState => {
     const fuzzed = params.fuzz && rng ? fuzzInterval(ivl, params.maximumInterval, rng) : ivl;
-    return bookkeeping(state, { ...mem, phase: 'review', step: 0, interval: fuzzed, due: now + fuzzed * DAY }, rating, now);
+    return bookkeeping(
+      state,
+      { ...mem, phase: 'review', step: 0, interval: fuzzed, due: now + fuzzed * DAY },
+      rating,
+      now,
+    );
   };
 
   /** Keeps a card in a (re)learning step. */
-  const toStep = (state: CardState, mem: MemoryState, phase: 'learning' | 'relearning', step: number, delayMin: number, now: Timestamp, rating: Rating): CardState =>
-    bookkeeping(state, { ...mem, phase, step, interval: 0, due: now + delayMin * MINUTE }, rating, now);
+  const toStep = (
+    state: CardState,
+    mem: MemoryState,
+    phase: 'learning' | 'relearning',
+    step: number,
+    delayMin: number,
+    now: Timestamp,
+    rating: Rating,
+  ): CardState =>
+    bookkeeping(
+      state,
+      { ...mem, phase, step, interval: 0, due: now + delayMin * MINUTE },
+      rating,
+      now,
+    );
 
   /** Step-phase logic shared by learning and relearning. */
-  const stepPhase = (state: CardState, mem: MemoryState, rating: Rating, now: Timestamp, phase: 'learning' | 'relearning', rng?: Rng): CardState => {
+  const stepPhase = (
+    state: CardState,
+    mem: MemoryState,
+    rating: Rating,
+    now: Timestamp,
+    phase: 'learning' | 'relearning',
+    rng?: Rng,
+  ): CardState => {
     const steps = phase === 'learning' ? params.learningSteps : params.relearningSteps;
     const step = state.phase === phase ? state.step : 0;
     if (rating === 4 || steps.length === 0) {
@@ -177,12 +220,18 @@ export function createFsrsScheduler(params: FsrsParams): Scheduler {
       case 1:
         return toStep(state, mem, phase, 0, steps[0]!, now, rating);
       case 2: {
-        const delay = step === 0 && steps.length > 1 ? (steps[0]! + steps[1]!) / 2 : step === 0 ? steps[0]! * 1.5 : steps[step]!;
+        const delay =
+          step === 0 && steps.length > 1
+            ? (steps[0]! + steps[1]!) / 2
+            : step === 0
+              ? steps[0]! * 1.5
+              : steps[step]!;
         return toStep(state, mem, phase, step, delay, now, rating);
       }
       case 3: {
         const next = step + 1;
-        if (next >= steps.length) return toReview(state, mem, interval(mem.stability), now, rating, rng);
+        if (next >= steps.length)
+          return toReview(state, mem, interval(mem.stability), now, rating, rng);
         return toStep(state, mem, phase, next, steps[next]!, now, rating);
       }
     }

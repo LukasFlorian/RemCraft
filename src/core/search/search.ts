@@ -78,7 +78,12 @@ function matchesFlags(rem: Rem, flags: readonly string[]): boolean {
  * @param tagName Resolves a tag id to its folded name.
  * @param limit Maximum number of hits.
  */
-export function search(items: Iterable<SearchItem>, query: string, tagName: (id: RemId) => string, limit = 50): SearchHit[] {
+export function search(
+  items: Iterable<SearchItem>,
+  query: string,
+  tagName: (id: RemId) => string,
+  limit = 50,
+): SearchHit[] {
   const q = parseSearchQuery(query);
   if (q.terms.length === 0 && q.tags.length === 0 && q.flags.length === 0) return [];
   const phrase = q.terms.join(' ');

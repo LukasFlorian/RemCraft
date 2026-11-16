@@ -46,7 +46,8 @@ const FUZZ_RANGES = [
 export function fuzzInterval(intervalDays: number, maximum: number, rng: Rng): number {
   if (intervalDays < 2.5) return intervalDays;
   let delta = 1;
-  for (const r of FUZZ_RANGES) delta += r.factor * Math.max(Math.min(intervalDays, r.end) - r.start, 0);
+  for (const r of FUZZ_RANGES)
+    delta += r.factor * Math.max(Math.min(intervalDays, r.end) - r.start, 0);
   const min = Math.max(2, Math.round(intervalDays - delta));
   const max = Math.min(Math.round(intervalDays + delta), maximum);
   // rng() == 0.5 maps to the centre, i.e. (approximately) the original interval.
@@ -60,7 +61,12 @@ export function elapsedDays(state: CardState, now: Timestamp): number {
 }
 
 /** Common bookkeeping applied by every algorithm after a review. */
-export function bookkeeping(prev: CardState, next: Partial<CardState>, rating: Rating, now: Timestamp): CardState {
+export function bookkeeping(
+  prev: CardState,
+  next: Partial<CardState>,
+  rating: Rating,
+  now: Timestamp,
+): CardState {
   return {
     ...prev,
     ...next,

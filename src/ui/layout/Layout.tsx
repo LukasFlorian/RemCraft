@@ -64,11 +64,16 @@ export function Layout(): ReactNode {
   });
 
   return (
-    <div className={`app-shell${collapsed ? ' sidebar-collapsed' : ''}${mobileOpen ? ' sidebar-open' : ''}`}>
-      <Sidebar onCollapse={() => (window.innerWidth <= 860 ? setMobileOpen(false) : setCollapsed(true))} onNavigate={() => setMobileOpen(false)} />
+    <div
+      className={`app-shell${collapsed ? ' sidebar-collapsed' : ''}${mobileOpen ? ' sidebar-open' : ''}`}
+    >
+      <Sidebar
+        onCollapse={() => (window.innerWidth <= 860 ? setMobileOpen(false) : setCollapsed(true))}
+        onNavigate={() => setMobileOpen(false)}
+      />
       {mobileOpen && <div className="sidebar-scrim" onClick={() => setMobileOpen(false)} />}
       <main className="main">
-        {(
+        {
           <button
             className={`icon-btn floating-menu-btn${collapsed ? '' : ' mobile-only'}`}
             onClick={() => (window.innerWidth <= 860 ? setMobileOpen(true) : setCollapsed(false))}
@@ -76,7 +81,7 @@ export function Layout(): ReactNode {
           >
             <MenuIcon size={18} />
           </button>
-        )}
+        }
         <Outlet />
       </main>
       <CaretPopup />

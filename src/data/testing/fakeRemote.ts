@@ -15,7 +15,11 @@ export class FakeServer {
   /** Creates a client for this server. */
   client(): RemoteBackend {
     return {
-      pull: async (since, limit) => [...this.rows.values()].filter((r) => r.seq > since).sort((a, b) => a.seq - b.seq).slice(0, limit),
+      pull: async (since, limit) =>
+        [...this.rows.values()]
+          .filter((r) => r.seq > since)
+          .sort((a, b) => a.seq - b.seq)
+          .slice(0, limit),
       push: async (rows: readonly RemoteRow[]) => {
         for (const row of rows) {
           const key = `${row.collection}:${row.id}`;

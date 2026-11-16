@@ -5,9 +5,18 @@ import { parseSearchQuery, search } from './search';
 describe('search', () => {
   const items = [
     { rem: createRem({ id: 'doc', text: rt('Big Data'), isDocument: true }), text: 'Big Data' },
-    { rem: createRem({ id: 'r1', text: rt('Data mining finds patterns in big data') }), text: 'Data mining finds patterns in big data' },
-    { rem: createRem({ id: 'r2', text: rt('Clustering'), tags: ['t'], todo: 'unfinished' }), text: 'Clustering' },
-    { rem: createRem({ id: 'r3', text: rt('Über Daten'), aliases: ['ueber'] }), text: 'Über Daten' },
+    {
+      rem: createRem({ id: 'r1', text: rt('Data mining finds patterns in big data') }),
+      text: 'Data mining finds patterns in big data',
+    },
+    {
+      rem: createRem({ id: 'r2', text: rt('Clustering'), tags: ['t'], todo: 'unfinished' }),
+      text: 'Clustering',
+    },
+    {
+      rem: createRem({ id: 'r3', text: rt('Über Daten'), aliases: ['ueber'] }),
+      text: 'Über Daten',
+    },
   ];
   const tagName = (id: string) => (id === 't' ? 'ml' : '');
 
@@ -24,6 +33,10 @@ describe('search', () => {
     expect(search(items, '', tagName)).toEqual([]);
   });
   it('parses queries', () => {
-    expect(parseSearchQuery('"exact phrase" #Tag is:card x')).toEqual({ terms: ['exact phrase', 'x'], tags: ['tag'], flags: ['card'] });
+    expect(parseSearchQuery('"exact phrase" #Tag is:card x')).toEqual({
+      terms: ['exact phrase', 'x'],
+      tags: ['tag'],
+      flags: ['card'],
+    });
   });
 });

@@ -4,10 +4,25 @@
 import type { ReactNode } from 'react';
 
 /** Toggle switch with label. */
-export function Switch({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label?: ReactNode; disabled?: boolean }): ReactNode {
+export function Switch({
+  checked,
+  onChange,
+  label,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label?: ReactNode;
+  disabled?: boolean;
+}): ReactNode {
   return (
     <label className="switch">
-      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
       <span className="switch-track" />
       {label && <span>{label}</span>}
     </label>
@@ -18,7 +33,13 @@ export function Switch({ checked, onChange, label, disabled }: { checked: boolea
 export function ProgressBar({ value, color }: { value: number; color?: string }): ReactNode {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
-    <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+    <div
+      className="progress"
+      role="progressbar"
+      aria-valuenow={pct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <div style={{ width: `${pct}%`, ...(color ? { background: color } : {}) }} />
     </div>
   );
@@ -29,7 +50,17 @@ export function ProgressBar({ value, color }: { value: number; color?: string })
  * labels the contained input; use `group` for composite controls (button
  * groups, trees) where a label element would swallow clicks.
  */
-export function Field({ label, hint, children, group }: { label: ReactNode; hint?: ReactNode | undefined; children: ReactNode; group?: boolean }): ReactNode {
+export function Field({
+  label,
+  hint,
+  children,
+  group,
+}: {
+  label: ReactNode;
+  hint?: ReactNode | undefined;
+  children: ReactNode;
+  group?: boolean;
+}): ReactNode {
   const body = (
     <>
       <span className="field-label">{label}</span>

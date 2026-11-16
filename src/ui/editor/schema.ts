@@ -22,8 +22,14 @@ const nodes: Record<string, NodeSpec> = {
     atom: true,
     selectable: true,
     attrs: { remId: {} },
-    parseDOM: [{ tag: 'span[data-ref]', getAttrs: (el) => ({ remId: (el as HTMLElement).dataset.ref }) }],
-    toDOM: (node) => ['span', { class: 'ref', 'data-ref': node.attrs.remId as string }, `[[${node.attrs.remId as string}]]`],
+    parseDOM: [
+      { tag: 'span[data-ref]', getAttrs: (el) => ({ remId: (el as HTMLElement).dataset.ref }) },
+    ],
+    toDOM: (node) => [
+      'span',
+      { class: 'ref', 'data-ref': node.attrs.remId as string },
+      `[[${node.attrs.remId as string}]]`,
+    ],
   },
   latex: {
     group: 'inline',
@@ -31,8 +37,17 @@ const nodes: Record<string, NodeSpec> = {
     atom: true,
     selectable: true,
     attrs: { source: { default: '' } },
-    parseDOM: [{ tag: 'span[data-latex]', getAttrs: (el) => ({ source: (el as HTMLElement).dataset.latex }) }],
-    toDOM: (node) => ['span', { class: 'latex', 'data-latex': node.attrs.source as string }, node.attrs.source as string],
+    parseDOM: [
+      {
+        tag: 'span[data-latex]',
+        getAttrs: (el) => ({ source: (el as HTMLElement).dataset.latex }),
+      },
+    ],
+    toDOM: (node) => [
+      'span',
+      { class: 'latex', 'data-latex': node.attrs.source as string },
+      node.attrs.source as string,
+    ],
   },
   separator: {
     group: 'inline',
@@ -40,8 +55,17 @@ const nodes: Record<string, NodeSpec> = {
     atom: true,
     selectable: false,
     attrs: { token: { default: '>>' } },
-    parseDOM: [{ tag: 'span[data-separator]', getAttrs: (el) => ({ token: (el as HTMLElement).dataset.separator }) }],
-    toDOM: (node) => ['span', { class: 'separator', 'data-separator': node.attrs.token as string }, node.attrs.token as string],
+    parseDOM: [
+      {
+        tag: 'span[data-separator]',
+        getAttrs: (el) => ({ token: (el as HTMLElement).dataset.separator }),
+      },
+    ],
+    toDOM: (node) => [
+      'span',
+      { class: 'separator', 'data-separator': node.attrs.token as string },
+      node.attrs.token as string,
+    ],
   },
 };
 
@@ -53,21 +77,35 @@ const marks: Record<string, MarkSpec> = {
   code: { parseDOM: [{ tag: 'code' }], toDOM: () => ['code', { class: 'inline-code' }, 0] },
   highlight: {
     attrs: { color: { default: 'yellow' } },
-    parseDOM: [{ tag: 'mark', getAttrs: (el) => ({ color: (el as HTMLElement).dataset.color ?? 'yellow' }) }],
-    toDOM: (mark) => ['mark', { class: `hl hl-${mark.attrs.color as string}`, 'data-color': mark.attrs.color as string }, 0],
+    parseDOM: [
+      { tag: 'mark', getAttrs: (el) => ({ color: (el as HTMLElement).dataset.color ?? 'yellow' }) },
+    ],
+    toDOM: (mark) => [
+      'mark',
+      { class: `hl hl-${mark.attrs.color as string}`, 'data-color': mark.attrs.color as string },
+      0,
+    ],
   },
   cloze: {
     attrs: { id: {} },
     // Inclusive so that typing at the end of a cloze extends it; `}}` exits.
     inclusive: true,
-    parseDOM: [{ tag: 'span[data-cloze]', getAttrs: (el) => ({ id: (el as HTMLElement).dataset.cloze }) }],
+    parseDOM: [
+      { tag: 'span[data-cloze]', getAttrs: (el) => ({ id: (el as HTMLElement).dataset.cloze }) },
+    ],
     toDOM: (mark) => ['span', { class: 'cloze', 'data-cloze': mark.attrs.id as string }, 0],
   },
   link: {
     attrs: { href: {} },
     inclusive: false,
-    parseDOM: [{ tag: 'a[href]', getAttrs: (el) => ({ href: (el as HTMLElement).getAttribute('href') }) }],
-    toDOM: (mark) => ['a', { href: mark.attrs.href as string, rel: 'noreferrer noopener', target: '_blank' }, 0],
+    parseDOM: [
+      { tag: 'a[href]', getAttrs: (el) => ({ href: (el as HTMLElement).getAttribute('href') }) },
+    ],
+    toDOM: (mark) => [
+      'a',
+      { href: mark.attrs.href as string, rel: 'noreferrer noopener', target: '_blank' },
+      0,
+    ],
   },
 };
 

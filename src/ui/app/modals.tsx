@@ -33,5 +33,9 @@ export function useModals(): ModalApi {
 /** Provides the global modal state. Rendering happens in `GlobalModals`. */
 export function ModalProvider({ children }: { children: ReactNode }): ReactNode {
   const [modal, setModal] = useState<GlobalModal | null>(null);
-  return <ModalContext.Provider value={{ modal, open: setModal, close: () => setModal(null) }}>{children}</ModalContext.Provider>;
+  return (
+    <ModalContext.Provider value={{ modal, open: setModal, close: () => setModal(null) }}>
+      {children}
+    </ModalContext.Provider>
+  );
 }

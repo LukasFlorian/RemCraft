@@ -12,16 +12,31 @@ import { useRemTitle } from '../hooks/useRemTitle';
 export function EditLaterPage(): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
-  const rems = useSelector((s) => s.memo('editLater', [s.collectionVersion('rems')], () => s.all('rems').filter((r) => r.editLater).sort((a, b) => b.updatedAt - a.updatedAt)));
+  const rems = useSelector((s) =>
+    s.memo('editLater', [s.collectionVersion('rems')], () =>
+      s
+        .all('rems')
+        .filter((r) => r.editLater)
+        .sort((a, b) => b.updatedAt - a.updatedAt),
+    ),
+  );
   return (
     <div className="main-scroll">
       <div className="page">
         <div className="page-header">
           <h1>Edit Later</h1>
         </div>
-        {rems.length === 0 && <div className="empty">Nothing to edit later. Use “/Edit later” on any Rem to collect it here.</div>}
+        {rems.length === 0 && (
+          <div className="empty">
+            Nothing to edit later. Use “/Edit later” on any Rem to collect it here.
+          </div>
+        )}
         {rems.map((r) => (
-          <div key={r.id} className="reference-item row" onClick={() => navigate(`/rem/${r.parentId ?? r.id}`)}>
+          <div
+            key={r.id}
+            className="reference-item row"
+            onClick={() => navigate(`/rem/${r.parentId ?? r.id}`)}
+          >
             <div style={{ flex: 1, minWidth: 0 }}>
               <ParentTitle id={r.parentId} />
               <RemContent rem={r} />
@@ -44,5 +59,9 @@ export function EditLaterPage(): ReactNode {
 
 function ParentTitle({ id }: { id: string | null }): ReactNode {
   const title = useRemTitle(id, '');
-  return title ? <div className="faint" style={{ fontSize: 12 }}>{title}</div> : null;
+  return title ? (
+    <div className="faint" style={{ fontSize: 12 }}>
+      {title}
+    </div>
+  ) : null;
 }

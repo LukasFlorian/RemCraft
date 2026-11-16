@@ -7,7 +7,16 @@ import { MOD_LABEL } from '../../hooks/useHotkeys';
 
 const M = MOD_LABEL;
 const GROUPS: { title: string; items: [string, string][] }[] = [
-  { title: 'Global', items: [[`${M} K`, 'Search'], [`${M} \\`, 'Toggle sidebar'], ['Alt N', 'New document'], ['Alt F', 'Practice flashcards'], [`${M} Z / ${M} ⇧ Z`, 'Undo / redo']] },
+  {
+    title: 'Global',
+    items: [
+      [`${M} K`, 'Search'],
+      [`${M} \\`, 'Toggle sidebar'],
+      ['Alt N', 'New document'],
+      ['Alt F', 'Practice flashcards'],
+      [`${M} Z / ${M} ⇧ Z`, 'Undo / redo'],
+    ],
+  },
   {
     title: 'Editing',
     items: [
@@ -26,7 +35,17 @@ const GROUPS: { title: string; items: [string, string][] }[] = [
       ['>> == :: ;; {{', 'Create flashcards (see docs)'],
     ],
   },
-  { title: 'Practice', items: [['Space / Enter', 'Show answer · accept suggestion'], ['1 2 3 4', 'Forgot · Partially · With effort · Easily'], ['S', 'Skip'], ['U', 'Undo'], ['E', 'Edit card'], ['Esc', 'Exit']] },
+  {
+    title: 'Practice',
+    items: [
+      ['Space / Enter', 'Show answer · accept suggestion'],
+      ['1 2 3 4', 'Forgot · Partially · With effort · Easily'],
+      ['S', 'Skip'],
+      ['U', 'Undo'],
+      ['E', 'Edit card'],
+      ['Esc', 'Exit'],
+    ],
+  },
 ];
 
 /** The shortcut list. */

@@ -62,7 +62,11 @@ describe('canonicalDelimiter', () => {
     for (const spec of DELIMITERS) {
       const token = canonicalDelimiter(spec.kind, spec.direction, spec.answerMode)!;
       const back = DELIMITERS.find((s) => s.token === token)!;
-      expect([back.kind, back.direction, back.answerMode]).toEqual([spec.kind, spec.direction, spec.answerMode]);
+      expect([back.kind, back.direction, back.answerMode]).toEqual([
+        spec.kind,
+        spec.direction,
+        spec.answerMode,
+      ]);
     }
     expect(canonicalDelimiter('plain', 'none', 'inline')).toBeNull();
   });

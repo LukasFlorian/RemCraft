@@ -67,7 +67,14 @@ import {
 import type { EditorView } from 'prosemirror-view';
 import type { RemCraftApp } from '@data/app';
 import { generateCards } from '@core/cards/generate';
-import type { AnswerMode, CardDirection, HighlightColor, Rem, RemId, RemKind } from '@core/model/types';
+import type {
+  AnswerMode,
+  CardDirection,
+  HighlightColor,
+  Rem,
+  RemId,
+  RemKind,
+} from '@core/model/types';
 import { HIGHLIGHT_COLORS } from '@core/model/types';
 import { rt } from '@core/richtext/ops';
 import { isoDate, DAY } from '@core/util/time';
@@ -132,7 +139,13 @@ export const COMMAND_GROUPS = [
  * Turns the Rem into a flashcard of the given type. Multi-line types get
  * empty answer children so the user can start typing immediately.
  */
-function setCard(ctx: CommandContext, rem: Rem, kind: RemKind, direction: CardDirection, answerMode: AnswerMode): void {
+function setCard(
+  ctx: CommandContext,
+  rem: Rem,
+  kind: RemKind,
+  direction: CardDirection,
+  answerMode: AnswerMode,
+): void {
   const { app } = ctx;
   app.store.transact((tx) => {
     tx.update('rems', rem.id, { kind, direction, answerMode, back: rem.back ?? [] });
@@ -140,7 +153,11 @@ function setCard(ctx: CommandContext, rem: Rem, kind: RemKind, direction: CardDi
       const count = answerMode === 'mc' ? 3 : 2;
       let after: RemId | null = null;
       for (let i = 0; i < count; i++) {
-        const child: Rem = app.rems.createIn(tx, { parentId: rem.id, afterId: after }, answerMode === 'mc' ? { mcCorrect: i === 0 } : {});
+        const child: Rem = app.rems.createIn(
+          tx,
+          { parentId: rem.id, afterId: after },
+          answerMode === 'mc' ? { mcCorrect: i === 0 } : {},
+        );
         after = child.id;
       }
     }
@@ -151,7 +168,21 @@ function setCard(ctx: CommandContext, rem: Rem, kind: RemKind, direction: CardDi
 }
 
 /** Toggles a boolean powerup. */
-function toggle(ctx: CommandContext, rem: Rem, key: 'typeInAnswer' | 'extraCardDetail' | 'hideContextInQueue' | 'quote' | 'editLater' | 'pinned' | 'isTemplate' | 'tableView' | 'isProperty' | 'isDocument'): void {
+function toggle(
+  ctx: CommandContext,
+  rem: Rem,
+  key:
+    | 'typeInAnswer'
+    | 'extraCardDetail'
+    | 'hideContextInQueue'
+    | 'quote'
+    | 'editLater'
+    | 'pinned'
+    | 'isTemplate'
+    | 'tableView'
+    | 'isProperty'
+    | 'isDocument',
+): void {
   ctx.app.rems.update(rem.id, { [key]: rem[key] ? undefined : true });
 }
 
@@ -171,7 +202,11 @@ function insertDate(ctx: CommandContext, offsetDays: number | string): void {
 }
 
 /** Applies a mark to the selection of the focused editor. */
-function mark(ctx: CommandContext, name: keyof typeof schema.marks, attrs?: Record<string, unknown>): void {
+function mark(
+  ctx: CommandContext,
+  name: keyof typeof schema.marks,
+  attrs?: Record<string, unknown>,
+): void {
   if (ctx.view) {
     toggleMark(ctx.view, name, attrs);
     ctx.view.focus();
@@ -184,7 +219,14 @@ function hasCards(ctx: CommandContext, rem: Rem): boolean {
 }
 
 /** Display names of highlight colours. */
-const COLOR_NAMES: Record<HighlightColor, string> = { red: 'Red', orange: 'Orange', yellow: 'Yellow', green: 'Green', blue: 'Blue', purple: 'Purple' };
+const COLOR_NAMES: Record<HighlightColor, string> = {
+  red: 'Red',
+  orange: 'Orange',
+  yellow: 'Yellow',
+  green: 'Green',
+  blue: 'Blue',
+  purple: 'Purple',
+};
 
 // ---------------------------------------------------------------------------
 // The command list
@@ -193,10 +235,42 @@ const COLOR_NAMES: Record<HighlightColor, string> = { red: 'Red', orange: 'Orang
 /** All slash commands. */
 export const COMMANDS: SlashCommand[] = [
   // Insert Flashcard
-  { id: 'card-basic', group: 'Insert Flashcard', label: 'Single-Line Card', icon: SquareStack, hint: '==', keywords: 'basic forward front back', run: (c, r) => setCard(c, r, 'plain', 'forward', 'inline') },
-  { id: 'card-multiline', group: 'Insert Flashcard', label: 'Multi-Line Flashcard', icon: AlignLeft, hint: '>>>', keywords: 'set multiline', run: (c, r) => setCard(c, r, 'plain', 'forward', 'set') },
-  { id: 'card-mc', group: 'Insert Flashcard', label: 'Multiple-Choice Flashcard', icon: ListChecks, hint: '>>A)', keywords: 'mc choice quiz', run: (c, r) => setCard(c, r, 'plain', 'forward', 'mc') },
-  { id: 'card-list', group: 'Insert Flashcard', label: 'List-Answer Flashcard', icon: ListOrdered, hint: '>>1.', keywords: 'list ordered sequence', run: (c, r) => setCard(c, r, 'plain', 'forward', 'list') },
+  {
+    id: 'card-basic',
+    group: 'Insert Flashcard',
+    label: 'Single-Line Card',
+    icon: SquareStack,
+    hint: '==',
+    keywords: 'basic forward front back',
+    run: (c, r) => setCard(c, r, 'plain', 'forward', 'inline'),
+  },
+  {
+    id: 'card-multiline',
+    group: 'Insert Flashcard',
+    label: 'Multi-Line Flashcard',
+    icon: AlignLeft,
+    hint: '>>>',
+    keywords: 'set multiline',
+    run: (c, r) => setCard(c, r, 'plain', 'forward', 'set'),
+  },
+  {
+    id: 'card-mc',
+    group: 'Insert Flashcard',
+    label: 'Multiple-Choice Flashcard',
+    icon: ListChecks,
+    hint: '>>A)',
+    keywords: 'mc choice quiz',
+    run: (c, r) => setCard(c, r, 'plain', 'forward', 'mc'),
+  },
+  {
+    id: 'card-list',
+    group: 'Insert Flashcard',
+    label: 'List-Answer Flashcard',
+    icon: ListOrdered,
+    hint: '>>1.',
+    keywords: 'list ordered sequence',
+    run: (c, r) => setCard(c, r, 'plain', 'forward', 'list'),
+  },
   {
     id: 'card-cloze',
     group: 'Insert Flashcard',
@@ -222,25 +296,102 @@ export const COMMANDS: SlashCommand[] = [
       c.openOcclusion(r.id);
     },
   },
-  { id: 'card-concept', group: 'Insert Flashcard', label: 'Concept Flashcard', icon: Lightbulb, hint: '::', keywords: 'concept definition term', run: (c, r) => setCard(c, r, 'concept', 'both', 'inline') },
-  { id: 'card-descriptor', group: 'Insert Flashcard', label: 'Descriptor Flashcard', icon: Spline, hint: ';;', keywords: 'descriptor attribute property', run: (c, r) => setCard(c, r, 'descriptor', 'forward', 'inline') },
+  {
+    id: 'card-concept',
+    group: 'Insert Flashcard',
+    label: 'Concept Flashcard',
+    icon: Lightbulb,
+    hint: '::',
+    keywords: 'concept definition term',
+    run: (c, r) => setCard(c, r, 'concept', 'both', 'inline'),
+  },
+  {
+    id: 'card-descriptor',
+    group: 'Insert Flashcard',
+    label: 'Descriptor Flashcard',
+    icon: Spline,
+    hint: ';;',
+    keywords: 'descriptor attribute property',
+    run: (c, r) => setCard(c, r, 'descriptor', 'forward', 'inline'),
+  },
 
   // Flashcard Configuration
-  { id: 'dir-forward', group: 'Flashcard Configuration', label: 'Practice forward', icon: ArrowRight, available: (_c, r) => r.direction !== 'none', run: (c, r) => c.app.rems.update(r.id, { direction: 'forward' }) },
-  { id: 'dir-backward', group: 'Flashcard Configuration', label: 'Practice backward', icon: ArrowLeftRight, available: (_c, r) => r.direction !== 'none' && r.answerMode !== 'mc', run: (c, r) => c.app.rems.update(r.id, { direction: 'backward' }) },
-  { id: 'dir-both', group: 'Flashcard Configuration', label: 'Practice both directions', icon: ArrowLeftRight, available: (_c, r) => r.direction !== 'none' && r.answerMode !== 'mc', run: (c, r) => c.app.rems.update(r.id, { direction: 'both' }) },
-  { id: 'dir-disabled', group: 'Flashcard Configuration', label: 'Disable flashcard', icon: Ban, available: (_c, r) => r.direction !== 'none', run: (c, r) => c.app.rems.update(r.id, { direction: 'disabled' }) },
+  {
+    id: 'dir-forward',
+    group: 'Flashcard Configuration',
+    label: 'Practice forward',
+    icon: ArrowRight,
+    available: (_c, r) => r.direction !== 'none',
+    run: (c, r) => c.app.rems.update(r.id, { direction: 'forward' }),
+  },
+  {
+    id: 'dir-backward',
+    group: 'Flashcard Configuration',
+    label: 'Practice backward',
+    icon: ArrowLeftRight,
+    available: (_c, r) => r.direction !== 'none' && r.answerMode !== 'mc',
+    run: (c, r) => c.app.rems.update(r.id, { direction: 'backward' }),
+  },
+  {
+    id: 'dir-both',
+    group: 'Flashcard Configuration',
+    label: 'Practice both directions',
+    icon: ArrowLeftRight,
+    available: (_c, r) => r.direction !== 'none' && r.answerMode !== 'mc',
+    run: (c, r) => c.app.rems.update(r.id, { direction: 'both' }),
+  },
+  {
+    id: 'dir-disabled',
+    group: 'Flashcard Configuration',
+    label: 'Disable flashcard',
+    icon: Ban,
+    available: (_c, r) => r.direction !== 'none',
+    run: (c, r) => c.app.rems.update(r.id, { direction: 'disabled' }),
+  },
   {
     id: 'card-remove',
     group: 'Flashcard Configuration',
     label: 'Remove flashcard',
     icon: Eraser,
     available: (_c, r) => r.direction !== 'none',
-    run: (c, r) => c.app.rems.update(r.id, { direction: 'none', kind: 'plain', answerMode: 'inline', back: null, text: [...r.text, ...(r.back?.length ? [{ type: 'text' as const, text: ' ' }, ...r.back] : [])] }),
+    run: (c, r) =>
+      c.app.rems.update(r.id, {
+        direction: 'none',
+        kind: 'plain',
+        answerMode: 'inline',
+        back: null,
+        text: [
+          ...r.text,
+          ...(r.back?.length ? [{ type: 'text' as const, text: ' ' }, ...r.back] : []),
+        ],
+      }),
   },
-  { id: 'type-in', group: 'Flashcard Configuration', label: 'Type in Answer', icon: Keyboard, hint: '/tia', keywords: 'tia type answer input', run: (c, r) => toggle(c, r, 'typeInAnswer') },
-  { id: 'extra-detail', group: 'Flashcard Configuration', label: 'Extra Card Detail', icon: Info, hint: '/ecd', keywords: 'ecd extra detail back', run: (c, r) => toggle(c, r, 'extraCardDetail') },
-  { id: 'hide-context', group: 'Flashcard Configuration', label: 'Hide context in queue', icon: EyeOff, keywords: 'hide ancestors breadcrumb', run: (c, r) => toggle(c, r, 'hideContextInQueue') },
+  {
+    id: 'type-in',
+    group: 'Flashcard Configuration',
+    label: 'Type in Answer',
+    icon: Keyboard,
+    hint: '/tia',
+    keywords: 'tia type answer input',
+    run: (c, r) => toggle(c, r, 'typeInAnswer'),
+  },
+  {
+    id: 'extra-detail',
+    group: 'Flashcard Configuration',
+    label: 'Extra Card Detail',
+    icon: Info,
+    hint: '/ecd',
+    keywords: 'ecd extra detail back',
+    run: (c, r) => toggle(c, r, 'extraCardDetail'),
+  },
+  {
+    id: 'hide-context',
+    group: 'Flashcard Configuration',
+    label: 'Hide context in queue',
+    icon: EyeOff,
+    keywords: 'hide ancestors breadcrumb',
+    run: (c, r) => toggle(c, r, 'hideContextInQueue'),
+  },
   {
     id: 'mc-correct',
     group: 'Flashcard Configuration',
@@ -253,13 +404,23 @@ export const COMMANDS: SlashCommand[] = [
       // Make explicit flags for all options so "first is correct" no longer applies implicitly.
       const siblings = c.app.store.children(r.parentId!);
       const anyMarked = siblings.some((s) => s.mcCorrect !== undefined);
-      c.app.rems.updateMany(siblings.map((s) => s.id), (s, ) => {
-        const implicit = anyMarked ? s.mcCorrect === true : s.id === siblings[0]?.id;
-        return { mcCorrect: s.id === r.id ? !implicit : implicit };
-      });
+      c.app.rems.updateMany(
+        siblings.map((s) => s.id),
+        (s) => {
+          const implicit = anyMarked ? s.mcCorrect === true : s.id === siblings[0]?.id;
+          return { mcCorrect: s.id === r.id ? !implicit : implicit };
+        },
+      );
     },
   },
-  { id: 'practice-rem', group: 'Flashcard Configuration', label: 'Practice this Rem', icon: SquareStack, available: hasCards, run: (c, r) => c.navigate(`/practice?scope=${r.id}&mode=all-in-order`) },
+  {
+    id: 'practice-rem',
+    group: 'Flashcard Configuration',
+    label: 'Practice this Rem',
+    icon: SquareStack,
+    available: hasCards,
+    run: (c, r) => c.navigate(`/practice?scope=${r.id}&mode=all-in-order`),
+  },
   {
     id: 'reset-cards',
     group: 'Flashcard Configuration',
@@ -273,30 +434,94 @@ export const COMMANDS: SlashCommand[] = [
   },
 
   // Headings & Highlights
-  { id: 'h1', group: 'Headings & Highlights', label: 'Heading 1', icon: Heading1, hint: '#', keywords: 'title h1', run: (c, r) => c.app.rems.update(r.id, { heading: r.heading === 1 ? undefined : 1 }) },
-  { id: 'h2', group: 'Headings & Highlights', label: 'Heading 2', icon: Heading2, hint: '##', keywords: 'h2', run: (c, r) => c.app.rems.update(r.id, { heading: r.heading === 2 ? undefined : 2 }) },
-  { id: 'h3', group: 'Headings & Highlights', label: 'Heading 3', icon: Heading3, hint: '###', keywords: 'h3', run: (c, r) => c.app.rems.update(r.id, { heading: r.heading === 3 ? undefined : 3 }) },
-  ...HIGHLIGHT_COLORS.map(
-    (color): SlashCommand => ({
-      id: `hl-${color}`,
-      group: 'Headings & Highlights',
-      label: `${COLOR_NAMES[color]} highlight`,
-      icon: Highlighter,
-      keywords: `highlight color ${color}`,
-      run: (c, r) => {
-        if (c.view && !c.view.state.selection.empty) mark(c, 'highlight', { color });
-        else c.app.rems.update(r.id, { highlight: r.highlight === color ? undefined : color });
-      },
-    }),
-  ),
-  { id: 'hl-none', group: 'Headings & Highlights', label: 'Remove highlight', icon: Eraser, available: (_c, r) => Boolean(r.highlight), run: (c, r) => c.app.rems.update(r.id, { highlight: undefined }) },
+  {
+    id: 'h1',
+    group: 'Headings & Highlights',
+    label: 'Heading 1',
+    icon: Heading1,
+    hint: '#',
+    keywords: 'title h1',
+    run: (c, r) => c.app.rems.update(r.id, { heading: r.heading === 1 ? undefined : 1 }),
+  },
+  {
+    id: 'h2',
+    group: 'Headings & Highlights',
+    label: 'Heading 2',
+    icon: Heading2,
+    hint: '##',
+    keywords: 'h2',
+    run: (c, r) => c.app.rems.update(r.id, { heading: r.heading === 2 ? undefined : 2 }),
+  },
+  {
+    id: 'h3',
+    group: 'Headings & Highlights',
+    label: 'Heading 3',
+    icon: Heading3,
+    hint: '###',
+    keywords: 'h3',
+    run: (c, r) => c.app.rems.update(r.id, { heading: r.heading === 3 ? undefined : 3 }),
+  },
+  ...HIGHLIGHT_COLORS.map((color): SlashCommand => ({
+    id: `hl-${color}`,
+    group: 'Headings & Highlights',
+    label: `${COLOR_NAMES[color]} highlight`,
+    icon: Highlighter,
+    keywords: `highlight color ${color}`,
+    run: (c, r) => {
+      if (c.view && !c.view.state.selection.empty) mark(c, 'highlight', { color });
+      else c.app.rems.update(r.id, { highlight: r.highlight === color ? undefined : color });
+    },
+  })),
+  {
+    id: 'hl-none',
+    group: 'Headings & Highlights',
+    label: 'Remove highlight',
+    icon: Eraser,
+    available: (_c, r) => Boolean(r.highlight),
+    run: (c, r) => c.app.rems.update(r.id, { highlight: undefined }),
+  },
 
   // Text Style & Formatting
-  { id: 'bold', group: 'Text Style & Formatting', label: 'Bold', icon: Bold, hint: '⌘B', run: (c) => mark(c, 'bold') },
-  { id: 'italic', group: 'Text Style & Formatting', label: 'Italic', icon: Italic, hint: '⌘I', run: (c) => mark(c, 'italic') },
-  { id: 'underline', group: 'Text Style & Formatting', label: 'Underline', icon: Underline, hint: '⌘U', run: (c) => mark(c, 'underline') },
-  { id: 'strike', group: 'Text Style & Formatting', label: 'Strikethrough', icon: Strikethrough, hint: '⌘⇧S', run: (c) => mark(c, 'strike') },
-  { id: 'inline-code', group: 'Text Style & Formatting', label: 'Inline code', icon: Code, hint: '`', run: (c) => mark(c, 'code') },
+  {
+    id: 'bold',
+    group: 'Text Style & Formatting',
+    label: 'Bold',
+    icon: Bold,
+    hint: '⌘B',
+    run: (c) => mark(c, 'bold'),
+  },
+  {
+    id: 'italic',
+    group: 'Text Style & Formatting',
+    label: 'Italic',
+    icon: Italic,
+    hint: '⌘I',
+    run: (c) => mark(c, 'italic'),
+  },
+  {
+    id: 'underline',
+    group: 'Text Style & Formatting',
+    label: 'Underline',
+    icon: Underline,
+    hint: '⌘U',
+    run: (c) => mark(c, 'underline'),
+  },
+  {
+    id: 'strike',
+    group: 'Text Style & Formatting',
+    label: 'Strikethrough',
+    icon: Strikethrough,
+    hint: '⌘⇧S',
+    run: (c) => mark(c, 'strike'),
+  },
+  {
+    id: 'inline-code',
+    group: 'Text Style & Formatting',
+    label: 'Inline code',
+    icon: Code,
+    hint: '`',
+    run: (c) => mark(c, 'code'),
+  },
   {
     id: 'link',
     group: 'Text Style & Formatting',
@@ -333,13 +558,50 @@ export const COMMANDS: SlashCommand[] = [
       if (src) c.app.rems.update(r.id, { image: { src } });
     },
   },
-  { id: 'occlusion-edit', group: 'Image & Drawing', label: 'Edit image occlusion', icon: Square, available: (_c, r) => Boolean(r.image), run: (c, r) => c.openOcclusion(r.id) },
-  { id: 'image-remove', group: 'Image & Drawing', label: 'Remove image', icon: Trash2, available: (_c, r) => Boolean(r.image), run: (c, r) => c.app.rems.update(r.id, { image: undefined }) },
+  {
+    id: 'occlusion-edit',
+    group: 'Image & Drawing',
+    label: 'Edit image occlusion',
+    icon: Square,
+    available: (_c, r) => Boolean(r.image),
+    run: (c, r) => c.openOcclusion(r.id),
+  },
+  {
+    id: 'image-remove',
+    group: 'Image & Drawing',
+    label: 'Remove image',
+    icon: Trash2,
+    available: (_c, r) => Boolean(r.image),
+    run: (c, r) => c.app.rems.update(r.id, { image: undefined }),
+  },
 
   // References, Tags & Portals
-  { id: 'reference', group: 'References, Tags & Portals', label: 'Reference', icon: Link2, hint: '[[', keywords: 'link rem', run: (c) => insertTrigger(c, '[[') },
-  { id: 'tag', group: 'References, Tags & Portals', label: 'Tag', icon: Tag, hint: '#', run: (c) => insertTrigger(c, ' #') },
-  { id: 'portal', group: 'References, Tags & Portals', label: 'Portal', icon: PanelTop, hint: '((', keywords: 'embed transclusion', run: (c) => insertTrigger(c, '((') },
+  {
+    id: 'reference',
+    group: 'References, Tags & Portals',
+    label: 'Reference',
+    icon: Link2,
+    hint: '[[',
+    keywords: 'link rem',
+    run: (c) => insertTrigger(c, '[['),
+  },
+  {
+    id: 'tag',
+    group: 'References, Tags & Portals',
+    label: 'Tag',
+    icon: Tag,
+    hint: '#',
+    run: (c) => insertTrigger(c, ' #'),
+  },
+  {
+    id: 'portal',
+    group: 'References, Tags & Portals',
+    label: 'Portal',
+    icon: PanelTop,
+    hint: '((',
+    keywords: 'embed transclusion',
+    run: (c) => insertTrigger(c, '(('),
+  },
   {
     id: 'search-portal',
     group: 'References, Tags & Portals',
@@ -362,7 +624,14 @@ export const COMMANDS: SlashCommand[] = [
       if (alias?.trim()) c.app.rems.update(r.id, { aliases: [...r.aliases, alias.trim()] });
     },
   },
-  { id: 'template', group: 'References, Tags & Portals', label: 'Toggle Template', icon: LayoutTemplate, keywords: 'template', run: (c, r) => toggle(c, r, 'isTemplate') },
+  {
+    id: 'template',
+    group: 'References, Tags & Portals',
+    label: 'Toggle Template',
+    icon: LayoutTemplate,
+    keywords: 'template',
+    run: (c, r) => toggle(c, r, 'isTemplate'),
+  },
   {
     id: 'insert-template',
     group: 'References, Tags & Portals',
@@ -375,18 +644,48 @@ export const COMMANDS: SlashCommand[] = [
         c.toast('No templates yet - mark a Rem as template first.');
         return;
       }
-      const name = await c.prompt(`Template name (${templates.map((t) => c.app.rems.title(t.id)).join(', ')})`);
-      const tpl = templates.find((t) => c.app.rems.title(t.id).toLowerCase() === name?.trim().toLowerCase());
+      const name = await c.prompt(
+        `Template name (${templates.map((t) => c.app.rems.title(t.id)).join(', ')})`,
+      );
+      const tpl = templates.find(
+        (t) => c.app.rems.title(t.id).toLowerCase() === name?.trim().toLowerCase(),
+      );
       if (tpl) c.app.rems.applyTemplate(tpl.id, r.id);
       else if (name) c.toast('Template not found');
     },
   },
-  { id: 'property', group: 'References, Tags & Portals', label: 'Toggle Property', icon: Tag, keywords: 'slot column field', run: (c, r) => toggle(c, r, 'isProperty') },
+  {
+    id: 'property',
+    group: 'References, Tags & Portals',
+    label: 'Toggle Property',
+    icon: Tag,
+    keywords: 'slot column field',
+    run: (c, r) => toggle(c, r, 'isProperty'),
+  },
 
   // Date & Time
-  { id: 'date-today', group: 'Date & Time', label: 'Today', icon: Calendar, keywords: 'date daily', run: (c) => insertDate(c, 0) },
-  { id: 'date-tomorrow', group: 'Date & Time', label: 'Tomorrow', icon: Calendar, run: (c) => insertDate(c, 1) },
-  { id: 'date-yesterday', group: 'Date & Time', label: 'Yesterday', icon: Calendar, run: (c) => insertDate(c, -1) },
+  {
+    id: 'date-today',
+    group: 'Date & Time',
+    label: 'Today',
+    icon: Calendar,
+    keywords: 'date daily',
+    run: (c) => insertDate(c, 0),
+  },
+  {
+    id: 'date-tomorrow',
+    group: 'Date & Time',
+    label: 'Tomorrow',
+    icon: Calendar,
+    run: (c) => insertDate(c, 1),
+  },
+  {
+    id: 'date-yesterday',
+    group: 'Date & Time',
+    label: 'Yesterday',
+    icon: Calendar,
+    run: (c) => insertDate(c, -1),
+  },
   {
     id: 'date-pick',
     group: 'Date & Time',
@@ -402,11 +701,29 @@ export const COMMANDS: SlashCommand[] = [
     group: 'Date & Time',
     label: 'Current time',
     icon: Clock,
-    run: (c) => c.view?.dispatch(c.view.state.tr.insertText(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))),
+    run: (c) =>
+      c.view?.dispatch(
+        c.view.state.tr.insertText(
+          new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        ),
+      ),
   },
 
   // Code, Math & Quote
-  { id: 'code-block', group: 'Code, Math & Quote', label: 'Code block', icon: Code, hint: '```', keywords: 'source program', run: (c, r) => c.app.rems.update(r.id, { code: r.code ? undefined : { language: '' }, back: null, direction: 'none' }) },
+  {
+    id: 'code-block',
+    group: 'Code, Math & Quote',
+    label: 'Code block',
+    icon: Code,
+    hint: '```',
+    keywords: 'source program',
+    run: (c, r) =>
+      c.app.rems.update(r.id, {
+        code: r.code ? undefined : { language: '' },
+        back: null,
+        direction: 'none',
+      }),
+  },
   {
     id: 'latex-inline',
     group: 'Code, Math & Quote',
@@ -419,12 +736,48 @@ export const COMMANDS: SlashCommand[] = [
       if (source && c.view) insertInline(c.view, schema.nodes.latex!.create({ source }));
     },
   },
-  { id: 'latex-block', group: 'Code, Math & Quote', label: 'LaTeX block', icon: Sigma, hint: '$$', keywords: 'math formula display equation', run: (c, r) => c.app.rems.update(r.id, { latexBlock: r.latexBlock ? undefined : true, text: r.latexBlock ? r.text : [{ type: 'latex', source: '' }], back: null, direction: 'none' }) },
-  { id: 'quote', group: 'Code, Math & Quote', label: 'Quote', icon: Quote, hint: '>', run: (c, r) => toggle(c, r, 'quote') },
+  {
+    id: 'latex-block',
+    group: 'Code, Math & Quote',
+    label: 'LaTeX block',
+    icon: Sigma,
+    hint: '$$',
+    keywords: 'math formula display equation',
+    run: (c, r) =>
+      c.app.rems.update(r.id, {
+        latexBlock: r.latexBlock ? undefined : true,
+        text: r.latexBlock ? r.text : [{ type: 'latex', source: '' }],
+        back: null,
+        direction: 'none',
+      }),
+  },
+  {
+    id: 'quote',
+    group: 'Code, Math & Quote',
+    label: 'Quote',
+    icon: Quote,
+    hint: '>',
+    run: (c, r) => toggle(c, r, 'quote'),
+  },
 
   // Tables, Divider, Columns
-  { id: 'table', group: 'Tables, Divider, Columns', label: 'Table (Rems tagged with this)', icon: Table, keywords: 'table grid properties', run: (c, r) => toggle(c, r, 'tableView') },
-  { id: 'divider', group: 'Tables, Divider, Columns', label: 'Divider', icon: Minus, hint: '---', keywords: 'line separator hr', run: (c, r) => c.app.rems.update(r.id, { divider: true }) },
+  {
+    id: 'table',
+    group: 'Tables, Divider, Columns',
+    label: 'Table (Rems tagged with this)',
+    icon: Table,
+    keywords: 'table grid properties',
+    run: (c, r) => toggle(c, r, 'tableView'),
+  },
+  {
+    id: 'divider',
+    group: 'Tables, Divider, Columns',
+    label: 'Divider',
+    icon: Minus,
+    hint: '---',
+    keywords: 'line separator hr',
+    run: (c, r) => c.app.rems.update(r.id, { divider: true }),
+  },
 
   // Upload File or Link Source
   {
@@ -437,7 +790,10 @@ export const COMMANDS: SlashCommand[] = [
       const file = await c.pickFile('*/*');
       if (!file) return;
       const src = await c.app.files.save(file, file.name);
-      c.app.rems.update(r.id, { file: { src, name: file.name, mimeType: file.type, size: file.size }, ...(r.text.length === 0 ? { text: rt(file.name) } : {}) });
+      c.app.rems.update(r.id, {
+        file: { src, name: file.name, mimeType: file.type, size: file.size },
+        ...(r.text.length === 0 ? { text: rt(file.name) } : {}),
+      });
     },
   },
   {
@@ -453,22 +809,127 @@ export const COMMANDS: SlashCommand[] = [
   },
 
   // Record Audio/Video
-  { id: 'record-audio', group: 'Record Audio/Video', label: 'Record audio', icon: Mic, keywords: 'voice microphone', run: (c, r) => c.openRecorder(r.id) },
+  {
+    id: 'record-audio',
+    group: 'Record Audio/Video',
+    label: 'Record audio',
+    icon: Mic,
+    keywords: 'voice microphone',
+    run: (c, r) => c.openRecorder(r.id),
+  },
 
   // Hierarchy
-  { id: 'todo', group: 'Hierarchy', label: 'Todo', icon: CheckSquare, hint: '[]', keywords: 'task checkbox', run: (c, r) => c.app.rems.update(r.id, { todo: r.todo ? undefined : 'unfinished' }) },
-  { id: 'make-document', group: 'Hierarchy', label: 'Toggle document', icon: FileText, keywords: 'page doc', run: (c, r) => toggle(c, r, 'isDocument') },
-  { id: 'make-folder', group: 'Hierarchy', label: 'Toggle folder', icon: Folder, run: (c, r) => c.app.rems.update(r.id, { isFolder: r.isFolder ? undefined : true, isDocument: true } as Partial<Rem>) },
-  { id: 'indent', group: 'Hierarchy', label: 'Indent', icon: Indent, hint: 'Tab', run: (c, r) => indent({ app: c.app, controller: c.controller, instance: c.instance }, [r.id], 'end') },
-  { id: 'outdent', group: 'Hierarchy', label: 'Outdent', icon: Outdent, hint: '⇧Tab', run: (c, r) => outdent({ app: c.app, controller: c.controller, instance: c.instance }, [r.id], 'end') },
-  { id: 'move-up', group: 'Hierarchy', label: 'Move up', icon: ArrowUpToLine, hint: '⌘⇧↑', run: (c, r) => void c.app.rems.moveUp(r.id) },
-  { id: 'move-down', group: 'Hierarchy', label: 'Move down', icon: ArrowDownToLine, hint: '⌘⇧↓', run: (c, r) => void c.app.rems.moveDown(r.id) },
-  { id: 'collapse', group: 'Hierarchy', label: 'Collapse / expand', icon: ChevronsDownUp, hint: '⌘↑/↓', run: (c, r) => toggleCollapsed({ app: c.app, controller: c.controller, instance: c.instance }, r.id) },
-  { id: 'zoom', group: 'Hierarchy', label: 'Zoom in', icon: ZoomIn, keywords: 'open focus', run: (c, r) => c.navigate(`/rem/${r.id}`) },
-  { id: 'duplicate', group: 'Hierarchy', label: 'Duplicate', icon: Copy, hint: '⌘⇧D', run: (c, r) => void c.app.rems.duplicate(r.id) },
-  { id: 'edit-later', group: 'Hierarchy', label: 'Edit later', icon: Pencil, keywords: 'review todo later', run: (c, r) => toggle(c, r, 'editLater') },
-  { id: 'pin', group: 'Hierarchy', label: 'Pin to sidebar', icon: List, run: (c, r) => toggle(c, r, 'pinned') },
-  { id: 'delete', group: 'Hierarchy', label: 'Delete', icon: Trash2, hint: '⌘⇧⌫', run: (c, r) => deleteRems({ app: c.app, controller: c.controller, instance: c.instance }, [r.id]) },
+  {
+    id: 'todo',
+    group: 'Hierarchy',
+    label: 'Todo',
+    icon: CheckSquare,
+    hint: '[]',
+    keywords: 'task checkbox',
+    run: (c, r) => c.app.rems.update(r.id, { todo: r.todo ? undefined : 'unfinished' }),
+  },
+  {
+    id: 'make-document',
+    group: 'Hierarchy',
+    label: 'Toggle document',
+    icon: FileText,
+    keywords: 'page doc',
+    run: (c, r) => toggle(c, r, 'isDocument'),
+  },
+  {
+    id: 'make-folder',
+    group: 'Hierarchy',
+    label: 'Toggle folder',
+    icon: Folder,
+    run: (c, r) =>
+      c.app.rems.update(r.id, {
+        isFolder: r.isFolder ? undefined : true,
+        isDocument: true,
+      } as Partial<Rem>),
+  },
+  {
+    id: 'indent',
+    group: 'Hierarchy',
+    label: 'Indent',
+    icon: Indent,
+    hint: 'Tab',
+    run: (c, r) =>
+      indent({ app: c.app, controller: c.controller, instance: c.instance }, [r.id], 'end'),
+  },
+  {
+    id: 'outdent',
+    group: 'Hierarchy',
+    label: 'Outdent',
+    icon: Outdent,
+    hint: '⇧Tab',
+    run: (c, r) =>
+      outdent({ app: c.app, controller: c.controller, instance: c.instance }, [r.id], 'end'),
+  },
+  {
+    id: 'move-up',
+    group: 'Hierarchy',
+    label: 'Move up',
+    icon: ArrowUpToLine,
+    hint: '⌘⇧↑',
+    run: (c, r) => void c.app.rems.moveUp(r.id),
+  },
+  {
+    id: 'move-down',
+    group: 'Hierarchy',
+    label: 'Move down',
+    icon: ArrowDownToLine,
+    hint: '⌘⇧↓',
+    run: (c, r) => void c.app.rems.moveDown(r.id),
+  },
+  {
+    id: 'collapse',
+    group: 'Hierarchy',
+    label: 'Collapse / expand',
+    icon: ChevronsDownUp,
+    hint: '⌘↑/↓',
+    run: (c, r) =>
+      toggleCollapsed({ app: c.app, controller: c.controller, instance: c.instance }, r.id),
+  },
+  {
+    id: 'zoom',
+    group: 'Hierarchy',
+    label: 'Zoom in',
+    icon: ZoomIn,
+    keywords: 'open focus',
+    run: (c, r) => c.navigate(`/rem/${r.id}`),
+  },
+  {
+    id: 'duplicate',
+    group: 'Hierarchy',
+    label: 'Duplicate',
+    icon: Copy,
+    hint: '⌘⇧D',
+    run: (c, r) => void c.app.rems.duplicate(r.id),
+  },
+  {
+    id: 'edit-later',
+    group: 'Hierarchy',
+    label: 'Edit later',
+    icon: Pencil,
+    keywords: 'review todo later',
+    run: (c, r) => toggle(c, r, 'editLater'),
+  },
+  {
+    id: 'pin',
+    group: 'Hierarchy',
+    label: 'Pin to sidebar',
+    icon: List,
+    run: (c, r) => toggle(c, r, 'pinned'),
+  },
+  {
+    id: 'delete',
+    group: 'Hierarchy',
+    label: 'Delete',
+    icon: Trash2,
+    hint: '⌘⇧⌫',
+    run: (c, r) =>
+      deleteRems({ app: c.app, controller: c.controller, instance: c.instance }, [r.id]),
+  },
 
   // AI Tools
   {

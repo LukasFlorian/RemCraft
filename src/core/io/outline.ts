@@ -110,11 +110,21 @@ export function parseOutline(source: string): OutlineNode[] {
   const attach = (node: OutlineNode, indent: number, headingLevel: number): void => {
     if (headingLevel > 0) {
       // Structural heading: close everything except headings of a lower level.
-      while (stack.length > 0 && !(stack[stack.length - 1]!.headingLevel > 0 && stack[stack.length - 1]!.headingLevel < headingLevel)) {
+      while (
+        stack.length > 0 &&
+        !(
+          stack[stack.length - 1]!.headingLevel > 0 &&
+          stack[stack.length - 1]!.headingLevel < headingLevel
+        )
+      ) {
         stack.pop();
       }
     } else {
-      while (stack.length > 0 && stack[stack.length - 1]!.headingLevel === 0 && stack[stack.length - 1]!.indent >= indent) {
+      while (
+        stack.length > 0 &&
+        stack[stack.length - 1]!.headingLevel === 0 &&
+        stack[stack.length - 1]!.indent >= indent
+      ) {
         stack.pop();
       }
     }
@@ -141,7 +151,11 @@ export function parseOutline(source: string): OutlineNode[] {
       // Remove the common indentation of the code lines.
       const common = Math.min(...body.filter((l) => l.trim() !== '').map(indentOf), Infinity);
       const code = body.map((l) => l.slice(Number.isFinite(common) ? common : 0)).join('\n');
-      attach({ text: code, block: { code: { language: fence[2] ?? '' } }, children: [] }, indent, 0);
+      attach(
+        { text: code, block: { code: { language: fence[2] ?? '' } }, children: [] },
+        indent,
+        0,
+      );
       i = j;
       continue;
     }
