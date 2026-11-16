@@ -50,3 +50,20 @@ describe('OpenAI-compatible provider', () => {
     expect(loadAiConfig()).toBeNull();
   });
 });
+
+describe('Claude provider', () => {
+  it('sends system prompts separately and reads text blocks', async () => {
+    const { createAnthropicProvider } = await import('./anthropic');
+    const fetchMock = vi.fn(async (_u: string | URL | Request, _i?: RequestInit) => new Response(JSON.stringify({ content: [{ type: 'text', text: 'hallo' }] })));
+    const ai = createAnthropicProvider({ baseUrl: '', apiKey: 'k', model: 'm' }, fetchMock as unknown as typeof fetch);
+    expect(await ai.complete([{ role: 'system', content: 'sys' }, { role: 'user', content: 'u' }])).toBe('hallo');
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('https://api.anthropic.com/v1/messages');
+    expect(JSON.parse(String(init!.body))).toMatchObject({ system: 'sys', messages: [{ role: 'user', content: 'u' }], model: 'm' });
+    expect((init!.headers as Record<string, string>)['x-api-key']).toBe('k');
+  });
+  it('is available in the registry', async () => {
+    const { AI_PROVIDERS } = await import('./registry');
+    expect(AI_PROVIDERS.list().map((p) => p.id)).toEqual(['openai-compatible', 'anthropic']);
+  });
+});

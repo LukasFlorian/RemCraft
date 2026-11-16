@@ -307,3 +307,16 @@ describe('applyExamPolicy', () => {
     expect(applyExamPolicy(prev, next, noFinal, NOW).due).toBe(noFinal.date - DAY);
   });
 });
+
+describe('scheduler registry', () => {
+  it('provides the built-in algorithms and falls back to SM-2', async () => {
+    const { SCHEDULERS } = await import('./registry');
+    expect(SCHEDULERS.list().map((s) => s.id)).toEqual(['sm2', 'fsrs', 'exponential']);
+    const exp = createScheduler({ ...createDefaultScheduler(), algorithm: 'exponential' });
+    let s = exp.review(card('x/f'), 3, NOW);
+    expect(s.interval).toBe(1);
+    s = exp.review(s, 3, s.due);
+    expect(s.interval).toBe(3);
+    expect(createScheduler({ ...createDefaultScheduler(), algorithm: 'unknown-plugin' }).algorithm).toBe('sm2');
+  });
+});

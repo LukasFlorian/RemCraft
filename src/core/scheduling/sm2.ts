@@ -21,14 +21,13 @@ import { bookkeeping, elapsedDays, fuzzInterval } from './common';
 import type { Rng, Scheduler } from './common';
 
 /**
- * Delay for "Partially recalled" while in a step phase: the average of the
- * first two steps on the first step (Anki behaviour), otherwise the current
- * step repeated.
+ * Delay for "Partially recalled" while in a step phase. RemNote: the card
+ * "keeps the same step and waits half the time to the next step" (on the last
+ * step: half of the current step).
  */
-function hardStepDelay(steps: readonly number[], step: number): number {
-  if (step === 0 && steps.length > 1) return (steps[0]! + steps[1]!) / 2;
-  if (step === 0) return steps[0]! * 1.5;
-  return steps[Math.min(step, steps.length - 1)]!;
+export function hardStepDelay(steps: readonly number[], step: number): number {
+  const next = steps[step + 1] ?? steps[Math.min(step, steps.length - 1)]!;
+  return next / 2;
 }
 
 /**
@@ -95,8 +94,13 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
         return atStep(s, 'learning', step, hardStepDelay(steps, step), now, rating);
       case 3: {
         const next = step + 1;
-        if (next >= steps.length)
-          return graduate(s, finalizeInterval(params.graduatingInterval, rng, false), now, rating);
+        if (next >= steps.length) {
+          // RemNote: the first interval applies the exponential rules (× ease) to the
+          // current fixed-step interval; `graduatingInterval` is the lower bound.
+          const stepDays = (steps[step] ?? 0) / (24 * 60);
+          const days = Math.max(params.graduatingInterval, stepDays * ease);
+          return graduate(s, finalizeInterval(days, rng, false), now, rating);
+        }
         return atStep(s, 'learning', next, steps[next]!, now, rating);
       }
     }
@@ -149,13 +153,19 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
     }
 
     // Compute all three successful intervals so they are strictly ordered.
+    // Overdueness bonus: a share of the delay is added before multiplying
+    // (RemNote defaults: 25 % Hard, 50 % Good, 100 % Easy).
+    const bonus = (share: number | undefined, fallback: number): number => late * (share ?? fallback);
     const hard = finalizeInterval(
-      Math.max((current + late / 4) * params.hardInterval, current + 1),
+      Math.max((current + bonus(params.overdueBonusHard, 0.25)) * params.hardInterval, current + 1),
       undefined,
     );
-    const good = Math.max(finalizeInterval((current + late / 2) * state.ease, undefined), hard + 1);
+    const good = Math.max(
+      finalizeInterval((current + bonus(params.overdueBonusGood, 0.5)) * state.ease, undefined),
+      hard + 1,
+    );
     const easy = Math.max(
-      finalizeInterval((current + late) * state.ease * params.easyBonus, undefined),
+      finalizeInterval((current + bonus(params.overdueBonusEasy, 1)) * state.ease * params.easyBonus, undefined),
       good + 1,
     );
 

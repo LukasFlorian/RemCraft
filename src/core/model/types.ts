@@ -148,6 +148,47 @@ export interface RemFile {
   size: number;
 }
 
+/** Markers of a slide (Fokus): important ★ and unclear ?. */
+export type SlideFlag = 'important' | 'unclear';
+
+/**
+ * Slide-deck information on a document Rem.
+ * `boxes` are slide rectangles in relative page coordinates `[x0, y0, x1, y1]`
+ * (several per page for handouts); every slide Rem references a page and box.
+ */
+export interface DeckInfo {
+  /** `file:<id>` of the PDF. */
+  src: string;
+  /** Original file name (matched against `source.pdf` of card files). */
+  pdfName: string;
+  pdfPages: number;
+  /** Layout mode: `auto` or `RxC` (rows × columns). */
+  layout: string;
+  boxes: number[][];
+}
+
+/** Position of a slide inside its deck. */
+export interface SlideInfo {
+  /** 0-based slide index (order of the slides). */
+  index: number;
+  /** 0-based PDF page. */
+  page: number;
+  /** Index into `DeckInfo.boxes`. */
+  box: number;
+}
+
+/** Where an imported card or explanation came from. */
+export interface FokusOrigin {
+  /** Name of the imported file. */
+  file: string;
+  /** Content key (section + front + back) used to keep progress on re-import. */
+  key: string;
+  pages?: number[];
+  anchor?: string;
+  /** Explanation of a slide (`notes[]` of the file) rather than a card. */
+  explanation?: boolean;
+}
+
 /**
  * A Rem: the universal building block of the knowledge base.
  *
@@ -225,6 +266,22 @@ export interface Rem {
   isTemplate?: boolean;
   /** ISO date (YYYY-MM-DD) for daily documents. */
   dailyDate?: string;
+
+  // --- lectures (slides ↔ notes ↔ flashcards) -----------------------------
+  /** This document is a slide deck (its children are the slides). */
+  deck?: DeckInfo;
+  /** This Rem is one slide of its parent deck; its children are the notes of the slide. */
+  slide?: SlideInfo;
+  /** Text extracted from the slide (search, card anchors, assistant context). */
+  slideText?: string;
+  /** Markers set during the lecture. */
+  slideFlags?: SlideFlag[];
+  /** Origin of Rems imported from a `*.fokus.json` file (keeps progress on re-import). */
+  fokus?: FokusOrigin;
+
+  // --- sharing -----------------------------------------------------------------
+  /** Shared space the Rem is synchronised in (absent = the owner's personal space). */
+  spaceId?: string;
 
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -309,8 +366,11 @@ export interface ReviewLog {
   updatedAt: Timestamp;
 }
 
-/** Supported scheduling algorithms. */
-export type SchedulerAlgorithm = 'sm2' | 'fsrs';
+/**
+ * Scheduling algorithm id. Built in: `sm2`, `fsrs`, `exponential`; further
+ * algorithms can be registered at runtime (see `scheduling/registry.ts`).
+ */
+export type SchedulerAlgorithm = 'sm2' | 'fsrs' | 'exponential' | (string & {});
 
 /** Parameters of RemNote's Anki-SM-2 variant (see docs/scheduling.md). */
 export interface Sm2Params {
@@ -340,6 +400,12 @@ export interface Sm2Params {
   maximumInterval: number;
   /** Randomise review intervals slightly to avoid clumping. */
   fuzz: boolean;
+  /** Share of the overdue days added before multiplying on "Partially recalled" (default 0.25). */
+  overdueBonusHard?: number;
+  /** … on "Recalled with effort" (default 0.5). */
+  overdueBonusGood?: number;
+  /** … on "Easily recalled" (default 1). */
+  overdueBonusEasy?: number;
 }
 
 /** Parameters of the FSRS-6 algorithm. */
@@ -352,6 +418,8 @@ export interface FsrsParams {
   learningSteps: number[];
   /** Relearning steps in minutes. */
   relearningSteps: number[];
+  /** Minutes until a never-seen card answered "Forgot" returns (used without learning steps). */
+  newCardForgotInterval?: number;
   /** Upper bound of intervals, in days. */
   maximumInterval: number;
   fuzz: boolean;
@@ -364,6 +432,8 @@ export interface SchedulerConfig {
   algorithm: SchedulerAlgorithm;
   sm2: Sm2Params;
   fsrs: FsrsParams;
+  /** Parameters of registered (plugin) algorithms, keyed by algorithm id. */
+  extra?: Record<string, Record<string, unknown>>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -420,11 +490,153 @@ export interface Settings {
   typeInAnswerGrading: 'exact' | 'lenient';
   /** Shuffle the global queue instead of ordering by due date. */
   shuffleQueue: boolean;
+  /** Learning cards may be shown this many minutes early at the end of the queue (RemNote: 15). */
+  learnAheadMinutes?: number;
+  /** Lecture mode (Fokus) options; defaults apply when absent. */
+  lecture?: Partial<LectureSettings>;
   updatedAt: Timestamp;
 }
 
+// ---------------------------------------------------------------------------
+// Lectures (attention tracking, ported from Fokus)
+// ---------------------------------------------------------------------------
+
+/** A pen/marker stroke on a slide; points relative to the slide (x0, y0, x1, y1, …). */
+export interface Stroke {
+  tool: 'pen' | 'marker';
+  color: string;
+  /** Width relative to the slide width. */
+  width: number;
+  p: number[];
+}
+
+/** A text box placed on a slide (positions/sizes relative to the slide). */
+export interface TextBox {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  /** Font size relative to the slide width. */
+  s: number;
+  /** Text colour. */
+  c: string;
+  bg: 'note' | 'white' | 'none';
+  text: string;
+}
+
+/** A highlight of slide text; one rectangle per marked line. */
+export interface TextMark {
+  id: string;
+  c: string;
+  text: string;
+  rects: [number, number, number, number][];
+}
+
+/** Drawings, text boxes and highlights of one slide (id = slide Rem id). */
+export interface SlideAnnotations {
+  id: RemId;
+  strokes: Stroke[];
+  boxes: TextBox[];
+  marks: TextMark[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** One lecture (recording). Its history lives in {@link LectureEvent}s. */
+export interface Lecture {
+  id: string;
+  name: string;
+  /** Slide deck shown in the lecture. */
+  deckId: RemId | null;
+  /** Course folder. */
+  courseId: RemId | null;
+  archived?: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Lecture event types (event sourcing, like Fokus):
+ * `start`/`stop` (recording intervals; `pause` marks a break), `slide`
+ * (navigation), `goal`, `summary`, `away` (time outside the app), `drift`
+ * (self-caught mind wandering), `checkin_prompt`/`checkin` (recall
+ * questions), `focus` (settings in effect), `flag`, `note`.
+ */
+export type LectureEventType =
+  | 'start'
+  | 'stop'
+  | 'slide'
+  | 'goal'
+  | 'summary'
+  | 'away'
+  | 'drift'
+  | 'checkin_prompt'
+  | 'checkin'
+  | 'focus'
+  | 'flag'
+  | 'note';
+
+/** One immutable lecture event (own record so devices never overwrite each other). */
+export interface LectureEvent {
+  id: string;
+  lectureId: string;
+  type: LectureEventType;
+  /** Wall-clock time (ms). */
+  t: Timestamp;
+  /** Slide index the event refers to. */
+  slide?: number;
+  /** `away`: start/end (ms). */
+  start?: Timestamp;
+  end?: Timestamp;
+  /** Free text (goal, summary, check-in prompt/answer). */
+  text?: string;
+  /** `checkin`: id of the prompt event. */
+  ref?: string;
+  /** `checkin`: self-rated focus 1-5. */
+  focus?: number;
+  skipped?: boolean;
+  /** `stop`: break instead of end. */
+  pause?: boolean;
+  /** `flag`: marker kind and state. */
+  flag?: SlideFlag;
+  on?: boolean;
+  /** `focus`: away tracking active. */
+  trackAway?: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** Thresholds and options of lecture mode (Fokus). */
+export interface LectureSettings {
+  /** Recall check-in every N lecture minutes (0 = off). */
+  checkinMinutes: number;
+  /** Record time outside the app. */
+  trackAway: boolean;
+  /** Shorter switches are ignored (s). */
+  awayMinSeconds: number;
+  /** After this long away a "welcome back" banner appears (s). */
+  welcomeBackSeconds: number;
+  /** Shorter visits count as "skipped" (s). */
+  minDwellSeconds: number;
+  /** This long outside the app on a slide → review (s). */
+  missedMinSeconds: number;
+  /** … or this share of the slide's time. */
+  missedRatio: number;
+  /** Explained this long (and ≥ 1.5 × median) without a note → review (s). */
+  longDwellSeconds: number;
+}
+
 /** Names of all synchronised collections. */
-export type CollectionName = 'rems' | 'cards' | 'logs' | 'exams' | 'schedulers' | 'settings';
+export type CollectionName =
+  | 'rems'
+  | 'cards'
+  | 'logs'
+  | 'exams'
+  | 'schedulers'
+  | 'settings'
+  | 'annotations'
+  | 'lectures'
+  | 'lectureEvents';
 
 /** Maps every collection name to its record type. */
 export interface CollectionTypes {
@@ -434,4 +646,7 @@ export interface CollectionTypes {
   exams: Exam;
   schedulers: SchedulerConfig;
   settings: Settings;
+  annotations: SlideAnnotations;
+  lectures: Lecture;
+  lectureEvents: LectureEvent;
 }

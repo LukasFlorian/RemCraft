@@ -16,7 +16,7 @@ create sequence if not exists public.records_seq;
 
 create table if not exists public.records (
   user_id    uuid    not null default auth.uid() references auth.users (id) on delete cascade,
-  collection text    not null check (collection in ('rems', 'cards', 'logs', 'exams', 'schedulers', 'settings')),
+  collection text    not null,
   id         text    not null,
   data       jsonb,
   deleted    boolean not null default false,

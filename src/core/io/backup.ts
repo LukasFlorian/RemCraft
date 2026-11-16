@@ -22,6 +22,9 @@ export const COLLECTIONS: readonly CollectionName[] = [
   'cards',
   'logs',
   'exams',
+  'annotations',
+  'lectures',
+  'lectureEvents',
 ];
 
 /**

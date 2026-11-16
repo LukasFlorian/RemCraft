@@ -138,6 +138,9 @@ export class ImportExportService {
       cards: [...this.store.all('cards')],
       logs: [...this.store.all('logs')],
       exams: [...this.store.all('exams')],
+      annotations: [...this.store.all('annotations')],
+      lectures: [...this.store.all('lectures')],
+      lectureEvents: [...this.store.all('lectureEvents')],
     });
   }
 

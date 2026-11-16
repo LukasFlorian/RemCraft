@@ -75,5 +75,5 @@ export function outboxEntryOf(change: Change): OutboxEntry {
 
 /** Empty collection data. */
 export function emptyData(): CollectionData {
-  return { rems: [], cards: [], logs: [], exams: [], schedulers: [], settings: [] };
+  return { rems: [], cards: [], logs: [], exams: [], schedulers: [], settings: [], annotations: [], lectures: [], lectureEvents: [] };
 }

@@ -61,13 +61,16 @@ interface UndoEntry {
 const EMPTY_CHILDREN: readonly Rem[] = Object.freeze([]);
 
 /** All collection names. */
-const COLLECTION_NAMES: readonly CollectionName[] = [
+export const COLLECTION_NAMES: readonly CollectionName[] = [
   'rems',
   'cards',
   'logs',
   'exams',
   'schedulers',
   'settings',
+  'annotations',
+  'lectures',
+  'lectureEvents',
 ];
 
 /** Key of a record inside a transaction. */
@@ -141,6 +144,9 @@ export class Store implements RemGraph {
     exams: new Map(),
     schedulers: new Map(),
     settings: new Map(),
+    annotations: new Map(),
+    lectures: new Map(),
+    lectureEvents: new Map(),
   };
   /** Per-collection change counters (for memoisation). */
   private readonly versions: Record<CollectionName, number> = {
@@ -150,6 +156,9 @@ export class Store implements RemGraph {
     exams: 0,
     schedulers: 0,
     settings: 0,
+    annotations: 0,
+    lectures: 0,
+    lectureEvents: 0,
   };
   /** Global change counter (the React snapshot). */
   private globalVersion = 0;

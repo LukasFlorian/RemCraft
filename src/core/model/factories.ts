@@ -39,6 +39,9 @@ export const DEFAULT_SM2_PARAMS: Readonly<Sm2Params> = Object.freeze({
   minimumLapseInterval: 1,
   maximumInterval: 36500,
   fuzz: true,
+  overdueBonusHard: 0.25,
+  overdueBonusGood: 0.5,
+  overdueBonusEasy: 1,
 });
 
 /** Default FSRS-6 model weights (identical to the reference implementation). */
@@ -53,6 +56,7 @@ export const DEFAULT_FSRS_PARAMS: Readonly<FsrsParams> = Object.freeze({
   desiredRetention: 0.9,
   learningSteps: [1, 10],
   relearningSteps: [10],
+  newCardForgotInterval: 1,
   maximumInterval: 36500,
   fuzz: true,
 });
