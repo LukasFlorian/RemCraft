@@ -21,7 +21,7 @@ function course(): Rem[] {
     id: 's1',
     parentId: 'deck',
     text: rt('Folie 1'),
-    slide: { index: 0, page: 1, box: null },
+    slide: { index: 0, page: 0, box: 0 },
     slideText: 'Gradient',
   });
   const note = createRem({ id: 'n1', parentId: 's1', order: 'a0', text: rt('Prof sagt: wichtig') });

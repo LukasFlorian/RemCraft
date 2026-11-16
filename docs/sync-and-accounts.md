@@ -11,14 +11,14 @@ writing them again.
 
 One generic table holds every record (`supabase/migrations/20261116000000_init.sql`):
 
-| Column | Meaning |
-|---|---|
-| `user_id` | owner (`auth.uid()`), part of the primary key |
-| `collection`, `id` | record address |
-| `data` | the record as JSON (`null` when deleted) |
-| `deleted` | tombstone flag |
-| `updated_at` | last-writer-wins timestamp (ms) |
-| `seq` | server-assigned change sequence number |
+| Column             | Meaning                                       |
+| ------------------ | --------------------------------------------- |
+| `user_id`          | owner (`auth.uid()`), part of the primary key |
+| `collection`, `id` | record address                                |
+| `data`             | the record as JSON (`null` when deleted)      |
+| `deleted`          | tombstone flag                                |
+| `updated_at`       | last-writer-wins timestamp (ms)               |
+| `seq`              | server-assigned change sequence number        |
 
 A trigger assigns a new `seq` on every write and **ignores updates older than the stored row**,
 so concurrent pushes can never overwrite newer data. Row-level security restricts every
@@ -39,11 +39,11 @@ local edit ─► store ─► IndexedDB + outbox ─► push (upsert, debounced
   and stores the new `lastSeq`. Rows for which a newer local change is still in the outbox are
   skipped.
 - **Triggers**: local writes, Supabase Realtime, every 60 s, when the browser comes online and
-  *Sync now*.
+  _Sync now_.
 
 ## Conflicts
 
-Conflicts are resolved per record by *last writer wins* on `updatedAt`. Timestamps come from a
+Conflicts are resolved per record by _last writer wins_ on `updatedAt`. Timestamps come from a
 hybrid logical clock: it never runs backwards and jumps past every timestamp seen from other
 devices, so an edit made after receiving a remote change always wins against it, even with
 skewed device clocks. Because Rems are small records (one bullet each) and sibling order uses
