@@ -39,6 +39,12 @@ export interface SlideViewProps {
   className?: string;
   /** Rendering width hint (CSS px). */
   width?: number;
+  /**
+   * Size relative to the container width (height from the slide's aspect
+   * ratio) instead of fitting into a fixed box - for documents and printing,
+   * where the available width changes after layout (print preview).
+   */
+  fluid?: boolean;
 }
 
 /** Fits a box of aspect `ratio` into `w × h`. */
@@ -66,6 +72,7 @@ export function SlideView({
   onTextAction,
   className,
   width = 900,
+  fluid = false,
 }: SlideViewProps): ReactNode {
   const app = useApp();
   const hostRef = useRef<HTMLDivElement>(null);
@@ -84,7 +91,9 @@ export function SlideView({
     return () => ro.disconnect();
   }, []);
 
-  const stage = fit(host.w, host.h || host.w / ratio, ratio);
+  const stage = fluid
+    ? { width: host.w, height: host.w / ratio, left: 0, top: 0 }
+    : fit(host.w, host.h || host.w / ratio, ratio);
   const save = (
     patch: Partial<{ strokes: Stroke[]; boxes: TextBox[]; marks: TextMark[] }>,
   ): void => {
@@ -92,7 +101,10 @@ export function SlideView({
   };
 
   return (
-    <div ref={hostRef} className={`slide-view${className ? ` ${className}` : ''}`}>
+    <div
+      ref={hostRef}
+      className={`slide-view${fluid ? ' fluid' : ''}${className ? ` ${className}` : ''}`}
+    >
       {!slide && <div className="slide-empty faint">Keine Folie</div>}
       {slide && (
         <div

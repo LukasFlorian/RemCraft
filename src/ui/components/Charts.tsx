@@ -4,7 +4,7 @@
  * gap between fills, recessive axes, a legend for ≥ 2 series, and a hover
  * tooltip on every mark.
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 /** One series of a bar chart. */
@@ -27,6 +27,25 @@ export interface BarChartProps {
   ariaLabel: string;
 }
 
+/**
+ * Width of an element in CSS pixels (follows resizes). Charts draw in real
+ * pixels, so text and bars are never stretched.
+ */
+function useWidth(fallback: number): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(fallback);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = (): void => setWidth(Math.max(120, el.clientWidth || fallback));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fallback]);
+  return [ref, width];
+}
+
 /** Vertical (stacked) bar chart. */
 export function BarChart({
   labels,
@@ -40,7 +59,7 @@ export function BarChart({
   const n = labels.length;
   const totals = labels.map((_, i) => series.reduce((s, x) => s + (x.values[i] ?? 0), 0));
   const max = Math.max(1, goal ?? 0, ...totals);
-  const width = 600;
+  const [plotRef, width] = useWidth(600);
   const top = 8;
   const bottom = 22;
   const left = 30;
@@ -61,13 +80,14 @@ export function BarChart({
           ))}
         </div>
       )}
-      <div className="chart-plot">
+      <div className="chart-plot" ref={plotRef}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
+          width={width}
+          height={height}
           role="img"
           aria-label={ariaLabel}
-          preserveAspectRatio="none"
-          style={{ height }}
+          style={{ height, width: '100%' }}
         >
           {ticks.map((t) => (
             <g key={t}>
@@ -117,7 +137,8 @@ export function BarChart({
                     />
                   );
                 })}
-                {i % labelEvery === 0 && (
+                {i % Math.max(labelEvery, Math.ceil((n * 44) / Math.max(1, width - left))) ===
+                  0 && (
                   <text x={x + barW / 2} y={height - 6} className="chart-tick" textAnchor="middle">
                     {label}
                   </text>
