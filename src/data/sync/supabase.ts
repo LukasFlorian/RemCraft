@@ -71,8 +71,10 @@ export class SupabaseBackend implements RemoteBackend {
       if (timer) clearTimeout(timer);
       timer = setTimeout(onChange, 400);
     };
+    // Unique topic: supabase-js reuses channels by name, and adding listeners to
+    // an already subscribed channel throws.
     const channel = this.client
-      .channel(`records-${this.userId}`)
+      .channel(`records-${this.userId}-${Math.random().toString(36).slice(2, 10)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${this.userId}` },
