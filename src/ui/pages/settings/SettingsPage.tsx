@@ -9,6 +9,7 @@ import { AiSection } from './AiSection';
 import { DataSection } from './DataSection';
 import { FlashcardSection } from './FlashcardSection';
 import { GeneralSection } from './GeneralSection';
+import { IntegrationsSection } from './IntegrationsSection';
 import { LectureSection } from './LectureSection';
 import { SchedulerSection } from './SchedulerSection';
 import { ShortcutsSection } from './ShortcutsSection';
@@ -19,6 +20,7 @@ const SECTIONS = [
   { id: 'flashcards', label: 'Flashcards', render: () => <FlashcardSection /> },
   { id: 'schedulers', label: 'Schedulers', render: () => <SchedulerSection /> },
   { id: 'lectures', label: 'Vorlesungen', render: () => <LectureSection /> },
+  { id: 'integrations', label: 'Integrationen (Todoist)', render: () => <IntegrationsSection /> },
   { id: 'data', label: 'Import, Export & Data', render: () => <DataSection /> },
   { id: 'ai', label: 'AI (experimental)', render: () => <AiSection /> },
   { id: 'shortcuts', label: 'Keyboard shortcuts', render: () => <ShortcutsSection /> },

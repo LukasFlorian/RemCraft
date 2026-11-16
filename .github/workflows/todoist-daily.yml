@@ -1,0 +1,31 @@
+# Hourly trigger of the `todoist-daily` Edge Function (alternative to pg_cron,
+# see docs/integrations.md). The function itself decides per user whether it
+# is just after local midnight. Does nothing until the SUPABASE_URL variable
+# and the CRON_SECRET secret are set.
+name: Todoist daily tasks
+
+on:
+  schedule:
+    - cron: '1 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Edge Function
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Todoist integration is not configured - nothing to do."
+            exit 0
+          fi
+          curl --fail --silent --show-error -X POST "$SUPABASE_URL/functions/v1/todoist-daily" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{"mode":"cron"}'
+          echo
