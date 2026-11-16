@@ -83,6 +83,8 @@ export class RemCraftApp {
   private account: AccountState;
   private readonly accountListeners = new Set<() => void>();
   private unsubscribeSyncStatus: (() => void) | null = null;
+  /** Serialises {@link handleUser} calls. */
+  private userQueue: Promise<void> = Promise.resolve();
 
   private constructor(
     readonly persistence: PersistenceAdapter,
@@ -99,8 +101,12 @@ export class RemCraftApp {
     this.auth = client ? new AuthService(client) : null;
     this.remoteFactory =
       remoteFactory ?? (client ? (user) => new SupabaseBackend(client, user.id) : null);
-    this.shareFactory = shareFactory ?? (client ? (user) => new SupabaseShareBackend(client, user?.id ?? null) : null);
-    this.integrationFactory = integrationFactory ?? (client ? (user) => new SupabaseIntegrationBackend(client, user.id) : null);
+    this.shareFactory =
+      shareFactory ??
+      (client ? (user) => new SupabaseShareBackend(client, user?.id ?? null) : null);
+    this.integrationFactory =
+      integrationFactory ??
+      (client ? (user) => new SupabaseIntegrationBackend(client, user.id) : null);
     // Anonymous visitors can open read-only share links.
     this.sharing.backend = this.shareFactory?.(null) ?? null;
     this.account = {
@@ -117,7 +123,13 @@ export class RemCraftApp {
   static async create(options: AppOptions = {}): Promise<RemCraftApp> {
     const persistence = options.persistence ?? (await openPersistence());
     const backend = options.backend === undefined ? getBackendConfig() : options.backend;
-    const app = new RemCraftApp(persistence, backend, options.remoteFactory ?? null, options.shareFactory ?? null, options.integrationFactory ?? null);
+    const app = new RemCraftApp(
+      persistence,
+      backend,
+      options.remoteFactory ?? null,
+      options.shareFactory ?? null,
+      options.integrationFactory ?? null,
+    );
     await app.init(options.seed ?? true);
     return app;
   }
@@ -146,6 +158,16 @@ export class RemCraftApp {
 
   /** Starts or stops synchronisation when the signed-in user changes. */
   async handleUser(user: AuthUser | null): Promise<void> {
+    // Sign-in events can arrive twice at once (e.g. the session from an OAuth
+    // redirect plus the auth event): handle them one after another so only one
+    // sync engine is ever started.
+    const run = this.userQueue.then(() => this.switchUser(user));
+    this.userQueue = run.catch(() => undefined);
+    return run;
+  }
+
+  /** Starts or stops synchronisation for one user (serialised by {@link handleUser}). */
+  private async switchUser(user: AuthUser | null): Promise<void> {
     if (user?.id === this.account.user?.id && (user === null || this.sync)) return;
     this.stopSync();
     if (!user || !this.remoteFactory) {

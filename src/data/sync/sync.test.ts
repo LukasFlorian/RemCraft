@@ -102,3 +102,20 @@ describe('multi-device sync', () => {
     a.dispose();
   });
 });
+
+describe('sign-in events', () => {
+  it('starts only one sync engine when sign-in is reported twice at once', async () => {
+    const server = new FakeServer();
+    let created = 0;
+    const app = await RemCraftApp.create({
+      persistence: new MemoryAdapter(),
+      backend: null,
+      seed: false,
+      remoteFactory: () => (created++, server.client()),
+    });
+    await Promise.all([app.handleUser(USER), app.handleUser(USER)]);
+    expect(created).toBe(1);
+    expect(app.getAccount().user?.id).toBe(USER.id);
+    app.dispose();
+  });
+});
