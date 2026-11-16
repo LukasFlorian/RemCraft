@@ -262,6 +262,12 @@ export interface Rem {
 
   // --- organisation -----------------------------------------------------
   pinned?: boolean;
+  /** Sort key among pinned Rems (fractional index; absent = by creation). */
+  pinOrder?: string;
+  /** Custom icon of a folder/document: an icon name (see `ui/components/RemIcon`) or an emoji. */
+  icon?: string;
+  /** Custom icon colour: a palette key (`blue`, `purple`, …). */
+  color?: string;
   editLater?: boolean;
   isTemplate?: boolean;
   /** ISO date (YYYY-MM-DD) for daily documents. */

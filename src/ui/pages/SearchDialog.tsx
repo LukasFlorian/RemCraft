@@ -4,7 +4,8 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
-import { FileText, Folder, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
+import { RemIcon } from '../components/RemIcon';
 import type { RemId } from '@core/model/types';
 import { useApp, useSelector } from '../app/context';
 import { Modal } from '../components/Modal';
@@ -115,7 +116,6 @@ function SearchResult({
   const rem = useSelector((s) => s.get(remId));
   const parent = useRemTitle(rem?.parentId ?? null, '');
   if (!rem) return null;
-  const Icon = rem.isFolder ? Folder : FileText;
   void app;
   return (
     <button
@@ -126,7 +126,7 @@ function SearchResult({
         if (active) el?.scrollIntoView({ block: 'nearest' });
       }}
     >
-      <Icon size={16} className="faint" />
+      <RemIcon rem={rem} size={16} />
       <span className="col" style={{ gap: 0, minWidth: 0, flex: 1 }}>
         <span className="ellipsis">
           <RichTextView value={rem.text} inertRefs />

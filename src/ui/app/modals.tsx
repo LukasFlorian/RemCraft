@@ -13,6 +13,7 @@ export type GlobalModal =
   | { kind: 'occlusion'; remId: RemId }
   | { kind: 'recorder'; remId: RemId }
   | { kind: 'move'; remIds: RemId[] }
+  | { kind: 'icon'; remId: RemId }
   | { kind: 'exam'; examId?: string; scope?: RemId[] };
 
 interface ModalApi {
