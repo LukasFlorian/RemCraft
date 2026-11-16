@@ -8,22 +8,22 @@ the arrow turns it back into text**. To write a delimiter literally, escape it: 
 
 ## Basic cards
 
-| Syntax | Card |
-|---|---|
-| `Front >> Back` or `Front == Back` | forward |
-| `Front << Back` | backward |
-| `Front <> Back` (or `><`) | both directions |
-| `Front >- Back` (or `=-`) | disabled (kept as note) |
+| Syntax                             | Card                    |
+| ---------------------------------- | ----------------------- |
+| `Front >> Back` or `Front == Back` | forward                 |
+| `Front << Back`                    | backward                |
+| `Front <> Back` (or `><`)          | both directions         |
+| `Front >- Back` (or `=-`)          | disabled (kept as note) |
 
 ## Concepts and descriptors
 
 Concepts are bold and practiced both ways; descriptors are italic and describe an attribute
 of their parent concept (the parent is shown as context while practicing).
 
-| | forward | backward | both | disabled |
-|---|---|---|---|---|
-| Concept | `:>` | `:<` | `::` | `:-` |
-| Descriptor | `;;` | `;<` | `;;<` / `;<>` | `;-` |
+|            | forward | backward | both          | disabled |
+| ---------- | ------- | -------- | ------------- | -------- |
+| Concept    | `:>`    | `:<`     | `::`          | `:-`     |
+| Descriptor | `;;`    | `;<`     | `;;<` / `;<>` | `;-`     |
 
 ```
 - Semaphore :: integer counter with atomic wait/signal
@@ -32,13 +32,13 @@ of their parent concept (the parent is shown as context while practicing).
 
 ## Multi-line cards (answer = children)
 
-| Syntax | Card |
-|---|---|
-| `Question >>>` | set: all children revealed at once (`<<<` backward, `<><` both) |
-| `Question ==` then Enter | same (empty back + children) |
-| `Question >>1.` | list-answer: children revealed one by one, order matters |
-| `Question >>A)` | multiple choice: children are options |
-| `Concept :::` / `Concept ::1.` | multi-line / list concept |
+| Syntax                         | Card                                                            |
+| ------------------------------ | --------------------------------------------------------------- |
+| `Question >>>`                 | set: all children revealed at once (`<<<` backward, `<><` both) |
+| `Question ==` then Enter       | same (empty back + children)                                    |
+| `Question >>1.`                | list-answer: children revealed one by one, order matters        |
+| `Question >>A)`                | multiple choice: children are options                           |
+| `Concept :::` / `Concept ::1.` | multi-line / list concept                                       |
 
 Multi-line delimiters only count at the end of the line.
 
@@ -84,8 +84,8 @@ each one becomes a card. Choose whether only the asked region or all regions are
 ## Type in answer
 
 `/Type in Answer` (`/tia`) on a Rem or any ancestor makes its cards ask for a typed answer.
-Grading (Settings → Flashcards): *lenient* ignores case, accents and punctuation and accepts
-≥ 85 % similarity (transpositions count as one typo); *exact* requires an exact match.
+Grading (Settings → Flashcards): _lenient_ ignores case, accents and punctuation and accepts
+≥ 85 % similarity (transpositions count as one typo); _exact_ requires an exact match.
 
 ## Inline formatting in text files
 

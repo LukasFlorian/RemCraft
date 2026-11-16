@@ -10,8 +10,7 @@ import type {
   Rem,
   ReviewLog,
   SchedulerConfig,
-  Settings,
-} from '@core/model/types';
+  Settings, Lecture, LectureEvent, SlideAnnotations } from '@core/model/types';
 import type { Change, RecordOf } from '../store/store';
 import type { CollectionData, OutboxEntry, PersistenceAdapter, StoredFile } from './adapter';
 import { outboxEntryOf } from './adapter';
@@ -24,6 +23,9 @@ class RemCraftDatabase extends Dexie {
   exams!: Table<Exam, string>;
   schedulers!: Table<SchedulerConfig, string>;
   settings!: Table<Settings, string>;
+  annotations!: Table<SlideAnnotations, string>;
+  lectures!: Table<Lecture, string>;
+  lectureEvents!: Table<LectureEvent, string>;
   outbox!: Table<OutboxEntry, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
   files!: Table<StoredFile, string>;
@@ -43,6 +45,8 @@ class RemCraftDatabase extends Dexie {
       meta: 'key',
       files: 'id, uploaded',
     });
+    // Version 2: lecture mode (Fokus) collections.
+    this.version(2).stores({ annotations: 'id', lectures: 'id', lectureEvents: 'id' });
   }
 }
 
@@ -53,6 +57,9 @@ const COLLECTIONS: readonly CollectionName[] = [
   'exams',
   'schedulers',
   'settings',
+  'annotations',
+  'lectures',
+  'lectureEvents',
 ];
 
 /** IndexedDB-backed {@link PersistenceAdapter}. */

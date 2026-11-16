@@ -1,50 +1,50 @@
 # Scheduling
 
-This document describes how RemCraft decides *when* a card is shown. Everything lives in
+This document describes how RemCraft decides _when_ a card is shown. Everything lives in
 `src/core/scheduling/` and is covered by unit tests.
 
 ## Ratings
 
-| Key | RemNote label | Meaning |
-|---|---|---|
-| 1 | Forgot | could not remember |
-| 2 | Partially recalled | hard, missing details, unsure |
-| 3 | Recalled with effort | correct with effort |
-| 4 | Easily recalled | instant |
-| S | Skip | no rating; a reviewed card comes back in one hour |
+| Key | RemNote label        | Meaning                                           |
+| --- | -------------------- | ------------------------------------------------- |
+| 1   | Forgot               | could not remember                                |
+| 2   | Partially recalled   | hard, missing details, unsure                     |
+| 3   | Recalled with effort | correct with effort                               |
+| 4   | Easily recalled      | instant                                           |
+| S   | Skip                 | no rating; a reviewed card comes back in one hour |
 
 ## Anki SM-2 (RemNote variant) – the default
 
-Research basis: RemNote's help article *"The Anki SM-2 Spaced Repetition Algorithm"*
+Research basis: RemNote's help article _"The Anki SM-2 Spaced Repetition Algorithm"_
 (starting ease 230 %, easy bonus 1.3, hard factor 1.2, ease ±15 pp, lapse multiplier 0.1,
 late bonus divided by a "hardness divider") and Anki's documented defaults for the rest.
 
 **Learning phase** – new cards walk through `learningSteps` (default 1 min, 10 min):
 
-| Rating | Effect |
-|---|---|
-| Forgot | back to step 1 |
-| Partially | repeat the step (first step: average of steps 1 and 2) |
+| Rating      | Effect                                                                  |
+| ----------- | ----------------------------------------------------------------------- |
+| Forgot      | back to step 1                                                          |
+| Partially   | repeat the step (first step: average of steps 1 and 2)                  |
 | With effort | next step; after the last step graduate with `graduatingInterval` (1 d) |
-| Easily | graduate immediately with `easyInterval` (4 d) |
+| Easily      | graduate immediately with `easyInterval` (4 d)                          |
 
 **Exponential phase** (`I` = current interval, `E` = ease, `late` = days overdue):
 
-| Rating | New interval | Ease |
-|---|---|---|
-| Partially | `max((I + late/4) × 1.2, I + 1)` | −15 pp |
-| With effort | `max((I + late/2) × E, hard + 1)` | ±0 |
-| Easily | `max((I + late) × E × 1.3, good + 1)` | +15 pp |
-| Forgot | lapse: `max(1, I × 0.1)`, relearning steps (10 min) | −20 pp |
+| Rating      | New interval                                        | Ease   |
+| ----------- | --------------------------------------------------- | ------ |
+| Partially   | `max((I + late/4) × 1.2, I + 1)`                    | −15 pp |
+| With effort | `max((I + late/2) × E, hard + 1)`                   | ±0     |
+| Easily      | `max((I + late) × E × 1.3, good + 1)`               | +15 pp |
+| Forgot      | lapse: `max(1, I × 0.1)`, relearning steps (10 min) | −20 pp |
 
 Intervals are multiplied by the interval modifier, capped by the maximum interval, rounded to
 days and fuzzed (±15 % → ±5 %, like Anki/FSRS) so cards learned together spread out. The ease
-never drops below 130 %. All values are configurable in *Settings → Schedulers*.
+never drops below 130 %. All values are configurable in _Settings → Schedulers_.
 
 ## FSRS-6
 
-FSRS models each card with *stability* `S` (days until recall probability drops to 90 %) and
-*difficulty* `D` (1–10), using 21 weights `w0…w20` (defaults of FSRS-6):
+FSRS models each card with _stability_ `S` (days until recall probability drops to 90 %) and
+_difficulty_ `D` (1–10), using 21 weights `w0…w20` (defaults of FSRS-6):
 
 - Forgetting curve: `R(t, S) = (1 + f·t/S)^(−w20)` with `f = 0.9^(−1/w20) − 1`
 - Interval for desired retention `r`: `I = S/f · (r^(−1/w20) − 1)`
@@ -63,7 +63,7 @@ state so an optimiser can be added later.
 
 ## Custom schedulers and inheritance
 
-Besides the global default (*Settings → Schedulers*), any number of SM-2 or FSRS
+Besides the global default (_Settings → Schedulers_), any number of SM-2 or FSRS
 configurations can be created and assigned to a document or folder (⋯ menu → Scheduler).
 The closest assignment up the tree wins - exactly like RemNote's custom schedulers.
 
@@ -71,25 +71,25 @@ The closest assignment up the tree wins - exactly like RemNote's custom schedule
 
 Priorities are set per document/folder and inherited: **Currently Studying** (active),
 **Maintaining**, **No Priority** (default) and **Paused**; **Exam** is derived from exams and
-beats all but *Paused*. The daily queue (`queue.ts`) is ordered:
+beats all but _Paused_. The daily queue (`queue.ts`) is ordered:
 
 1. (Re)learning cards due within 20 minutes (any priority)
 2. Exam cards: due reviews → today's new-card quota → today's final-review quota
-3. Currently Studying: due reviews → new cards (limit *new cards per day*)
+3. Currently Studying: due reviews → new cards (limit _new cards per day_)
 4. Maintaining: due reviews
 5. No Priority: due reviews → new cards (same daily limit)
 
 Paused cards never appear in the global queue, but can be practiced explicitly from their
 document. Within a bucket, reviews are ordered by retrievability (most at risk first) unless
-*shuffle* is enabled. Practicing a document offers *spaced repetition*, *practice all*,
-*all in order* and *cram* (no scheduling effect).
+_shuffle_ is enabled. Practicing a document offers _spaced repetition_, _practice all_,
+_all in order_ and _cram_ (no scheduling effect).
 
 ## Daily goal and streak
 
-- Goal modes: *all due cards* (default), *Exams + Currently Studying* (RemNote's recommended
+- Goal modes: _all due cards_ (default), _Exams + Currently Studying_ (RemNote's recommended
   setting) or a fixed number.
-- Progress counts correct answers today (*Forgot* does not count), like RemNote 1.27.
-- Streak: consecutive study days with at least *streak goal* reviews (default 10). A study day
+- Progress counts correct answers today (_Forgot_ does not count), like RemNote 1.27.
+- Streak: consecutive study days with at least _streak goal_ reviews (default 10). A study day
   starts at the configured hour (default 04:00).
 
 ## Exam scheduler
@@ -97,15 +97,15 @@ document. Within a bucket, reviews are ordered by retrievability (most at risk f
 Modelled after RemNote's Exam Scheduler V2 (`exam.ts`). An exam has a date/time, a scope
 (documents/folders) and options.
 
-**Windows**: the *final review* covers the last `finalReviewDays` days before the exam day
-(default 2); everything before is the *learning period*.
+**Windows**: the _final review_ covers the last `finalReviewDays` days before the exam day
+(default 2); everything before is the _learning period_.
 
 **New cards** (never practiced):
 
-- *Spread* (default): today's quota is `ceil((remaining + introducedToday) / learningDaysLeft) −
-  introducedToday`. The quota is recomputed every day from what is left, so missed days are
+- _Spread_ (default): today's quota is `ceil((remaining + introducedToday) / learningDaysLeft) −
+introducedToday`. The quota is recomputed every day from what is left, so missed days are
   automatically redistributed (catch-up) and the quota does not shrink while you learn.
-- *Due now*: all new cards are queued immediately.
+- _Due now_: all new cards are queued immediately.
 - If no learning days are left, all remaining new cards are due.
 
 **Extra practice** (default on): a card leaving (re)learning must have been recalled at least
@@ -120,7 +120,7 @@ one more review; the pending cards are spread evenly over the remaining final-re
 weakest first.
 
 **Daily target** = new quota + due reviews + final-review quota + correct answers already given
-today. The exam is *on track* while there is no overdue backlog from previous days.
+today. The exam is _on track_ while there is no overdue backlog from previous days.
 
 **Study plan**: `planExam` projects every remaining day until the exam - new cards per the quota
 rule, future reviews by simulating "Recalled with effort" answers with the card's scheduler, and
@@ -129,9 +129,9 @@ no longer influences priorities; cards continue with their regular schedule.
 
 ## Sources
 
-- RemNote Help Center: *The Anki SM-2 Spaced Repetition Algorithm*, *The FSRS Spaced Repetition
-  Algorithm*, *Custom Schedulers*, *Understanding the Exam Scheduler*, *Preparing for an Exam*,
-  *Setting Priorities and Disabling Flashcards*, *The Daily Learning Goal*, *Flashcard Basics*.
+- RemNote Help Center: _The Anki SM-2 Spaced Repetition Algorithm_, _The FSRS Spaced Repetition
+  Algorithm_, _Custom Schedulers_, _Understanding the Exam Scheduler_, _Preparing for an Exam_,
+  _Setting Priorities and Disabling Flashcards_, _The Daily Learning Goal_, _Flashcard Basics_.
 - RemNote changelogs 1.15 (Exam Scheduler) and 1.27 (Exam Scheduler V2).
 - open-spaced-repetition: FSRS-6 algorithm and `ts-fsrs` reference implementation.
 - Anki manual: deck options (learning steps, ease, fuzz).

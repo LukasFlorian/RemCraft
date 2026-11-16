@@ -213,7 +213,8 @@ export function createFsrsScheduler(params: FsrsParams): Scheduler {
     const steps = phase === 'learning' ? params.learningSteps : params.relearningSteps;
     const step = state.phase === phase ? state.step : 0;
     if (rating === 4 || steps.length === 0) {
-      if (rating === 1 && steps.length === 0) return toStep(state, mem, phase, 0, 1, now, rating);
+      if (rating === 1 && steps.length === 0)
+        return toStep(state, mem, phase, 0, params.newCardForgotInterval ?? 1, now, rating);
       return toReview(state, mem, interval(mem.stability), now, rating, rng);
     }
     switch (rating) {

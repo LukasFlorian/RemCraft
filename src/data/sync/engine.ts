@@ -34,6 +34,14 @@ export interface SyncEngineOptions {
   pushDelay?: number;
   /** Fallback polling interval (ms). */
   pollInterval?: number;
+  /** Runs before every push (e.g. reconciling shared-space memberships). */
+  beforePush?: () => Promise<void>;
+  /**
+   * Whether records of a shared space may be uploaded (false for read-only
+   * members). Local edits to such records are discarded from the outbox and
+   * overwritten by the next remote change.
+   */
+  canPush?: (space: string) => boolean;
 }
 
 /** Pushes and pulls records between the local store and a remote backend. */
@@ -136,31 +144,47 @@ export class SyncEngine {
     }
   }
 
+  /**
+   * Forgets the pull cursor so the next cycle downloads everything again
+   * (after joining a shared space, whose rows may be older than the cursor).
+   */
+  async resetCursor(): Promise<void> {
+    await this.persistence.setMeta(SEQ_KEY, 0);
+  }
+
   /** Uploads the outbox in batches. */
   private async push(): Promise<void> {
+    await this.options.beforePush?.();
+    const canPush = this.options.canPush ?? (() => true);
     for (;;) {
       const entries = await this.persistence.outbox(BATCH);
       if (entries.length === 0) return;
-      const rows: RemoteRow[] = entries.map((e) => {
+      const rows: RemoteRow[] = [];
+      for (const e of entries) {
         const record = this.store.getRecord(e.collection, e.id);
+        const space = (record as { spaceId?: string } | undefined)?.spaceId ?? e.space ?? null;
+        if (space !== null && !canPush(space)) continue; // read-only membership
         if (!record || e.deleted) {
-          return {
+          rows.push({
             collection: e.collection,
             id: e.id,
             data: null,
             deleted: true,
             updated_at: e.updatedAt,
-          };
+            space,
+          });
+        } else {
+          rows.push({
+            collection: e.collection,
+            id: e.id,
+            data: record,
+            deleted: false,
+            updated_at: record.updatedAt,
+            space,
+          });
         }
-        return {
-          collection: e.collection,
-          id: e.id,
-          data: record,
-          deleted: false,
-          updated_at: record.updatedAt,
-        };
-      });
-      await this.remote.push(rows);
+      }
+      if (rows.length > 0) await this.remote.push(rows);
       await this.persistence.removeFromOutbox(entries);
       if (entries.length < BATCH) return;
     }

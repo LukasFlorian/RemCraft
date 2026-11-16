@@ -13,6 +13,8 @@ export interface RemoteRow {
   deleted: boolean;
   /** Last-writer-wins timestamp (ms). */
   updated_at: number;
+  /** Shared space (`null`/absent = the user's personal partition). */
+  space?: string | null;
 }
 
 /** A row as returned by a pull, with the server's change sequence number. */

@@ -1,6 +1,13 @@
-# AI integration (extension point)
+# AI integration
 
-RemCraft ships without AI features, but is prepared for them:
+The first AI feature is the **lecture assistant** (key K in lecture mode, `ui/lecture/AssistantPanel.tsx`):
+it explains slides, quizzes you, answers open questions from your notes and generates flashcards
+in the `fokus-cards` format, which are imported onto their slides. Context is chosen explicitly
+with chips (`@Folie`, `@Foliensatz`, `@Meine Notizen`, `@Karten`, `@Vorlesung`, `@Kurs`,
+built by `data/lecture/context.ts`).
+
+Providers are pluggable through `AI_PROVIDERS` (`src/ai/registry.ts`): `openai-compatible` and
+`anthropic` (Claude, Messages API with streaming). Add a provider by registering a factory.
 
 - `src/ai/provider.ts` defines the only interface features may depend on:
 
@@ -15,7 +22,7 @@ RemCraft ships without AI features, but is prepared for them:
   `/chat/completions` protocol: OpenAI, Azure OpenAI (via its compatible endpoint), OpenRouter,
   Groq, Mistral, Together, DeepSeek, local Ollama (`http://localhost:11434/v1`) or LM Studio.
   Supports JSON mode, temperature, max tokens, abort signals and server-sent-event streaming.
-- *Settings → AI* stores base URL, key and model in `localStorage` of the device (never
+- _Settings → AI_ stores base URL, key and model in `localStorage` of the device (never
   synchronised) and offers a connection test.
 
 ## Adding a feature
@@ -25,7 +32,7 @@ RemCraft ships without AI features, but is prepared for them:
 3. Build prompts from domain data (e.g. `exportMarkdown` of a document) and parse answers with
    the existing importers - e.g. ask the model to answer in RemNote syntax and feed the result to
    `app.io.pasteAt(...)`. That way generated flashcards use the exact same pipeline as imports.
-4. Add a command to the *AI Tools* group in `src/ui/editor/commands.ts`.
+4. Add a command to the _AI Tools_ group in `src/ui/editor/commands.ts`.
 
 Ideas: generate cards from a document or PDF text, explain a card during practice, grade typed
 answers semantically, summarise a document.

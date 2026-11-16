@@ -35,9 +35,16 @@ describe('SM-2 learning phase', () => {
   it('Easily recalled graduates immediately with the easy interval', () => {
     expect(run([4])).toMatchObject({ phase: 'review', interval: 4 });
   });
-  it('Partially recalled repeats the step (average of the first two steps)', () => {
+  it('Partially recalled keeps the step and waits half the time to the next step', () => {
     const s = run([2]);
-    expect(s.due - t0).toBe(5.5 * MINUTE);
+    expect(s).toMatchObject({ phase: 'learning', step: 0 });
+    expect(s.due - t0).toBe(5 * MINUTE);
+  });
+  it('graduates with the step interval times the ease (at least the graduating interval)', () => {
+    const days = createSm2Scheduler({ ...params, learningSteps: [60, 2 * 24 * 60] });
+    let s = days.review(createCardState('c', 'r', t0), 3, t0);
+    s = days.review(s, 3, s.due);
+    expect(s).toMatchObject({ phase: 'review', interval: Math.round(2 * 2.3) });
   });
 });
 

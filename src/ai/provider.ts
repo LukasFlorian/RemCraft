@@ -33,6 +33,8 @@ export interface AiProvider {
 
 /** Connection settings of an OpenAI-compatible endpoint. */
 export interface AiConfig {
+  /** Provider id from `AI_PROVIDERS` (default `openai-compatible`). */
+  provider?: string;
   /** Base URL including the version path, e.g. `https://api.openai.com/v1`. */
   baseUrl: string;
   apiKey: string;

@@ -324,6 +324,7 @@ export function selectGlobalQueue(store: Store, now: Timestamp): QueuedCard[] {
         retrievability: (e) =>
           schedulerById(store, inherited.get(e.remId)?.schedulerId).retrievability(e.state, now),
         shuffle: settings.shuffleQueue,
+        learnAheadMinutes: settings.learnAheadMinutes ?? 15,
       });
     },
   );

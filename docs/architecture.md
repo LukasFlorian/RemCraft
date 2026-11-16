@@ -11,28 +11,32 @@ server component is a Supabase project used as a sync target and identity provid
 ┌───────────────┴──────────── src/data ─────────────────▼────────────────┐
 │ RemCraftApp (composition root)                                          │
 │ services: RemService · PracticeService · ExamService · SettingsService │
-│           ImportExportService · FileService                             │
+│           ImportExportService · FileService · LectureService           │
+│           SharingService · IntegrationService                           │
 │ selectors (memoised derived data)                                       │
 │ Store (in-memory records, indexes, transactions, undo/redo)             │
 │   ├─ Persister ──► PersistenceAdapter (Dexie/IndexedDB │ Memory)         │
 │   ├─ TabSync   ──► BroadcastChannel                                     │
 │   └─ SyncEngine ─► RemoteBackend (Supabase │ fake)  + AuthService        │
+│      ShareBackend · IntegrationBackend (Supabase │ fake)                 │
 └───────────────▲─────────────────────────────────────────────────────────┘
                 │ pure functions, no IO
 ┌───────────────┴──────────── src/core ──────────────────────────────────┐
 │ model · richtext · cards · scheduling · stats · io · search · util      │
+│ lecture · sharing · planning                                            │
 └─────────────────────────────────────────────────────────────────────────┘
-        src/ai: AiProvider interface + OpenAI-compatible client (unused yet)
+        src/ai: AiProvider registry (OpenAI-compatible, Anthropic)
+        supabase/functions: todoist-daily (Edge Function, Deno)
 ```
 
 ## Layers and rules
 
-| Layer | Responsibility | May depend on |
-|---|---|---|
+| Layer      | Responsibility                                                                                                                                                                 | May depend on                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
 | `src/core` | Domain model and algorithms: card syntax, card generation, schedulers, exam planner, queues, statistics, import/export formats, search. Pure TypeScript, deterministic, no IO. | nothing (except tiny libs like `fractional-indexing`) |
-| `src/data` | State, persistence, synchronisation, application services, derived selectors. | `core` |
-| `src/ui` | React components, routing, editor. | `core`, `data`, `ai` |
-| `src/ai` | AI provider abstraction. | nothing |
+| `src/data` | State, persistence, synchronisation, application services, derived selectors.                                                                                                  | `core`                                                |
+| `src/ui`   | React components, routing, editor.                                                                                                                                             | `core`, `data`, `ai`                                  |
+| `src/ai`   | AI provider abstraction.                                                                                                                                                       | nothing                                               |
 
 The rules are enforced by ESLint (`no-restricted-imports` in `eslint.config.js`): `core`
 cannot import React, Dexie, Supabase or the other layers; `data` cannot import the UI.
@@ -41,13 +45,17 @@ cannot import React, Dexie, Supabase or the other layers; `data` cannot import t
 
 Each boundary is a small interface so implementations can be swapped and tested in isolation:
 
-| Interface | Location | Implementations |
-|---|---|---|
-| `RemGraph` (`get`, `children`) | `core/model/graph.ts` | `Store`, `createMemoryGraph` (tests, importers) |
-| `Scheduler` (`review`, `retrievability`) | `core/scheduling/common.ts` | SM-2, FSRS-6 |
-| `PersistenceAdapter` | `data/persistence/adapter.ts` | `DexieAdapter`, `MemoryAdapter` |
-| `RemoteBackend` (`pull`, `push`, `subscribe`, files) | `data/sync/remote.ts` | `SupabaseBackend`, `FakeServer` (tests) |
-| `AiProvider` (`complete`, `stream`) | `ai/provider.ts` | OpenAI-compatible client |
+| Interface                                            | Location                        | Implementations                                 |
+| ---------------------------------------------------- | ------------------------------- | ----------------------------------------------- |
+| `RemGraph` (`get`, `children`)                       | `core/model/graph.ts`           | `Store`, `createMemoryGraph` (tests, importers) |
+| `Scheduler` (`review`, `retrievability`)             | `core/scheduling/common.ts`     | SM-2, FSRS-6                                    |
+| `PersistenceAdapter`                                 | `data/persistence/adapter.ts`   | `DexieAdapter`, `MemoryAdapter`                 |
+| `RemoteBackend` (`pull`, `push`, `subscribe`, files) | `data/sync/remote.ts`           | `SupabaseBackend`, `FakeServer` (tests)         |
+| `AiProvider` (`complete`, `stream`)                  | `ai/provider.ts`                | OpenAI-compatible, Anthropic (`AI_PROVIDERS`)   |
+| `PdfEngine`                                          | `data/lecture/pdf.ts`           | pdf.js                                          |
+| `ShareBackend`                                       | `data/sync/shareBackend.ts`     | `SupabaseShareBackend`, `FakeServer.share`      |
+| `IntegrationBackend`                                 | `data/services/integrations.ts` | `SupabaseIntegrationBackend`                    |
+| `PreCommitHook`                                      | `data/store/store.ts`           | space-id invariant (`SharingService`)           |
 
 ## Data flow
 
@@ -94,6 +102,7 @@ deleting a cloze retires exactly that card. See [data-model.md](data-model.md).
 - **New collection**: add it to `CollectionName`/`CollectionTypes`; the generic `records`
   table syncs it without a migration.
 - **AI features**: depend on `AiProvider` only ([ai-integration.md](ai-integration.md)).
+- More (Anki-style features, registries): [extending.md](extending.md).
 
 ## Performance notes
 

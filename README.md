@@ -9,8 +9,8 @@ accounts with cross-device sync on a free Supabase project.
 It is a static web app (installable as a PWA) that works **offline first**: everything is
 stored in the browser (IndexedDB) and synchronised in the background when you are signed in.
 
-| Notes | Practice | Exams |
-|---|---|---|
+| Notes                                                                  | Practice                                         | Exams                                                     |
+| ---------------------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------- |
 | Outliner with RemNote syntax (`>>`, `::`, `;;`, `{{cloze}}`, `>>A)` …) | All card types, 4 ratings, type-in answers, undo | Spread new cards until the exam, final review, study plan |
 
 ## Highlights
@@ -19,7 +19,7 @@ stored in the browser (IndexedDB) and synchronised in the background when you ar
   slash menu (`/`) with RemNote's categories, references (`[[`), tags (`#`), portals (`((`),
   search portals, headings, todos, quotes, code blocks, LaTeX (KaTeX), highlights, images,
   image occlusion, PDFs/files, embeds, audio recording, templates, aliases, tag tables,
-  daily notes, *Edit later*, pinning, references panel.
+  daily notes, _Edit later_, pinning, references panel.
 - **Flashcards**: basic (forward/backward/both/disabled), concept & descriptor,
   multi-line (set), list-answer, multiple choice with several correct answers,
   cloze with hints and merged clozes, image occlusion, extra card detail, type-in answers.
@@ -33,7 +33,14 @@ stored in the browser (IndexedDB) and synchronised in the background when you ar
   Markdown export in RemNote syntax.
 - **Sync**: Supabase Auth (email/password, magic link, GitHub OAuth) + Postgres with row-level
   security, realtime updates, last-writer-wins conflict resolution, offline outbox.
-- **AI-ready**: an OpenAI-compatible provider interface for future features (no AI used yet).
+- **Lectures** (Fokus port): import slide decks (handouts are split automatically), take notes
+  per slide in lecture mode with ink, flags, check-ins and drift tracking, quiz the cards of the
+  current slide, analyse the lecture and get a review list; `*.fokus.json` cards land on their slides.
+- **Sharing**: whole course folders, only notes, only cards, … as read-only cloneable links/files,
+  or live collaboration with read/write roles.
+- **Todoist**: every night at 00:01 one task per course with the day's estimated study time.
+- **AI**: lecture assistant with Claude or any OpenAI-compatible model (your key).
+- **Extensible**: registries for schedulers and AI providers, pure core - built to adopt Anki features.
 
 ## Quick start
 
@@ -50,9 +57,9 @@ To enable accounts and sync, follow [docs/deployment.md](docs/deployment.md).
 
 ## Free hosting in a nutshell
 
-1. Create a free [Supabase](https://supabase.com) project and run
-   [`supabase/migrations/20261116000000_init.sql`](supabase/migrations/20261116000000_init.sql) in its SQL editor.
-2. In GitHub: *Settings → Pages → Source: GitHub Actions*, and add the repository
+1. Create a free [Supabase](https://supabase.com) project and run the files in
+   [`supabase/migrations/`](supabase/migrations) (in order) in its SQL editor.
+2. In GitHub: _Settings → Pages → Source: GitHub Actions_, and add the repository
    **variables** `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 3. Push to `main` – the [deploy workflow](.github/workflows/deploy.yml) publishes the app to
    `https://<user>.github.io/<repo>/`. A [keep-alive workflow](.github/workflows/supabase-keepalive.yml)
@@ -63,34 +70,38 @@ Details, alternatives (Netlify, Cloudflare Pages) and auth redirect settings:
 
 ## Scripts
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Development server |
-| `npm run build` | Type-check and production build (`dist/`) |
-| `npm test` | Unit/integration tests (Vitest) |
-| `npm run e2e` | End-to-end tests (Playwright, against the production build) |
-| `npm run lint` / `npm run typecheck` | Static checks |
-| `npm run check` | Typecheck + lint + tests |
+| Command                              | Purpose                                                     |
+| ------------------------------------ | ----------------------------------------------------------- |
+| `npm run dev`                        | Development server                                          |
+| `npm run build`                      | Type-check and production build (`dist/`)                   |
+| `npm test`                           | Unit/integration tests (Vitest)                             |
+| `npm run e2e`                        | End-to-end tests (Playwright, against the production build) |
+| `npm run lint` / `npm run typecheck` | Static checks                                               |
+| `npm run check`                      | Typecheck + lint + tests                                    |
 
 ## Documentation
 
-| Document | Content |
-|---|---|
-| [docs/features.md](docs/features.md) | RemNote feature matrix: what is implemented, partially, or not |
-| [docs/architecture.md](docs/architecture.md) | Layers, modules, data flow, extension points |
-| [docs/data-model.md](docs/data-model.md) | Records, ids, ordering, card derivation |
-| [docs/flashcard-syntax.md](docs/flashcard-syntax.md) | Every card type and its syntax |
-| [docs/scheduling.md](docs/scheduling.md) | SM-2, FSRS-6, exam scheduler, queue, priorities, goals |
-| [docs/sync-and-accounts.md](docs/sync-and-accounts.md) | Local-first storage, sync protocol, conflicts, security |
-| [docs/deployment.md](docs/deployment.md) | Supabase + GitHub Pages setup, alternatives, costs |
-| [docs/development.md](docs/development.md) | Conventions, testing, how to extend |
-| [docs/ai-integration.md](docs/ai-integration.md) | Plugging in any OpenAI-compatible model |
-| [docs/adr/](docs/adr) | Architecture decision records |
+| Document                                               | Content                                                        |
+| ------------------------------------------------------ | -------------------------------------------------------------- |
+| [docs/features.md](docs/features.md)                   | RemNote feature matrix: what is implemented, partially, or not |
+| [docs/architecture.md](docs/architecture.md)           | Layers, modules, data flow, extension points                   |
+| [docs/data-model.md](docs/data-model.md)               | Records, ids, ordering, card derivation                        |
+| [docs/flashcard-syntax.md](docs/flashcard-syntax.md)   | Every card type and its syntax                                 |
+| [docs/scheduling.md](docs/scheduling.md)               | SM-2, FSRS-6, exam scheduler, queue, priorities, goals         |
+| [docs/sync-and-accounts.md](docs/sync-and-accounts.md) | Local-first storage, sync protocol, conflicts, security        |
+| [docs/deployment.md](docs/deployment.md)               | Supabase + GitHub Pages setup, alternatives, costs             |
+| [docs/development.md](docs/development.md)             | Conventions, testing, how to extend                            |
+| [docs/ai-integration.md](docs/ai-integration.md)       | Plugging in any OpenAI-compatible model                        |
+| [docs/lectures.md](docs/lectures.md)                   | Slide decks, lecture mode, fokus cards                         |
+| [docs/sharing.md](docs/sharing.md)                     | Read-only snapshots and live collaboration                     |
+| [docs/integrations.md](docs/integrations.md)           | Todoist daily study tasks                                      |
+| [docs/extending.md](docs/extending.md)                 | Extension points (Anki & co.)                                  |
+| [docs/adr/](docs/adr)                                  | Architecture decision records                                  |
 
 ## Tech stack
 
 TypeScript (strict) · React 19 · ProseMirror · Vite · Dexie (IndexedDB) · Supabase ·
-KaTeX · Vitest · Playwright · GitHub Actions.
+KaTeX · pdf.js · Vitest · Playwright · GitHub Actions.
 
 ## License
 

@@ -1,2 +1,6 @@
 # Minimal Supabase CLI configuration (used by `supabase link` / `db push`).
 project_id = "remcraft"
+
+# The Todoist function authorises itself (cron secret or user JWT).
+[functions.todoist-daily]
+verify_jwt = false

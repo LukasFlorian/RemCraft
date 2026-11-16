@@ -44,13 +44,14 @@ docs/          documentation
 
 ## Tests
 
-| Command | Scope |
-|---|---|
-| `npm test` | Vitest: core algorithms, store, services, persistence (fake-indexeddb), multi-device sync against an in-memory server, editor conversion, AI client |
-| `npm run test:coverage` | with coverage of `core`, `data`, `ai` |
-| `npm run e2e` | Playwright against the production build (editing, practicing, undo, import, exams, search) |
+| Command                 | Scope                                                                                                                                               |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm test`              | Vitest: core algorithms, store, services, persistence (fake-indexeddb), multi-device sync against an in-memory server, editor conversion, AI client |
+| `npm run test:coverage` | with coverage of `core`, `data`, `ai`                                                                                                               |
+| `npm run e2e`           | Playwright against the production build (editing, practicing, undo, import, exams, search)                                                          |
 
 Notable tests:
+
 - `core/scheduling/fsrs.test.ts` cross-checks FSRS against the reference implementation.
 - `data/sync/sync.test.ts` simulates two devices editing concurrently and offline.
 - `core/io/io.test.ts` round-trips RemNote Markdown including `{CORRECT: …}` and clozes.

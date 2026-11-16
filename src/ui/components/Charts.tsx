@@ -48,7 +48,8 @@ export function BarChart({
   const slot = (width - left) / Math.max(1, n);
   const barW = Math.max(2, Math.min(28, slot - 4));
   const y = (v: number): number => top + plotH - (v / max) * plotH;
-  const ticks = [0, Math.round(max / 2), max];
+  // Unique ticks (for max = 1 the midpoint rounds onto the top).
+  const ticks = [...new Set([0, Math.round(max / 2), max])];
   return (
     <div className="chart">
       {series.length > 1 && (

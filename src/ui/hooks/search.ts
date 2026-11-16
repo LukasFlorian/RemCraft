@@ -14,7 +14,7 @@ function items(store: Store): SearchItem[] {
     const resolve = (id: RemId): string => toPlainText(store.get(id)?.text ?? []);
     return store.all('rems').map((rem) => ({
       rem,
-      text: toPlainText(rem.text, resolve) + (rem.back ? ` ${toPlainText(rem.back, resolve)}` : ''),
+      text: toPlainText(rem.text, resolve) + (rem.back ? ` ${toPlainText(rem.back, resolve)}` : '') + (rem.slideText ? ` ${rem.slideText}` : ''),
     }));
   });
 }

@@ -25,6 +25,8 @@ export interface Change<K extends CollectionName = CollectionName> {
   id: string;
   before: RecordOf<K> | undefined;
   after: RecordOf<K> | undefined;
+  /** Logical time of a deletion (tombstone timestamp for synchronisation). */
+  at?: number;
 }
 
 /** Where a change came from. Persistence and sync react differently. */
@@ -50,6 +52,12 @@ export interface TransactOptions {
   keepTimestamps?: boolean;
 }
 
+/**
+ * Runs before a local transaction commits and may write further records
+ * through `tx` (derived fields, invariants). Must be idempotent.
+ */
+export type PreCommitHook = (tx: Transaction, changes: readonly Change[]) => void;
+
 /** Entry of the undo/redo history. */
 interface UndoEntry {
   changes: Change[];
@@ -61,13 +69,16 @@ interface UndoEntry {
 const EMPTY_CHILDREN: readonly Rem[] = Object.freeze([]);
 
 /** All collection names. */
-const COLLECTION_NAMES: readonly CollectionName[] = [
+export const COLLECTION_NAMES: readonly CollectionName[] = [
   'rems',
   'cards',
   'logs',
   'exams',
   'schedulers',
   'settings',
+  'annotations',
+  'lectures',
+  'lectureEvents',
 ];
 
 /** Key of a record inside a transaction. */
@@ -127,7 +138,7 @@ export class Transaction {
     const prev = this.pending.get(key);
     const before = prev ? prev.before : this.store.getRecord(collection, id);
     if (!before && !prev) return;
-    this.pending.set(key, { collection, id, before, after: undefined } as Change);
+    this.pending.set(key, { collection, id, before, after: undefined, at: this.store.clock.now() } as Change);
   }
 }
 
@@ -141,6 +152,9 @@ export class Store implements RemGraph {
     exams: new Map(),
     schedulers: new Map(),
     settings: new Map(),
+    annotations: new Map(),
+    lectures: new Map(),
+    lectureEvents: new Map(),
   };
   /** Per-collection change counters (for memoisation). */
   private readonly versions: Record<CollectionName, number> = {
@@ -150,12 +164,16 @@ export class Store implements RemGraph {
     exams: 0,
     schedulers: 0,
     settings: 0,
+    annotations: 0,
+    lectures: 0,
+    lectureEvents: 0,
   };
   /** Global change counter (the React snapshot). */
   private globalVersion = 0;
 
   private readonly listeners = new Set<() => void>();
   private readonly commitHandlers = new Set<(e: CommitEvent) => void>();
+  private readonly preCommitHooks = new Set<PreCommitHook>();
   private undoStack: UndoEntry[] = [];
   private redoStack: UndoEntry[] = [];
 
@@ -216,6 +234,26 @@ export class Store implements RemGraph {
 
   /** {@link RemGraph.children} - ordered children of a Rem. */
   children(id: RemId | null): readonly Rem[] {
+    if (id === null) return this.topLevel();
+    return this.sortedChildren(id);
+  }
+
+  /**
+   * Top-level Rems: those without a parent plus *orphans* whose parent is not
+   * available locally - the roots of subtrees shared with this user (their
+   * real parent lives in the owner's knowledge base).
+   */
+  private topLevel(): readonly Rem[] {
+    return this.memo('topLevel', [this.versions.rems], () => {
+      const own = this.sortedChildren(null);
+      const orphans: Rem[] = [];
+      for (const parentId of this.childIndex.keys())
+        if (parentId !== null && !this.data.rems.has(parentId)) orphans.push(...this.sortedChildren(parentId));
+      return orphans.length === 0 ? own : [...own, ...orphans];
+    });
+  }
+
+  private sortedChildren(id: RemId | null): readonly Rem[] {
     const list = this.childIndex.get(id);
     if (!list) return EMPTY_CHILDREN;
     if (this.unsortedParents.has(id)) {
@@ -262,7 +300,14 @@ export class Store implements RemGraph {
    */
   transact<T>(fn: (tx: Transaction) => T, options: TransactOptions = {}): T {
     const pending = new Map<string, Change>();
-    const result = fn(new Transaction(this, pending, options));
+    const tx = new Transaction(this, pending, options);
+    const result = fn(tx);
+    // Local edits pass through the pre-commit hooks (e.g. sharing keeps
+    // `spaceId` consistent inside shared subtrees). Remote/loaded data is
+    // already normalised by the device that wrote it; undo/redo restore
+    // exact earlier versions.
+    if ((options.origin ?? 'local') === 'local')
+      for (const hook of this.preCommitHooks) hook(tx, [...pending.values()]);
     const changes = [...pending.values()].filter(
       (c) => c.before !== undefined || c.after !== undefined,
     );
@@ -431,6 +476,15 @@ export class Store implements RemGraph {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
+
+  /**
+   * Registers a hook that runs inside every local transaction before it
+   * commits. Returns an unregister function.
+   */
+  addPreCommitHook(hook: PreCommitHook): () => void {
+    this.preCommitHooks.add(hook);
+    return () => this.preCommitHooks.delete(hook);
+  }
 
   /** Subscribes to committed change batches (persistence, sync). */
   onCommit(handler: (e: CommitEvent) => void): () => void {

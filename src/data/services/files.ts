@@ -38,6 +38,25 @@ export class FileService {
     return FILE_PREFIX + id;
   }
 
+  /** Returns the blob of a stored file (downloading it when signed in). */
+  async blob(src: string): Promise<Blob | null> {
+    if (!src.startsWith(FILE_PREFIX)) {
+      const res = await fetch(src).catch(() => null);
+      return res?.ok ? res.blob() : null;
+    }
+    const id = src.slice(FILE_PREFIX.length);
+    const stored = await this.persistence.getFile(id);
+    if (stored) return stored.blob;
+    if (!this.remote) return null;
+    try {
+      const blob = await this.remote.downloadFile(id);
+      await this.persistence.putFile({ id, name: id, mimeType: blob.type, size: blob.size, blob, uploaded: true, createdAt: Date.now() });
+      return blob;
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * Resolves a source (`file:<id>`, `data:` or `http(s):`) to a URL usable in
    * `<img>`/`<iframe>`. Missing local files are downloaded when signed in.

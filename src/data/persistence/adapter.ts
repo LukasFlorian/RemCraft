@@ -18,6 +18,8 @@ export interface OutboxEntry {
   /** Timestamp of the change (deletion time for deletes). */
   updatedAt: number;
   deleted: boolean;
+  /** Shared space of the record (tombstones must reach the right partition). */
+  space?: string;
 }
 
 /** A locally stored binary file (image, PDF). */
@@ -64,16 +66,18 @@ export interface PersistenceAdapter {
 
 /** Builds an outbox entry for a change. */
 export function outboxEntryOf(change: Change): OutboxEntry {
+  const space = ((change.after ?? change.before) as { spaceId?: string } | undefined)?.spaceId;
   return {
+    ...(space ? { space } : {}),
     key: `${change.collection}:${change.id}`,
     collection: change.collection,
     id: change.id,
-    updatedAt: change.after?.updatedAt ?? Date.now(),
+    updatedAt: change.after?.updatedAt ?? change.at ?? Date.now(),
     deleted: change.after === undefined,
   };
 }
 
 /** Empty collection data. */
 export function emptyData(): CollectionData {
-  return { rems: [], cards: [], logs: [], exams: [], schedulers: [], settings: [] };
+  return { rems: [], cards: [], logs: [], exams: [], schedulers: [], settings: [], annotations: [], lectures: [], lectureEvents: [] };
 }

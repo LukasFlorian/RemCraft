@@ -4,12 +4,11 @@
  * A scheduler is a *pure* function from (card state, rating, time) to the next
  * card state. Everything else - queues, exams, persistence - is layered on top
  * and works with any algorithm. Adding an algorithm means implementing this
- * interface and registering it in {@link createScheduler}.
+ * interface and registering it in `SCHEDULERS` (see `registry.ts`).
  */
 import type { CardState, Rating, SchedulerConfig, Timestamp } from '../model/types';
 import type { Rng, Scheduler } from './common';
-import { createFsrsScheduler } from './fsrs';
-import { createSm2Scheduler } from './sm2';
+import { SCHEDULERS } from './registry';
 
 /** All ratings in ascending order. */
 export const RATINGS: readonly Rating[] = [1, 2, 3, 4];
@@ -28,13 +27,8 @@ export const RATING_LABELS: Readonly<Record<Rating, string>> = {
  * @param config Scheduler configuration (algorithm + parameters).
  */
 export function createScheduler(config: SchedulerConfig): Scheduler {
-  switch (config.algorithm) {
-    case 'fsrs':
-      return createFsrsScheduler(config.fsrs);
-    case 'sm2':
-    default:
-      return createSm2Scheduler(config.sm2);
-  }
+  // Unknown algorithms (e.g. a plugin not loaded on this device) fall back to SM-2.
+  return (SCHEDULERS.get(config.algorithm) ?? SCHEDULERS.require('sm2')).create(config);
 }
 
 /**

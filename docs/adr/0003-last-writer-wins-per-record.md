@@ -18,5 +18,5 @@ review logs, card state separate from content.
 ## Consequences
 
 - Simple, transparent protocol; easy to test (`sync.test.ts`).
-- Concurrent edits of the *same* bullet on two offline devices keep only the later one - rare for
+- Concurrent edits of the _same_ bullet on two offline devices keep only the later one - rare for
   a single user and acceptable.

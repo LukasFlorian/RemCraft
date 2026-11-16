@@ -12,6 +12,8 @@ import { useSelector } from '../../app/context';
 import { ImageView } from '../../editor/blocks';
 import { RemContent } from '../../editor/RemBlock';
 import { useRemTitle } from '../../hooks/useRemTitle';
+import { SlideView } from '../../lecture/SlideView';
+import { useNavigate } from 'react-router';
 import { RichTextView } from '../../richtext/RichTextView';
 
 /** Props of {@link CardFace}. */
@@ -49,6 +51,29 @@ function ContextTitle({ id }: { id: RemId }): ReactNode {
   return <>{useRemTitle(id)}</>;
 }
 
+/**
+ * The slide a card was written on (closing the loop slides → notes → cards):
+ * a link to the slide, with a thumbnail once the answer is revealed.
+ */
+function SlideOrigin({ ids, revealed }: { ids: RemId[]; revealed: boolean }): ReactNode {
+  const navigate = useNavigate();
+  const slide = useSelector((s) => [...ids].reverse().map((id) => s.get(id)).find((r) => r?.slide));
+  if (!slide?.parentId || !slide.slide) return null;
+  const n = slide.slide.index + 1;
+  return (
+    <div className="slide-origin">
+      <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/lecture/${slide.parentId}?slide=${n}`)}>
+        📄 Folie {n}
+      </button>
+      {revealed && (
+        <div className="slide-origin-thumb">
+          <SlideView deckId={slide.parentId} slide={slide} width={360} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** The card face. */
 export function CardFace({
   view,
@@ -78,12 +103,19 @@ export function CardFace({
     onReveal();
   };
 
-  const extra = revealed && view.extra.length > 0 && (
+  const origin = <SlideOrigin ids={view.context} revealed={revealed} />;
+  const extra = (revealed && view.extra.length > 0 && (
     <div className="card-extra">
       {view.extra.map((id) => (
         <RemInline key={id} remId={id} />
       ))}
     </div>
+  )) || null;
+  const extraAndOrigin = (
+    <>
+      {extra}
+      {origin}
+    </>
   );
 
   const typeBox = typeIn && (
@@ -126,7 +158,7 @@ export function CardFace({
               <RichTextView value={view.answer} />
             </div>
           )}
-          {extra}
+          {extraAndOrigin}
         </div>
       );
     case 'cloze':
@@ -153,7 +185,7 @@ export function CardFace({
               <RichTextView value={view.back} />
             </div>
           )}
-          {extra}
+          {extraAndOrigin}
         </div>
       );
     case 'set':
@@ -177,7 +209,7 @@ export function CardFace({
                 <RichTextView value={view.question} />
               </div>
             )}
-            {extra}
+            {extraAndOrigin}
           </div>
         );
       }
@@ -207,7 +239,7 @@ export function CardFace({
               Reveal next item ({listShown}/{view.items.length})
             </button>
           )}
-          {extra}
+          {extraAndOrigin}
         </div>
       );
     }
@@ -270,7 +302,7 @@ export function CardFace({
               Check answer
             </button>
           )}
-          {extra}
+          {extraAndOrigin}
         </div>
       );
     }
@@ -292,7 +324,7 @@ export function CardFace({
             revealed={revealed ? view.occlusionId : undefined}
           />
           {typeBox}
-          {extra}
+          {extraAndOrigin}
         </div>
       );
     }

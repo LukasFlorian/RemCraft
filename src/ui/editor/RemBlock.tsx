@@ -28,6 +28,7 @@ import {
 import { useController, useControllerState } from './controller';
 import { PlainBlockEditor } from './PlainBlockEditor';
 import { CardPopover } from './CardPopover';
+import { SlideView } from '../lecture/SlideView';
 
 /** How the parent presents its children. */
 export type ChildMode = AnswerMode | 'none';
@@ -325,6 +326,11 @@ export const RemBlock = memo(function RemBlock({
           )}
           {marker}
           <div className="rem-content">
+            {rem.slide && rem.parentId && (
+              <div className="slide-thumb-inline" onMouseDown={(e) => e.stopPropagation()} onClick={() => navigate(`/lecture/${rem.parentId}?slide=${rem.slide!.index + 1}`)}>
+                <SlideView deckId={rem.parentId} slide={rem} width={260} />
+              </div>
+            )}
             {rem.image && (
               <ImageView
                 src={rem.image.src}

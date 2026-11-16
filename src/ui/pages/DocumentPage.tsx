@@ -16,7 +16,9 @@ import {
   FolderPlus,
   Layers,
   MoreHorizontal,
+  Presentation,
   Redo2,
+  Share2,
   Star,
   Undo2,
 } from 'lucide-react';
@@ -31,6 +33,11 @@ import { Outliner } from '../editor/Outliner';
 import { RemContent } from '../editor/RemBlock';
 import { TitleEditor } from '../editor/TitleEditor';
 import { FileView } from '../editor/blocks';
+import { DeckPanel } from '../lecture/DeckPanel';
+import { ShareDialog, useSpaces } from '../sharing/ShareDialog';
+import { ROLE_LABELS } from '@core/sharing/spaces';
+import { pickFiles } from '../hooks/useFilePicker';
+import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { PriorityBadge, useRemMenu } from './remMenu';
 
@@ -100,6 +107,9 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   const due = useSelector((s) => selectDueCounts(s, now).get(remId) ?? 0);
   const priority = useSelector((s) => selectInheritance(s, now).get(remId)?.priority ?? 'none');
   const [menu, setMenu] = useState<{ anchor: HTMLElement; entries: MenuEntry[] } | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const spaces = useSpaces();
+  const space = rem.spaceId ? spaces.find((s) => s.id === rem.spaceId) : undefined;
   const isNew = rem.text.length === 0 && Date.now() - rem.createdAt < 5000;
 
   /** Moves the caret from the title into the outline. */
@@ -174,6 +184,14 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
           <Redo2 size={17} />
         </button>
         <button
+          className={`icon-btn${rem.spaceId ? ' active' : ''}`}
+          title={space ? `Geteilt: ${space.name} (${ROLE_LABELS[space.role]})` : 'Teilen'}
+          aria-label="Teilen"
+          onClick={() => setSharing(true)}
+        >
+          <Share2 size={17} />
+        </button>
+        <button
           className={`icon-btn${rem.pinned ? ' active' : ''}`}
           title={rem.pinned ? 'Unpin' : 'Pin to sidebar'}
           aria-label="Pin"
@@ -194,6 +212,9 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
         onMouseDown={(e) => e.target === e.currentTarget && controller.clearSelection()}
       >
         <div className="page doc-page">
+          {space?.role === 'reader' && (
+            <div className="readonly-banner">Nur lesen: geteilt von einer anderen Person. Deine Änderungen werden nicht synchronisiert - klone den Bereich, um ihn zu bearbeiten.</div>
+          )}
           {rem.dailyDate && <DailyNav date={rem.dailyDate} />}
           <div className={`doc-title-row${rem.isFolder ? ' is-folder' : ''}`}>
             {rem.isFolder && <Folder size={26} className="icon-folder" />}
@@ -209,13 +230,15 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
               <RemContent rem={rem} />
             </div>
           )}
-          {rem.file && <FileView rem={rem} />}
+          {rem.file && !rem.deck && <FileView rem={rem} />}
+          {rem.deck && <DeckPanel deckId={remId} />}
           <div className="doc-body">
             {rem.isFolder ? <FolderContents folderId={remId} /> : <Outliner rootId={remId} />}
           </div>
           <ReferencesPanel remId={remId} />
         </div>
       </div>
+      {sharing && <ShareDialog remId={remId} onClose={() => setSharing(false)} />}
       {menu && (
         <Menu
           anchor={menu.anchor}
@@ -254,6 +277,7 @@ function DailyNav({ date }: { date: string }): ReactNode {
 /** Contents of a folder: its documents and sub-folders. */
 function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
   const app = useApp();
+  const toast = useToast();
   const navigate = useNavigate();
   const children = useChildren(folderId);
   return (
@@ -276,6 +300,23 @@ function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
           }}
         >
           <FolderPlus size={14} /> New folder
+        </button>
+        <button
+          className="btn btn-sm"
+          onClick={() =>
+            void pickFiles('.pdf,application/pdf').then(async ([file]) => {
+              if (!file) return;
+              toast('Foliensatz wird analysiert…');
+              try {
+                const id = await app.lectures.importPdf(file, folderId);
+                navigate(`/rem/${id}`);
+              } catch (e) {
+                toast(e instanceof Error ? e.message : String(e), 'error');
+              }
+            })
+          }
+        >
+          <Presentation size={14} /> Foliensatz (PDF)
         </button>
       </div>
       {children.length === 0 && <div className="empty">This folder is empty.</div>}

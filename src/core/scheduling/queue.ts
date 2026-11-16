@@ -65,14 +65,14 @@ export interface GlobalQueueOptions {
   examQuotas: ReadonlyMap<string, ExamQuota>;
   /** Recall probability of a card (for ordering). */
   retrievability: (entry: QueueEntry) => number;
-  /** Learning cards due within this many minutes are shown already. */
+  /** Learning cards due within this many minutes are shown already (RemNote default 15). */
   learnAheadMinutes?: number;
   shuffle?: boolean;
   rng?: Rng;
 }
 
 /** True when a (re)learning card is due within the learn-ahead window. */
-export function isLearningDue(state: CardState, now: Timestamp, learnAheadMinutes = 20): boolean {
+export function isLearningDue(state: CardState, now: Timestamp, learnAheadMinutes = 15): boolean {
   return (
     (state.phase === 'learning' || state.phase === 'relearning') &&
     state.due <= now + learnAheadMinutes * MINUTE
@@ -105,7 +105,7 @@ export function buildGlobalQueue(
   opts: GlobalQueueOptions,
 ): QueuedCard[] {
   const { now, dayStartHour } = opts;
-  const learnAhead = opts.learnAheadMinutes ?? 20;
+  const learnAhead = opts.learnAheadMinutes ?? 15;
   const byRisk = (a: QueueEntry, b: QueueEntry): number =>
     opts.retrievability(a) - opts.retrievability(b) || a.state.due - b.state.due;
   const byDoc = (a: QueueEntry, b: QueueEntry): number => a.docOrder - b.docOrder;
