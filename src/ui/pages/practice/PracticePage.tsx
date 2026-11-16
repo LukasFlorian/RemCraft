@@ -72,9 +72,14 @@ export function PracticePage(): ReactNode {
 
   useEffect(() => {
     shownAt.current = Date.now();
+  }, [cardId, tick]);
+
+  /** Moves on to the next card (state is reset synchronously to avoid key races). */
+  const advance = (): void => {
     setRevealed(false);
     setSuggested(null);
-  }, [cardId, tick]);
+    setTick((t) => t + 1);
+  };
 
   // A card that no longer exists (deleted while practicing) is dropped.
   useEffect(() => {
@@ -94,7 +99,7 @@ export function PracticePage(): ReactNode {
     const nextDue = mode === 'cram' ? (rating === 1 ? now + 60_000 : null) : result.state.due;
     session.answer(cardId, nextDue, now);
     setStats((s) => ({ ...s, answered: s.answered + 1, correct: s.correct + (rating > 1 ? 1 : 0) }));
-    setTick((t) => t + 1);
+    advance();
   };
 
   const undo = (): void => {
@@ -103,13 +108,13 @@ export function PracticePage(): ReactNode {
     if (logId) app.practice.undoAnswer(logId);
     session.undo();
     setStats((s) => ({ ...s, answered: Math.max(0, s.answered - 1) }));
-    setTick((t) => t + 1);
+    advance();
   };
 
   const skip = (): void => {
     if (!cardId) return;
     session.skip(cardId);
-    setTick((t) => t + 1);
+    advance();
   };
 
   useHotkeys(

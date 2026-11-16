@@ -14,7 +14,7 @@ export function GeneralSection(): ReactNode {
   return (
     <div className="card col" style={{ gap: 16 }}>
       <h2 className="card-title">Appearance</h2>
-      <Field label="Theme">
+      <Field group label="Theme">
         <div className="segmented" style={{ maxWidth: 360 }}>
           {(['dark', 'light', 'system'] as Settings['theme'][]).map((t) => (
             <button key={t} className={settings.theme === t ? 'active' : ''} onClick={() => app.settings.update({ theme: t })}>

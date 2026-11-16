@@ -1,0 +1,31 @@
+# Applies the SQL migrations in supabase/migrations to your Supabase project
+# (manual trigger). Alternative: paste the SQL into the dashboard's SQL editor.
+#
+# Required repository secrets:
+#   SUPABASE_ACCESS_TOKEN - personal access token (supabase.com/dashboard/account/tokens)
+#   SUPABASE_DB_PASSWORD  - database password of the project
+# Required repository variable:
+#   SUPABASE_PROJECT_REF  - the project reference (xyz in xyz.supabase.co)
+name: Supabase migrate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Link project and push migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}" --password "$SUPABASE_DB_PASSWORD"
+          supabase db push --password "$SUPABASE_DB_PASSWORD"

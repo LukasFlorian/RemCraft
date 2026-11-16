@@ -1,0 +1,33 @@
+# Free Supabase projects are paused after one week without activity. This
+# workflow calls a tiny database function twice a week so the project stays
+# active. It does nothing until the SUPABASE_URL / SUPABASE_ANON_KEY
+# repository variables are set.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '17 6 * * 1,4'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping database
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Supabase is not configured - nothing to do."
+            exit 0
+          fi
+          curl --fail --silent --show-error -X POST "$SUPABASE_URL/rest/v1/rpc/keepalive" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          echo
+          echo "Supabase is awake."

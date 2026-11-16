@@ -1,0 +1,2 @@
+# Minimal Supabase CLI configuration (used by `supabase link` / `db push`).
+project_id = "remcraft"

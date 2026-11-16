@@ -68,12 +68,12 @@ export function ExamEditor({ examId, scope: initialScope, onClose }: { examId?: 
           <input className="input" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
       </div>
-      <Field label="Material" hint="Choose the folders and documents the exam covers. Their cards get the Exam priority.">
+      <Field group label="Material" hint="Choose the folders and documents the exam covers. Their cards get the Exam priority.">
         <div className="scope-tree">
           <ScopeLevel parentId={null} depth={0} scope={scope} toggle={toggle} />
         </div>
       </Field>
-      <Field label="Cards you have never practiced">
+      <Field group label="Cards you have never practiced">
         <div className="segmented">
           <button className={newCardMode === 'spread' ? 'active' : ''} onClick={() => setNewCardMode('spread')}>
             Spread them out until the exam (recommended)

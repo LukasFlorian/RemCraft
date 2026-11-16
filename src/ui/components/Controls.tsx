@@ -24,14 +24,25 @@ export function ProgressBar({ value, color }: { value: number; color?: string })
   );
 }
 
-/** Labelled form field. */
-export function Field({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }): ReactNode {
-  return (
-    <div className="field">
+/**
+ * Labelled form field. By default the wrapper is a `<label>` so the text
+ * labels the contained input; use `group` for composite controls (button
+ * groups, trees) where a label element would swallow clicks.
+ */
+export function Field({ label, hint, children, group }: { label: ReactNode; hint?: ReactNode | undefined; children: ReactNode; group?: boolean }): ReactNode {
+  const body = (
+    <>
       <span className="field-label">{label}</span>
       {children}
       {hint && <span className="field-hint">{hint}</span>}
+    </>
+  );
+  return group ? (
+    <div className="field" role="group">
+      {body}
     </div>
+  ) : (
+    <label className="field">{body}</label>
   );
 }
 

@@ -822,3 +822,11 @@
     white-space: nowrap;
   }
 }
+
+.streak-card > .row {
+  flex-wrap: wrap;
+}
+
+.streak-card > .row > div:last-child {
+  min-width: 220px;
+}

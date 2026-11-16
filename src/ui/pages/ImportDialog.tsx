@@ -174,7 +174,7 @@ export function ImportDialog({ onClose, parentId = null }: { onClose: () => void
           </Field>
         </>
       ) : (
-        <Field label="Files">
+        <Field group label="Files">
           <div className="row">
             <button className="btn" onClick={() => void pickFiles(source.accept, source.format !== 'backup').then((f) => f.length && setFiles(f))}>
               <FileUp size={15} /> Choose file{source.format !== 'backup' ? 's' : ''}
