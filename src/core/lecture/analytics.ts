@@ -4,7 +4,15 @@
  */
 import type { LectureSettings, Timestamp } from '../model/types';
 import type { LectureState } from './session';
-import { activeDuration, closedIntervals, isRunning, overlap, slideAt, summarize, toActive } from './session';
+import {
+  activeDuration,
+  closedIntervals,
+  isRunning,
+  overlap,
+  slideAt,
+  summarize,
+  toActive,
+} from './session';
 
 /** Default lecture-mode settings (Fokus `config.example.toml`). */
 export const DEFAULT_LECTURE_SETTINGS: LectureSettings = {
@@ -44,7 +52,14 @@ export function visits(st: LectureState, now: Timestamp): [Timestamp, Timestamp,
  * @param now Reference time.
  */
 export function slideStats(st: LectureState, slideCount: number, now: Timestamp): SlideStats[] {
-  const stats: SlideStats[] = Array.from({ length: slideCount }, (_, slide) => ({ slide, dwellMs: 0, visits: 0, awayMs: 0, drifts: 0, checkins: [] }));
+  const stats: SlideStats[] = Array.from({ length: slideCount }, (_, slide) => ({
+    slide,
+    dwellMs: 0,
+    visits: 0,
+    awayMs: 0,
+    drifts: 0,
+    checkins: [],
+  }));
   const shown = visits(st, now).filter(([, , p]) => p >= 0 && p < slideCount);
   for (const [a, b, p] of shown) {
     const dwell = overlap(st, a, b, now);
@@ -64,8 +79,20 @@ export function slideStats(st: LectureState, slideCount: number, now: Timestamp)
     if (p !== null && p >= 0 && p < slideCount) stats[p]!.drifts++;
   }
   for (const c of st.checkins) {
-    if (c.answeredT !== null && !c.skipped && c.text.trim() && c.slide !== null && c.slide >= 0 && c.slide < slideCount) {
-      stats[c.slide]!.checkins.push({ t: c.answeredT, text: c.text, focus: c.focus, prompt: c.prompt });
+    if (
+      c.answeredT !== null &&
+      !c.skipped &&
+      c.text.trim() &&
+      c.slide !== null &&
+      c.slide >= 0 &&
+      c.slide < slideCount
+    ) {
+      stats[c.slide]!.checkins.push({
+        t: c.answeredT,
+        text: c.text,
+        focus: c.focus,
+        prompt: c.prompt,
+      });
     }
   }
   return stats;
@@ -90,11 +117,18 @@ export interface LectureKpis {
 }
 
 /** Computes the KPIs of a lecture. */
-export function lectureKpis(st: LectureState, cfg: LectureSettings, slideCount: number | null, now: Timestamp): LectureKpis {
+export function lectureKpis(
+  st: LectureState,
+  cfg: LectureSettings,
+  slideCount: number | null,
+  now: Timestamp,
+): LectureKpis {
   const s = summarize(st, now);
   const spans = st.away.map((a) => overlap(st, a.start, a.end, now));
   const answered = st.checkins.filter((c) => c.answeredT !== null && !c.skipped);
-  const ratings = answered.map((c) => c.focus).filter((f): f is number => typeof f === 'number' && f > 0);
+  const ratings = answered
+    .map((c) => c.focus)
+    .filter((f): f is number => typeof f === 'number' && f > 0);
   let slidesSeen = 0;
   let paceMs: number | null = null;
   if (slideCount) {
@@ -114,7 +148,9 @@ export function lectureKpis(st: LectureState, cfg: LectureSettings, slideCount: 
     drifts: st.drifts.length,
     checkins: st.checkins.length,
     checkinsAnswered: answered.length,
-    focusAvg: ratings.length ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 100) / 100 : null,
+    focusAvg: ratings.length
+      ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 100) / 100
+      : null,
     noteEdits: st.noteEdits,
     slidesSeen,
     paceMs,
@@ -128,7 +164,13 @@ export interface Timeline {
   awaySeconds: number[];
   /** Minute positions of noticed drifts. */
   drifts: number[];
-  checkins: { minute: number; focus: number | null; skipped: boolean; text: string; prompt: string }[];
+  checkins: {
+    minute: number;
+    focus: number | null;
+    skipped: boolean;
+    text: string;
+    prompt: string;
+  }[];
   /** Slide shown in the middle of each minute. */
   slide: (number | null)[];
 }
@@ -150,10 +192,19 @@ export function timeline(st: LectureState, now: Timestamp): Timeline {
       }
     }
   }
-  const drifts = st.drifts.map((d) => toActive(st, d.t, now)).filter((x) => !Number.isNaN(x)).map((x) => Math.round((x / 60_000) * 100) / 100);
+  const drifts = st.drifts
+    .map((d) => toActive(st, d.t, now))
+    .filter((x) => !Number.isNaN(x))
+    .map((x) => Math.round((x / 60_000) * 100) / 100);
   const checkins = st.checkins
     .filter((c) => c.answeredT !== null)
-    .map((c) => ({ minute: Math.round((toActive(st, c.answeredT!, now, true) / 60_000) * 100) / 100, focus: c.focus, skipped: c.skipped, text: c.text, prompt: c.prompt }));
+    .map((c) => ({
+      minute: Math.round((toActive(st, c.answeredT!, now, true) / 60_000) * 100) / 100,
+      focus: c.focus,
+      skipped: c.skipped,
+      text: c.text,
+      prompt: c.prompt,
+    }));
   // Slide shown in the middle of each minute (inverse of the active-time mapping).
   const slide: (number | null)[] = [];
   const intervals = closedIntervals(st, now);
@@ -169,14 +220,27 @@ export function timeline(st: LectureState, now: Timestamp): Timeline {
     }
     slide.push(wall === null ? null : slideAt(st, wall));
   }
-  return { minutes: n, awaySeconds: away.map((v) => Math.round(Math.min(60, v) * 10) / 10), drifts, checkins, slide };
+  return {
+    minutes: n,
+    awaySeconds: away.map((v) => Math.round(Math.min(60, v) * 10) / 10),
+    drifts,
+    checkins,
+    slide,
+  };
 }
 
 /** Sums the slide statistics of several lectures with the same deck. */
 export function mergeStats(perLecture: SlideStats[][]): SlideStats[] {
   const first = perLecture[0];
   if (!first) return [];
-  const merged = first.map((s) => ({ ...s, dwellMs: 0, visits: 0, awayMs: 0, drifts: 0, checkins: [] as SlideStats['checkins'] }));
+  const merged = first.map((s) => ({
+    ...s,
+    dwellMs: 0,
+    visits: 0,
+    awayMs: 0,
+    drifts: 0,
+    checkins: [] as SlideStats['checkins'],
+  }));
   for (const stats of perLecture) {
     stats.forEach((s, i) => {
       const m = merged[i];

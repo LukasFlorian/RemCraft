@@ -23,7 +23,16 @@ import { isoDate } from '../util/time';
 export const FOKUS_FORMAT = 'fokus-cards';
 export const FOKUS_VERSION = 1;
 /** Card types of the format. */
-export const FOKUS_TYPES = ['basic', 'concept', 'cloze', 'mc', 'numeric', 'set', 'list', 'descriptor'] as const;
+export const FOKUS_TYPES = [
+  'basic',
+  'concept',
+  'cloze',
+  'mc',
+  'numeric',
+  'set',
+  'list',
+  'descriptor',
+] as const;
 
 /** A card of a `fokus-cards` file. */
 export interface FokusCard {
@@ -61,12 +70,20 @@ export interface FokusDoc {
 /** Problems of an import file (empty = fine). */
 export function validateFokus(doc: unknown): string[] {
   const d = doc as Partial<FokusDoc> | null;
-  if (!d || typeof d !== 'object' || d.format !== FOKUS_FORMAT) return [`Kein Fokus-Kartenformat (erwartet "format": "${FOKUS_FORMAT}")`];
+  if (!d || typeof d !== 'object' || d.format !== FOKUS_FORMAT)
+    return [`Kein Fokus-Kartenformat (erwartet "format": "${FOKUS_FORMAT}")`];
   const errors: string[] = [];
-  if (Number(d.version ?? 0) > FOKUS_VERSION) errors.push(`Version ${String(d.version)} ist neuer als diese App (kann ${FOKUS_VERSION})`);
-  if (!Array.isArray(d.cards) || (d.notes !== undefined && !Array.isArray(d.notes))) errors.push('"cards" und "notes" müssen Listen sein');
-  else if (d.cards.length + (d.notes?.length ?? 0) > 5000) errors.push('Zu viele Einträge (max. 5000)');
-  else d.cards.forEach((c, i) => (!c || !String(c.front ?? '').trim()) && errors.push(`Karte ${i + 1}: "front" fehlt`));
+  if (Number(d.version ?? 0) > FOKUS_VERSION)
+    errors.push(`Version ${String(d.version)} ist neuer als diese App (kann ${FOKUS_VERSION})`);
+  if (!Array.isArray(d.cards) || (d.notes !== undefined && !Array.isArray(d.notes)))
+    errors.push('"cards" und "notes" müssen Listen sein');
+  else if (d.cards.length + (d.notes?.length ?? 0) > 5000)
+    errors.push('Zu viele Einträge (max. 5000)');
+  else
+    d.cards.forEach(
+      (c, i) =>
+        (!c || !String(c.front ?? '').trim()) && errors.push(`Karte ${i + 1}: "front" fehlt`),
+    );
   return errors;
 }
 
@@ -79,7 +96,9 @@ function hash(s: string): string {
     h1 = Math.imul(h1 ^ c, 16777619);
     h2 = Math.imul(h2 ^ c, 2246822519);
   }
-  return ((h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0')).slice(0, 12);
+  return (
+    (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0')
+  ).slice(0, 12);
 }
 
 /** Stable content key: results survive re-imports and re-ordering. */
@@ -123,14 +142,20 @@ export type MappedBy = 'page' | 'page+anchor' | 'anchor' | 'none';
  * 1. Slides on the given PDF pages (1-based); several per page → the anchor decides.
  * 2. No usable page, or the anchor clearly fits elsewhere → best anchor match over all slides.
  */
-export function resolveSlides(item: { pages?: unknown[]; anchor?: string }, slides: readonly SlideRef[]): { slides: number[]; by: MappedBy } {
+export function resolveSlides(
+  item: { pages?: unknown[]; anchor?: string },
+  slides: readonly SlideRef[],
+): { slides: number[]; by: MappedBy } {
   const byPage = new Map<number, number[]>();
   slides.forEach((s, i) => byPage.set(s.page + 1, [...(byPage.get(s.page + 1) ?? []), i]));
   const pages = (item.pages ?? []).map(Number).filter((p) => Number.isInteger(p));
   const anchor = String(item.anchor ?? '');
   const candidates = pages.flatMap((p) => byPage.get(p) ?? []);
   const score = (i: number): number => anchorScore(anchor, slides[i]?.text ?? '');
-  const firstPerPage = (): number[] => [...new Set(pages.filter((p) => byPage.has(p)).map((p) => byPage.get(p)![0]!))].sort((a, b) => a - b);
+  const firstPerPage = (): number[] =>
+    [...new Set(pages.filter((p) => byPage.has(p)).map((p) => byPage.get(p)![0]!))].sort(
+      (a, b) => a - b,
+    );
   if (candidates.length) {
     if (!anchor) return { slides: firstPerPage(), by: 'page' };
     const best = candidates.reduce((a, b) => (score(b) > score(a) ? b : a));
@@ -157,7 +182,12 @@ export function resolveSlides(item: { pages?: unknown[]; anchor?: string }, slid
 
 /** Escapes RemNote delimiters inside readable text used as fallback. */
 function plain(s: string): string {
-  return s.replace(/(>>|<<|==|::|;;|\{\{|\}\})/g, (m) => m.split('').map((c) => `\\${c}`).join(''));
+  return s.replace(/(>>|<<|==|::|;;|\{\{|\}\})/g, (m) =>
+    m
+      .split('')
+      .map((c) => `\\${c}`)
+      .join(''),
+  );
 }
 
 /**
@@ -171,12 +201,18 @@ export function cardOutline(card: FokusCard): OutlineNode[] {
   switch (card.type) {
     case 'mc': {
       const opts = [...(card.options ?? [])].sort((a, b) => Number(b.correct) - Number(a.correct));
-      const correct = opts.map((o, i) => (o.correct ? String.fromCharCode(65 + i) : null)).filter(Boolean);
-      return parseOutline(`- ${front} {CORRECT: ${correct.join(', ') || 'A'}} >>A)\n${opts.map((o) => `    - ${plain(o.text)}`).join('\n')}`);
+      const correct = opts
+        .map((o, i) => (o.correct ? String.fromCharCode(65 + i) : null))
+        .filter(Boolean);
+      return parseOutline(
+        `- ${front} {CORRECT: ${correct.join(', ') || 'A'}} >>A)\n${opts.map((o) => `    - ${plain(o.text)}`).join('\n')}`,
+      );
     }
     case 'set':
     case 'list':
-      return parseOutline(`- ${front} ${card.type === 'list' ? '>>1.' : '>>>'}\n${(card.items ?? []).map((i) => `    - ${plain(i)}`).join('\n')}`);
+      return parseOutline(
+        `- ${front} ${card.type === 'list' ? '>>1.' : '>>>'}\n${(card.items ?? []).map((i) => `    - ${plain(i)}`).join('\n')}`,
+      );
     case 'concept':
       return parseOutline(`- ${front} :: ${back}`);
     case 'cloze':
@@ -200,7 +236,11 @@ export function noteOutline(note: FokusNote): OutlineNode[] {
  * @param deckId Deck document.
  * @param fileBase Base name for the files (`<base>.remnote.md`).
  */
-export function exportFokus(graph: RemGraph, deckId: RemId, fileBase: string): { doc: FokusDoc; remnote: string } {
+export function exportFokus(
+  graph: RemGraph,
+  deckId: RemId,
+  fileBase: string,
+): { doc: FokusDoc; remnote: string } {
   const deck = graph.get(deckId);
   const slides = graph.children(deckId).filter((r) => r.slide);
   const title = (r: Rem): string => toPlainText(r.text);
@@ -214,20 +254,42 @@ export function exportFokus(graph: RemGraph, deckId: RemId, fileBase: string): {
     const anchor = (slide.slideText ?? title(slide)).split(/\s+/).slice(0, 8).join(' ');
     const pages = [(slide.slide?.page ?? 0) + 1];
     if (rem.fokus?.explanation) {
-      notes.push({ pages, anchor, title: title(rem).replace(/^💡\s*/, ''), text: exportMarkdown(graph, [rem.id], { includeRoot: false }) });
+      notes.push({
+        pages,
+        anchor,
+        title: title(rem).replace(/^💡\s*/, ''),
+        text: exportMarkdown(graph, [rem.id], { includeRoot: false }),
+      });
       return;
     }
     if (specs.length) {
       const items = answerChildren(children);
-      const type = rem.answerMode === 'mc' ? 'mc' : rem.answerMode === 'list' ? 'list' : rem.answerMode === 'set' ? 'set' : specs[0]!.kind === 'cloze' ? 'cloze' : rem.kind === 'plain' ? 'basic' : rem.kind;
+      const type =
+        rem.answerMode === 'mc'
+          ? 'mc'
+          : rem.answerMode === 'list'
+            ? 'list'
+            : rem.answerMode === 'set'
+              ? 'set'
+              : specs[0]!.kind === 'cloze'
+                ? 'cloze'
+                : rem.kind === 'plain'
+                  ? 'basic'
+                  : rem.kind;
       cards.push({
         id: `c${String(++n).padStart(3, '0')}`,
         section,
         type,
         front: toPlainText(rem.text, refName),
         back: toPlainText(rem.back ?? [], refName),
-        options: rem.answerMode === 'mc' ? mcOptions(children).map((o) => ({ text: refName(o.remId), correct: o.correct })).sort((a, b) => Number(b.correct) - Number(a.correct)) : [],
-        items: rem.answerMode === 'set' || rem.answerMode === 'list' ? items.map((i) => title(i)) : [],
+        options:
+          rem.answerMode === 'mc'
+            ? mcOptions(children)
+                .map((o) => ({ text: refName(o.remId), correct: o.correct }))
+                .sort((a, b) => Number(b.correct) - Number(a.correct))
+            : [],
+        items:
+          rem.answerMode === 'set' || rem.answerMode === 'list' ? items.map((i) => title(i)) : [],
         pages: rem.fokus?.pages ?? pages,
         anchor: rem.fokus?.anchor ?? anchor,
         remnote: exportMarkdown(graph, [rem.id]).replace(/\n$/, ''),
@@ -236,14 +298,19 @@ export function exportFokus(graph: RemGraph, deckId: RemId, fileBase: string): {
     }
     for (const c of children) visit(c, slide, section);
   };
-  for (const slide of slides) for (const c of graph.children(slide.id)) visit(c, slide, title(slide));
+  for (const slide of slides)
+    for (const c of graph.children(slide.id)) visit(c, slide, title(slide));
   const remnote = slides.map((s) => exportMarkdown(graph, [s.id])).join('');
   return {
     doc: {
       format: FOKUS_FORMAT,
       version: FOKUS_VERSION,
       created: isoDate(Date.now()),
-      source: { pdf: deck?.deck?.pdfName ?? '', pdf_pages: deck?.deck?.pdfPages ?? 0, title: deck ? title(deck) : '' },
+      source: {
+        pdf: deck?.deck?.pdfName ?? '',
+        pdf_pages: deck?.deck?.pdfPages ?? 0,
+        title: deck ? title(deck) : '',
+      },
       remnote_file: `${fileBase}.remnote.md`,
       cards,
       notes,

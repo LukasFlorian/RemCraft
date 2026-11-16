@@ -2,19 +2,50 @@ import { createMemoryGraph } from '../model/graph';
 import { createRem } from '../model/factories';
 import type { LectureEvent } from '../model/types';
 import { rt } from '../richtext/ops';
-import { DEFAULT_LECTURE_SETTINGS, lectureKpis, mergeStats, slideStats, timeline } from './analytics';
-import { anchorScore, cardKey, cardOutline, exportFokus, resolveSlides, validateFokus } from './fokusCards';
+import {
+  DEFAULT_LECTURE_SETTINGS,
+  lectureKpis,
+  mergeStats,
+  slideStats,
+  timeline,
+} from './analytics';
+import {
+  anchorScore,
+  cardKey,
+  cardOutline,
+  exportFokus,
+  resolveSlides,
+  validateFokus,
+} from './fokusCards';
 import type { Mask } from './layout';
-import { detectAuto, detectBoxes, detectGrid, detectImages, nonEmptyBoxes } from './layout';
+import {
+  detectAuto,
+  detectBoxes,
+  detectGrid,
+  detectImages,
+  nonEmptyBoxes,
+  planRelayout,
+} from './layout';
 import { openQuestions } from './notes';
 import { reviewRows, todo } from './review';
-import { buildLectureState, nextCheckinIn, nextCheckinPrompt, openCheckin, summarize, toActive } from './session';
+import {
+  buildLectureState,
+  nextCheckinIn,
+  nextCheckinPrompt,
+  openCheckin,
+  summarize,
+  toActive,
+} from './session';
 
 const T0 = 1_700_000_000_000;
 const S = 1000;
 let n = 0;
 /** Event helper. */
-function ev(type: LectureEvent['type'], t: number, extra: Partial<LectureEvent> = {}): LectureEvent {
+function ev(
+  type: LectureEvent['type'],
+  t: number,
+  extra: Partial<LectureEvent> = {},
+): LectureEvent {
   return { id: `e${++n}`, lectureId: 'L', type, t: T0 + t, createdAt: 0, updatedAt: 0, ...extra };
 }
 
@@ -75,7 +106,16 @@ describe('lecture analytics', () => {
 
   it('builds review rows with reasons', () => {
     const stats = slideStats(st, 3, NOW);
-    const rows = reviewRows(stats, (i) => ({ flags: i === 2 ? ['unclear'] : [], openQuestions: i === 0 ? ['warum?'] : [], hasNote: i !== 1, forgottenCards: 0 }), DEFAULT_LECTURE_SETTINGS);
+    const rows = reviewRows(
+      stats,
+      (i) => ({
+        flags: i === 2 ? ['unclear'] : [],
+        openQuestions: i === 0 ? ['warum?'] : [],
+        hasNote: i !== 1,
+        forgottenCards: 0,
+      }),
+      DEFAULT_LECTURE_SETTINGS,
+    );
     const keys = rows.map((r) => r.reasons.map((x) => x.key));
     expect(keys[1]).toEqual(['missed', 'drift']);
     expect(todo(rows)[0]!.slide).toBe(1);
@@ -91,8 +131,14 @@ describe('fokus cards', () => {
   ];
   it('scores anchors and resolves slides by page and anchor', () => {
     expect(anchorScore('Hadoop Architektur', 'Die Hadoop Architektur')).toBe(1);
-    expect(resolveSlides({ pages: [2], anchor: 'Hadoop Architektur' }, slides)).toEqual({ slides: [2], by: 'page+anchor' });
-    expect(resolveSlides({ pages: [9], anchor: 'Die 5 Vs' }, slides)).toEqual({ slides: [1], by: 'anchor' });
+    expect(resolveSlides({ pages: [2], anchor: 'Hadoop Architektur' }, slides)).toEqual({
+      slides: [2],
+      by: 'page+anchor',
+    });
+    expect(resolveSlides({ pages: [9], anchor: 'Die 5 Vs' }, slides)).toEqual({
+      slides: [1],
+      by: 'anchor',
+    });
     expect(resolveSlides({ pages: [1] }, slides)).toEqual({ slides: [0], by: 'page' });
     expect(resolveSlides({ anchor: 'gibt es nicht' }, slides)).toEqual({ slides: [], by: 'none' });
     // A verbatim match beats a slide that merely contains the same words.
@@ -100,24 +146,65 @@ describe('fokus cards', () => {
       { page: 0, text: 'Lernrate bestimmt die Schrittweite' },
       { page: 0, text: 'Die Lernrate' },
     ];
-    expect(resolveSlides({ pages: [1], anchor: 'Die Lernrate' }, tie)).toEqual({ slides: [1], by: 'page+anchor' });
+    expect(resolveSlides({ pages: [1], anchor: 'Die Lernrate' }, tie)).toEqual({
+      slides: [1],
+      by: 'page+anchor',
+    });
   });
   it('validates and builds outlines', () => {
     expect(validateFokus({ format: 'x' })[0]).toMatch(/Kein Fokus/);
-    expect(validateFokus({ format: 'fokus-cards', version: 1, cards: [{ front: '' }] })[0]).toMatch(/front/);
+    expect(validateFokus({ format: 'fokus-cards', version: 1, cards: [{ front: '' }] })[0]).toMatch(
+      /front/,
+    );
     expect(cardKey({ front: 'a', back: 'b' })).toHaveLength(12);
     expect(cardOutline({ front: 'Q', remnote: 'Q >> A' })[0]!.text).toBe('Q >> A');
-    const mc = cardOutline({ front: 'Which?', type: 'mc', options: [{ text: 'no', correct: false }, { text: 'yes', correct: true }] });
+    const mc = cardOutline({
+      front: 'Which?',
+      type: 'mc',
+      options: [
+        { text: 'no', correct: false },
+        { text: 'yes', correct: true },
+      ],
+    });
     expect(mc[0]!.text).toBe('Which? {CORRECT: A} >>A)');
     expect(mc[0]!.children.map((c) => c.text)).toEqual(['yes', 'no']);
   });
   it('exports a deck', () => {
-    const deck = createRem({ id: 'd', text: rt('VL 1'), isDocument: true, deck: { src: 'file:x', pdfName: 'VL01.pdf', pdfPages: 2, layout: 'auto', boxes: [[0, 0, 1, 1]] } });
-    const s0 = createRem({ id: 's0', parentId: 'd', text: rt('Folie 1'), slide: { index: 0, page: 0, box: 0 }, slideText: 'Einführung Big Data' });
-    const c = createRem({ id: 'c', parentId: 's0', text: rt('Was ist Big Data?'), back: rt('Viele Daten'), direction: 'forward' });
+    const deck = createRem({
+      id: 'd',
+      text: rt('VL 1'),
+      isDocument: true,
+      deck: {
+        src: 'file:x',
+        pdfName: 'VL01.pdf',
+        pdfPages: 2,
+        layout: 'auto',
+        boxes: [[0, 0, 1, 1]],
+      },
+    });
+    const s0 = createRem({
+      id: 's0',
+      parentId: 'd',
+      text: rt('Folie 1'),
+      slide: { index: 0, page: 0, box: 0 },
+      slideText: 'Einführung Big Data',
+    });
+    const c = createRem({
+      id: 'c',
+      parentId: 's0',
+      text: rt('Was ist Big Data?'),
+      back: rt('Viele Daten'),
+      direction: 'forward',
+    });
     const { doc, remnote } = exportFokus(createMemoryGraph([deck, s0, c]), 'd', 'VL01');
     expect(doc.source).toMatchObject({ pdf: 'VL01.pdf', pdf_pages: 2 });
-    expect(doc.cards[0]).toMatchObject({ front: 'Was ist Big Data?', back: 'Viele Daten', pages: [1], type: 'basic', section: 'Folie 1' });
+    expect(doc.cards[0]).toMatchObject({
+      front: 'Was ist Big Data?',
+      back: 'Viele Daten',
+      pages: [1],
+      type: 'basic',
+      section: 'Folie 1',
+    });
     expect(remnote).toContain('Was ist Big Data? >> Viele Daten');
   });
 });
@@ -126,7 +213,8 @@ describe('layout detection', () => {
   /** Mask with filled rectangles (pixel coordinates). */
   function mask(w: number, h: number, rects: number[][]): Mask {
     const data = new Uint8Array(w * h);
-    for (const [x0, y0, x1, y1] of rects) for (let y = y0!; y < y1!; y++) for (let x = x0!; x < x1!; x++) data[y * w + x] = 1;
+    for (const [x0, y0, x1, y1] of rects)
+      for (let y = y0!; y < y1!; y++) for (let x = x0!; x < x1!; x++) data[y * w + x] = 1;
     return { w, h, data };
   }
   it('finds two stacked slides on a portrait handout', () => {
@@ -145,7 +233,9 @@ describe('layout detection', () => {
   it('keeps landscape slides whole and supports explicit grids', () => {
     expect(detectAuto(mask(160, 90, [[5, 5, 150, 80]]))).toEqual([[0, 0, 1, 1]]);
     expect(detectGrid(mask(100, 100, []), 2, 2)).toHaveLength(4);
-    expect(detectBoxes({ sampleMasks: [mask(100, 141, [])], sampleImages: [[]], portrait: true }, '3x1')).toHaveLength(3);
+    expect(
+      detectBoxes({ sampleMasks: [mask(100, 141, [])], sampleImages: [[]], portrait: true }, '3x1'),
+    ).toHaveLength(3);
   });
   it('uses consistent embedded images', () => {
     const page = [
@@ -154,5 +244,44 @@ describe('layout detection', () => {
     ];
     expect(detectImages([page, page, page], true)).toEqual(page);
     expect(detectImages([[[0.1, 0.1, 0.9, 0.9]]], false)).toBeNull();
+  });
+});
+
+describe('planRelayout', () => {
+  const top = [0, 0, 1, 0.5];
+  const bottom = [0, 0.5, 1, 1];
+  const full = [0, 0, 1, 1];
+
+  it('keeps content on the same place when splitting pages and back', () => {
+    // 1 slide per page (2 pages) -> 2 per page (4 slides): content of page 2 lands on slide 3.
+    const old = [
+      { page: 0, box: full },
+      { page: 1, box: full },
+    ];
+    const next = [
+      { page: 0, box: top },
+      { page: 0, box: bottom },
+      { page: 1, box: top },
+      { page: 1, box: bottom },
+    ];
+    const plan = planRelayout(old, next, () => true);
+    expect(plan.reuse).toEqual([0, null, 1, null]);
+    expect(plan.moveTo.size).toBe(0);
+    // ...and back: the bottom halves' content moves into the full page slides.
+    const back = planRelayout(next, old, (i) => i === 1 || i === 2);
+    expect(back.reuse).toEqual([0, 2]);
+    expect(back.moveTo.get(1)).toBe(0);
+  });
+
+  it('reuses empty slides and never drops content', () => {
+    const old = [
+      { page: 0, box: top },
+      { page: 0, box: bottom },
+      { page: 5, box: full },
+    ];
+    const plan = planRelayout(old, [{ page: 0, box: full }], (i) => i === 2);
+    expect(plan.reuse).toEqual([0]);
+    expect(plan.moveTo.get(2)).toBe(0);
+    expect(plan.moveTo.has(1)).toBe(false); // empty: simply removed
   });
 });

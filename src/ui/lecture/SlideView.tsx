@@ -42,7 +42,11 @@ export interface SlideViewProps {
 }
 
 /** Fits a box of aspect `ratio` into `w × h`. */
-function fit(w: number, h: number, ratio: number): { width: number; height: number; left: number; top: number } {
+function fit(
+  w: number,
+  h: number,
+  ratio: number,
+): { width: number; height: number; left: number; top: number } {
   let width = w;
   let height = w / ratio;
   if (height > h) {
@@ -53,7 +57,16 @@ function fit(w: number, h: number, ratio: number): { width: number; height: numb
 }
 
 /** The slide view. */
-export function SlideView({ deckId, slide, interactive = false, tool = 'select', color = PEN_COLORS[0]!, onTextAction, className, width = 900 }: SlideViewProps): ReactNode {
+export function SlideView({
+  deckId,
+  slide,
+  interactive = false,
+  tool = 'select',
+  color = PEN_COLORS[0]!,
+  onTextAction,
+  className,
+  width = 900,
+}: SlideViewProps): ReactNode {
   const app = useApp();
   const hostRef = useRef<HTMLDivElement>(null);
   const [host, setHost] = useState({ w: 0, h: 0 });
@@ -72,7 +85,9 @@ export function SlideView({ deckId, slide, interactive = false, tool = 'select',
   }, []);
 
   const stage = fit(host.w, host.h || host.w / ratio, ratio);
-  const save = (patch: Partial<{ strokes: Stroke[]; boxes: TextBox[]; marks: TextMark[] }>): void => {
+  const save = (
+    patch: Partial<{ strokes: Stroke[]; boxes: TextBox[]; marks: TextMark[] }>,
+  ): void => {
     if (slide) app.lectures.setAnnotations(slide.id, patch);
   };
 
@@ -80,21 +95,47 @@ export function SlideView({ deckId, slide, interactive = false, tool = 'select',
     <div ref={hostRef} className={`slide-view${className ? ` ${className}` : ''}`}>
       {!slide && <div className="slide-empty faint">Keine Folie</div>}
       {slide && (
-        <div className="slide-stage" style={{ width: stage.width, height: stage.height, left: stage.left, top: stage.top }}>
+        <div
+          className="slide-stage"
+          style={{ width: stage.width, height: stage.height, left: stage.left, top: stage.top }}
+        >
           {url ? (
             <img
               src={url}
               alt={`Folie ${(slide.slide?.index ?? 0) + 1}`}
               draggable={false}
-              onLoad={(e) => setRatio(e.currentTarget.naturalWidth / Math.max(1, e.currentTarget.naturalHeight))}
+              onLoad={(e) =>
+                setRatio(e.currentTarget.naturalWidth / Math.max(1, e.currentTarget.naturalHeight))
+              }
             />
           ) : (
             <div className="slide-loading faint">Folie wird geladen…</div>
           )}
-          <MarksLayer marks={ann?.marks ?? []} interactive={interactive} onChange={(marks) => save({ marks })} />
-          {interactive && tool === 'select' && <TextLayer items={items} onHighlight={(m) => save({ marks: [...(ann?.marks ?? []), m] })} onTextAction={onTextAction} />}
-          <InkLayer strokes={ann?.strokes ?? []} tool={interactive ? tool : 'select'} color={color} size={stage} onChange={(strokes) => save({ strokes })} />
-          <TextBoxesLayer boxes={ann?.boxes ?? []} tool={interactive ? tool : 'select'} interactive={interactive} color={color} onChange={(boxes) => save({ boxes })} />
+          <MarksLayer
+            marks={ann?.marks ?? []}
+            interactive={interactive}
+            onChange={(marks) => save({ marks })}
+          />
+          {interactive && tool === 'select' && (
+            <TextLayer
+              items={items}
+              onHighlight={(m) => save({ marks: [...(ann?.marks ?? []), m] })}
+              onTextAction={onTextAction}
+            />
+          )}
+          <InkLayer
+            strokes={ann?.strokes ?? []}
+            tool={interactive ? tool : 'select'}
+            color={color}
+            size={stage}
+            onChange={(strokes) => save({ strokes })}
+          />
+          <TextBoxesLayer
+            boxes={ann?.boxes ?? []}
+            tool={interactive ? tool : 'select'}
+            interactive={interactive}
+            onChange={(boxes) => save({ boxes })}
+          />
         </div>
       )}
     </div>
@@ -106,7 +147,19 @@ export function SlideView({ deckId, slide, interactive = false, tool = 'select',
 // ---------------------------------------------------------------------------
 
 /** Pen, marker and eraser on a canvas. */
-function InkLayer({ strokes, tool, color, size, onChange }: { strokes: Stroke[]; tool: SlideTool; color: string; size: { width: number; height: number }; onChange: (s: Stroke[]) => void }): ReactNode {
+function InkLayer({
+  strokes,
+  tool,
+  color,
+  size,
+  onChange,
+}: {
+  strokes: Stroke[];
+  tool: SlideTool;
+  color: string;
+  size: { width: number; height: number };
+  onChange: (s: Stroke[]) => void;
+}): ReactNode {
   const ref = useRef<HTMLCanvasElement>(null);
   const current = useRef<Stroke | null>(null);
   const drawing = tool === 'pen' || tool === 'marker' || tool === 'eraser';
@@ -143,12 +196,20 @@ function InkLayer({ strokes, tool, color, size, onChange }: { strokes: Stroke[];
 
   const pos = (e: React.PointerEvent): [number, number] => {
     const r = ref.current!.getBoundingClientRect();
-    return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))];
+    return [
+      Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+      Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)),
+    ];
   };
   /** Removes strokes passing near a point. */
   const erase = (x: number, y: number): void => {
     const near = (s: Stroke): boolean => {
-      for (let i = 0; i < s.p.length; i += 2) if (Math.hypot(s.p[i]! - x, (s.p[i + 1]! - y) * (size.height / Math.max(1, size.width))) < 0.015) return true;
+      for (let i = 0; i < s.p.length; i += 2)
+        if (
+          Math.hypot(s.p[i]! - x, (s.p[i + 1]! - y) * (size.height / Math.max(1, size.width))) <
+          0.015
+        )
+          return true;
       return false;
     };
     const kept = strokes.filter((s) => !near(s));
@@ -166,7 +227,12 @@ function InkLayer({ strokes, tool, color, size, onChange }: { strokes: Stroke[];
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
         const [x, y] = pos(e);
         if (tool === 'eraser') return erase(x, y);
-        current.current = { tool: tool === 'marker' ? 'marker' : 'pen', color, width: tool === 'marker' ? 0.018 : 0.003, p: [x, y] };
+        current.current = {
+          tool: tool === 'marker' ? 'marker' : 'pen',
+          color,
+          width: tool === 'marker' ? 0.018 : 0.003,
+          p: [x, y],
+        };
         redraw();
       }}
       onPointerMove={(e) => {
@@ -190,9 +256,22 @@ function InkLayer({ strokes, tool, color, size, onChange }: { strokes: Stroke[];
 // ---------------------------------------------------------------------------
 
 /** Transparent, selectable text over the slide; selection → highlight/note/AI. */
-function TextLayer({ items, onHighlight, onTextAction }: { items: { str: string; x0: number; y0: number; x1: number; y1: number }[]; onHighlight: (m: TextMark) => void; onTextAction: SlideViewProps['onTextAction'] }): ReactNode {
+function TextLayer({
+  items,
+  onHighlight,
+  onTextAction,
+}: {
+  items: { str: string; x0: number; y0: number; x1: number; y1: number }[];
+  onHighlight: (m: TextMark) => void;
+  onTextAction: SlideViewProps['onTextAction'];
+}): ReactNode {
   const ref = useRef<HTMLDivElement>(null);
-  const [sel, setSel] = useState<{ text: string; rects: [number, number, number, number][]; x: number; y: number } | null>(null);
+  const [sel, setSel] = useState<{
+    text: string;
+    rects: [number, number, number, number][];
+    x: number;
+    y: number;
+  } | null>(null);
   return (
     <div
       ref={ref}
@@ -204,19 +283,45 @@ function TextLayer({ items, onHighlight, onTextAction }: { items: { str: string;
         const box = layer.getBoundingClientRect();
         const rects = [...s.getRangeAt(0).getClientRects()]
           .filter((r) => r.width > 1)
-          .map((r) => [(r.left - box.left) / box.width, (r.top - box.top) / box.height, r.width / box.width, r.height / box.height] as [number, number, number, number]);
+          .map(
+            (r) =>
+              [
+                (r.left - box.left) / box.width,
+                (r.top - box.top) / box.height,
+                r.width / box.width,
+                r.height / box.height,
+              ] as [number, number, number, number],
+          );
         if (!rects.length) return setSel(null);
         const last = s.getRangeAt(0).getBoundingClientRect();
-        setSel({ text: s.toString().replace(/\s+/g, ' ').trim(), rects, x: last.left - box.left + last.width / 2, y: last.top - box.top });
+        setSel({
+          text: s.toString().replace(/\s+/g, ' ').trim(),
+          rects,
+          x: last.left - box.left + last.width / 2,
+          y: last.top - box.top,
+        });
       }}
     >
       {items.map((t, i) => (
-        <span key={i} style={{ left: `${t.x0 * 100}%`, top: `${t.y0 * 100}%`, width: `${(t.x1 - t.x0) * 100}%`, height: `${(t.y1 - t.y0) * 100}%`, fontSize: `calc(${(t.y1 - t.y0) * 100}cqh * 0.9)` }}>
+        <span
+          key={i}
+          style={{
+            left: `${t.x0 * 100}%`,
+            top: `${t.y0 * 100}%`,
+            width: `${(t.x1 - t.x0) * 100}%`,
+            height: `${(t.y1 - t.y0) * 100}%`,
+            fontSize: `calc(${(t.y1 - t.y0) * 100}cqh * 0.9)`,
+          }}
+        >
           {t.str}
         </span>
       ))}
       {sel && (
-        <div className="selection-bar" style={{ left: sel.x, top: Math.max(0, sel.y - 40) }} onMouseDown={(e) => e.preventDefault()}>
+        <div
+          className="selection-bar"
+          style={{ left: sel.x, top: Math.max(0, sel.y - 40) }}
+          onMouseDown={(e) => e.preventDefault()}
+        >
           {MARK_COLORS.map((c) => (
             <button
               key={c}
@@ -230,13 +335,25 @@ function TextLayer({ items, onHighlight, onTextAction }: { items: { str: string;
               }}
             />
           ))}
-          <button className="icon-btn" title="In die Notizen" onClick={() => (onTextAction?.('note', sel.text), setSel(null))}>
+          <button
+            className="icon-btn"
+            title="In die Notizen"
+            onClick={() => (onTextAction?.('note', sel.text), setSel(null))}
+          >
             <MessageSquareText size={15} />
           </button>
-          <button className="icon-btn" title="KI fragen" onClick={() => (onTextAction?.('ai', sel.text), setSel(null))}>
+          <button
+            className="icon-btn"
+            title="KI fragen"
+            onClick={() => (onTextAction?.('ai', sel.text), setSel(null))}
+          >
             <Sparkles size={15} />
           </button>
-          <button className="icon-btn" title="Kopieren" onClick={() => (void navigator.clipboard?.writeText(sel.text), setSel(null))}>
+          <button
+            className="icon-btn"
+            title="Kopieren"
+            onClick={() => (void navigator.clipboard?.writeText(sel.text), setSel(null))}
+          >
             <Copy size={15} />
           </button>
         </div>
@@ -246,7 +363,15 @@ function TextLayer({ items, onHighlight, onTextAction }: { items: { str: string;
 }
 
 /** Coloured highlight rectangles; click changes the colour or deletes. */
-function MarksLayer({ marks, interactive, onChange }: { marks: TextMark[]; interactive: boolean; onChange: (m: TextMark[]) => void }): ReactNode {
+function MarksLayer({
+  marks,
+  interactive,
+  onChange,
+}: {
+  marks: TextMark[];
+  interactive: boolean;
+  onChange: (m: TextMark[]) => void;
+}): ReactNode {
   const [active, setActive] = useState<string | null>(null);
   return (
     <div className="marks-layer">
@@ -255,7 +380,14 @@ function MarksLayer({ marks, interactive, onChange }: { marks: TextMark[]; inter
           <div
             key={`${m.id}-${i}`}
             className="text-mark"
-            style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: `${w * 100}%`, height: `${h * 100}%`, background: m.c, pointerEvents: interactive ? 'auto' : 'none' }}
+            style={{
+              left: `${x * 100}%`,
+              top: `${y * 100}%`,
+              width: `${w * 100}%`,
+              height: `${h * 100}%`,
+              background: m.c,
+              pointerEvents: interactive ? 'auto' : 'none',
+            }}
             onClick={() => setActive(active === m.id ? null : m.id)}
             title={m.text}
           />
@@ -267,11 +399,27 @@ function MarksLayer({ marks, interactive, onChange }: { marks: TextMark[]; inter
           if (!m) return null;
           const [x, y] = m.rects[0]!;
           return (
-            <div className="selection-bar" style={{ left: `${x * 100}%`, top: `calc(${y * 100}% - 40px)` }}>
+            <div
+              className="selection-bar"
+              style={{ left: `${x * 100}%`, top: `calc(${y * 100}% - 40px)` }}
+            >
               {MARK_COLORS.map((c) => (
-                <button key={c} className="mark-swatch" style={{ background: c }} aria-label="Farbe" onClick={() => (onChange(marks.map((k) => (k.id === active ? { ...k, c } : k))), setActive(null))} />
+                <button
+                  key={c}
+                  className="mark-swatch"
+                  style={{ background: c }}
+                  aria-label="Farbe"
+                  onClick={() => (
+                    onChange(marks.map((k) => (k.id === active ? { ...k, c } : k))),
+                    setActive(null)
+                  )}
+                />
               ))}
-              <button className="icon-btn" title="Markierung löschen" onClick={() => (onChange(marks.filter((k) => k.id !== active)), setActive(null))}>
+              <button
+                className="icon-btn"
+                title="Markierung löschen"
+                onClick={() => (onChange(marks.filter((k) => k.id !== active)), setActive(null))}
+              >
                 <Trash2 size={15} />
               </button>
             </div>
@@ -286,11 +434,22 @@ function MarksLayer({ marks, interactive, onChange }: { marks: TextMark[]; inter
 // ---------------------------------------------------------------------------
 
 /** Sticky-note text boxes on the slide. */
-function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: TextBox[]; tool: SlideTool; interactive: boolean; color: string; onChange: (b: TextBox[]) => void }): ReactNode {
+function TextBoxesLayer({
+  boxes,
+  tool,
+  interactive,
+  onChange,
+}: {
+  boxes: TextBox[];
+  tool: SlideTool;
+  interactive: boolean;
+  onChange: (b: TextBox[]) => void;
+}): ReactNode {
   const ref = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const update = (id: string, patch: Partial<TextBox>): void => onChange(boxes.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+  const update = (id: string, patch: Partial<TextBox>): void =>
+    onChange(boxes.map((b) => (b.id === id ? { ...b, ...patch } : b)));
   const width = ref.current?.clientWidth ?? 800;
 
   return (
@@ -299,8 +458,20 @@ function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: 
       className={`boxes-layer${tool === 'text' ? ' placing' : ''}`}
       onPointerDown={(e) => {
         if (tool !== 'text' || e.target !== e.currentTarget) return;
+        // Without this the browser moves the focus to the slide after the
+        // click; the new (still empty) box would blur and delete itself.
+        e.preventDefault();
         const r = e.currentTarget.getBoundingClientRect();
-        const box: TextBox = { id: newId(8), x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, w: 0.3, s: 0.022, c: color === '#111111' ? '#111111' : '#111111', bg: 'note', text: '' };
+        const box: TextBox = {
+          id: newId(8),
+          x: (e.clientX - r.left) / r.width,
+          y: (e.clientY - r.top) / r.height,
+          w: 0.3,
+          s: 0.022,
+          c: '#111111',
+          bg: 'note',
+          text: '',
+        };
         onChange([...boxes, box]);
         setSelected(box.id);
         setEditing(box.id);
@@ -310,7 +481,14 @@ function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: 
         <div
           key={b.id}
           className={`text-box bg-${b.bg}${selected === b.id ? ' selected' : ''}`}
-          style={{ left: `${b.x * 100}%`, top: `${b.y * 100}%`, width: `${b.w * 100}%`, fontSize: b.s * width, color: b.c, pointerEvents: interactive ? 'auto' : 'none' }}
+          style={{
+            left: `${b.x * 100}%`,
+            top: `${b.y * 100}%`,
+            width: `${b.w * 100}%`,
+            fontSize: b.s * width,
+            color: b.c,
+            pointerEvents: interactive ? 'auto' : 'none',
+          }}
           onPointerDown={(e) => {
             if (editing === b.id) return;
             e.stopPropagation();
@@ -320,7 +498,11 @@ function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: 
             const sy = e.clientY;
             const ox = b.x;
             const oy = b.y;
-            const move = (ev: PointerEvent): void => update(b.id, { x: Math.min(0.98, Math.max(0, ox + (ev.clientX - sx) / layer.width)), y: Math.min(0.98, Math.max(0, oy + (ev.clientY - sy) / layer.height)) });
+            const move = (ev: PointerEvent): void =>
+              update(b.id, {
+                x: Math.min(0.98, Math.max(0, ox + (ev.clientX - sx) / layer.width)),
+                y: Math.min(0.98, Math.max(0, oy + (ev.clientY - sy) / layer.height)),
+              });
             const up = (): void => {
               window.removeEventListener('pointermove', move);
               window.removeEventListener('pointerup', up);
@@ -332,7 +514,10 @@ function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: 
         >
           {editing === b.id ? (
             <textarea
-              autoFocus
+              ref={(el) => {
+                // Focus once mounted, after the creating click has finished.
+                if (el && document.activeElement !== el) requestAnimationFrame(() => el.focus());
+              }}
               className="text-box-input"
               defaultValue={b.text}
               onBlur={(e) => {
@@ -341,7 +526,9 @@ function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: 
                 if (!text.trim()) onChange(boxes.filter((x) => x.id !== b.id));
                 else update(b.id, { text });
               }}
-              onKeyDown={(e) => e.key === 'Escape' && (e.currentTarget as HTMLTextAreaElement).blur()}
+              onKeyDown={(e) =>
+                e.key === 'Escape' && (e.currentTarget as HTMLTextAreaElement).blur()
+              }
             />
           ) : (
             <span className="text-box-text">{b.text}</span>
@@ -349,18 +536,44 @@ function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: 
           {selected === b.id && editing !== b.id && interactive && (
             <div className="box-bar" onPointerDown={(e) => e.stopPropagation()}>
               {['#111111', '#d0021b', '#1d4ed8', '#047857'].map((c) => (
-                <button key={c} className="mark-swatch" style={{ background: c }} aria-label="Textfarbe" onClick={() => update(b.id, { c })} />
+                <button
+                  key={c}
+                  className="mark-swatch"
+                  style={{ background: c }}
+                  aria-label="Textfarbe"
+                  onClick={() => update(b.id, { c })}
+                />
               ))}
-              <button className="icon-btn" title="Kleiner" onClick={() => update(b.id, { s: Math.max(0.008, b.s - 0.003) })}>
+              <button
+                className="icon-btn"
+                title="Kleiner"
+                onClick={() => update(b.id, { s: Math.max(0.008, b.s - 0.003) })}
+              >
                 −
               </button>
-              <button className="icon-btn" title="Größer" onClick={() => update(b.id, { s: Math.min(0.08, b.s + 0.003) })}>
+              <button
+                className="icon-btn"
+                title="Größer"
+                onClick={() => update(b.id, { s: Math.min(0.08, b.s + 0.003) })}
+              >
                 +
               </button>
-              <button className="icon-btn" title="Hintergrund" onClick={() => update(b.id, { bg: b.bg === 'note' ? 'white' : b.bg === 'white' ? 'none' : 'note' })}>
+              <button
+                className="icon-btn"
+                title="Hintergrund"
+                onClick={() =>
+                  update(b.id, {
+                    bg: b.bg === 'note' ? 'white' : b.bg === 'white' ? 'none' : 'note',
+                  })
+                }
+              >
                 <StickyNote size={14} />
               </button>
-              <button className="icon-btn" title="Löschen" onClick={() => onChange(boxes.filter((x) => x.id !== b.id))}>
+              <button
+                className="icon-btn"
+                title="Löschen"
+                onClick={() => onChange(boxes.filter((x) => x.id !== b.id))}
+              >
                 <Trash2 size={14} />
               </button>
             </div>
@@ -373,7 +586,10 @@ function TextBoxesLayer({ boxes, tool, interactive, color, onChange }: { boxes: 
                 const layer = ref.current!.getBoundingClientRect();
                 const sx = e.clientX;
                 const ow = b.w;
-                const move = (ev: PointerEvent): void => update(b.id, { w: Math.min(1, Math.max(0.04, ow + (ev.clientX - sx) / layer.width)) });
+                const move = (ev: PointerEvent): void =>
+                  update(b.id, {
+                    w: Math.min(1, Math.max(0.04, ow + (ev.clientX - sx) / layer.width)),
+                  });
                 const up = (): void => {
                   window.removeEventListener('pointermove', move);
                   window.removeEventListener('pointerup', up);

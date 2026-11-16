@@ -41,19 +41,39 @@ export function fmtDuration(ms: number): string {
 }
 
 /** Why a slide deserves another look. */
-export function reasons(s: SlideStats, input: SlideReviewInput, longMs: number, cfg: LectureSettings): ReviewReason[] {
+export function reasons(
+  s: SlideStats,
+  input: SlideReviewInput,
+  longMs: number,
+  cfg: LectureSettings,
+): ReviewReason[] {
   const out: ReviewReason[] = [];
-  if (input.flags.includes('unclear')) out.push({ key: 'unclear', label: 'als unklar markiert', weight: 3 });
+  if (input.flags.includes('unclear'))
+    out.push({ key: 'unclear', label: 'als unklar markiert', weight: 3 });
   const q = input.openQuestions.length;
   if (q) out.push({ key: 'question', label: `${q} offene Frage${q > 1 ? 'n' : ''}`, weight: 2 });
   const missed =
     s.awayMs >= cfg.missedMinSeconds * 1000 ||
-    (s.dwellMs >= cfg.minDwellSeconds * 1000 && s.awayMs >= 10_000 && s.awayMs >= cfg.missedRatio * s.dwellMs);
-  if (missed) out.push({ key: 'missed', label: `${fmtDuration(s.awayMs)} nicht in der App`, weight: 2 });
-  if (input.flags.includes('important')) out.push({ key: 'important', label: 'als wichtig markiert', weight: 1.5 });
+    (s.dwellMs >= cfg.minDwellSeconds * 1000 &&
+      s.awayMs >= 10_000 &&
+      s.awayMs >= cfg.missedRatio * s.dwellMs);
+  if (missed)
+    out.push({ key: 'missed', label: `${fmtDuration(s.awayMs)} nicht in der App`, weight: 2 });
+  if (input.flags.includes('important'))
+    out.push({ key: 'important', label: 'als wichtig markiert', weight: 1.5 });
   if (s.drifts) out.push({ key: 'drift', label: `hier abgeschweift (${s.drifts}×)`, weight: 1 });
-  if (s.dwellMs >= longMs && !input.hasNote) out.push({ key: 'no_note', label: `${fmtDuration(s.dwellMs)} erklärt, keine Notiz`, weight: 1 });
-  if (input.forgottenCards) out.push({ key: 'cards', label: `${input.forgottenCards} Karte${input.forgottenCards > 1 ? 'n' : ''} nicht gewusst`, weight: 1.5 });
+  if (s.dwellMs >= longMs && !input.hasNote)
+    out.push({
+      key: 'no_note',
+      label: `${fmtDuration(s.dwellMs)} erklärt, keine Notiz`,
+      weight: 1,
+    });
+  if (input.forgottenCards)
+    out.push({
+      key: 'cards',
+      label: `${input.forgottenCards} Karte${input.forgottenCards > 1 ? 'n' : ''} nicht gewusst`,
+      weight: 1.5,
+    });
   return out;
 }
 
@@ -81,18 +101,33 @@ function median(xs: number[]): number {
  * @param inputs Flags, questions, notes and cards per slide index.
  * @param cfg Thresholds.
  */
-export function reviewRows(stats: SlideStats[], inputs: (slide: number) => SlideReviewInput, cfg: LectureSettings): ReviewRow[] {
+export function reviewRows(
+  stats: SlideStats[],
+  inputs: (slide: number) => SlideReviewInput,
+  cfg: LectureSettings,
+): ReviewRow[] {
   // "Long" is relative to this lecture's pace: noticeably longer than a typical slide.
   const covered = stats.map((s) => s.dwellMs).filter((d) => d >= cfg.minDwellSeconds * 1000);
-  const longMs = covered.length ? Math.max(cfg.longDwellSeconds * 1000, 1.5 * median(covered)) : cfg.longDwellSeconds * 1000;
+  const longMs = covered.length
+    ? Math.max(cfg.longDwellSeconds * 1000, 1.5 * median(covered))
+    : cfg.longDwellSeconds * 1000;
   return stats.map((s) => {
     const r = reasons(s, inputs(s.slide), longMs, cfg);
-    const status = s.dwellMs >= cfg.minDwellSeconds * 1000 ? 'covered' : s.visits ? 'skipped' : 'unseen';
-    return { slide: s.slide, stats: s, status, reasons: r, priority: Math.round(r.reduce((a, x) => a + x.weight, 0) * 100) / 100 };
+    const status =
+      s.dwellMs >= cfg.minDwellSeconds * 1000 ? 'covered' : s.visits ? 'skipped' : 'unseen';
+    return {
+      slide: s.slide,
+      stats: s,
+      status,
+      reasons: r,
+      priority: Math.round(r.reduce((a, x) => a + x.weight, 0) * 100) / 100,
+    };
   });
 }
 
 /** Rows worth reviewing, most important first. */
 export function todo(rows: ReviewRow[]): ReviewRow[] {
-  return rows.filter((r) => r.priority > 0).sort((a, b) => b.priority - a.priority || a.slide - b.slide);
+  return rows
+    .filter((r) => r.priority > 0)
+    .sort((a, b) => b.priority - a.priority || a.slide - b.slide);
 }

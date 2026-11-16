@@ -61,7 +61,10 @@ export function runs(profile: boolean[], minGap: number): [number, number][] {
 /** Removes thin text lines in the outer 7 % of the page (headers, footers, page numbers). */
 export function dropMargins(m: Mask): Mask {
   const data = new Uint8Array(m.data);
-  for (const [r0, r1] of runs(rowProfile(m).map((v) => v > 0.002), Math.max(2, Math.floor(0.01 * m.h)))) {
+  for (const [r0, r1] of runs(
+    rowProfile(m).map((v) => v > 0.002),
+    Math.max(2, Math.floor(0.01 * m.h)),
+  )) {
     const thin = r1 - r0 < 0.03 * m.h;
     if (thin && (r1 <= 0.07 * m.h || r0 >= 0.93 * m.h)) data.fill(0, r0 * m.w, r1 * m.w);
   }
@@ -82,7 +85,12 @@ export function unionMasks(masks: readonly Mask[]): Mask | null {
 
 /** Relative box from pixel bounds with padding. */
 function toRel(r0: number, r1: number, c0: number, c1: number, m: Mask, pad = 0.004): number[] {
-  return [Math.max(0, c0 / m.w - pad), Math.max(0, r0 / m.h - pad), Math.min(1, c1 / m.w + pad), Math.min(1, r1 / m.h + pad)];
+  return [
+    Math.max(0, c0 / m.w - pad),
+    Math.max(0, r0 / m.h - pad),
+    Math.min(1, c1 / m.w + pad),
+    Math.min(1, r1 / m.h + pad),
+  ];
 }
 
 /** Real handout slides have (nearly) equal sizes. */
@@ -99,9 +107,15 @@ function consistent(boxes: number[][]): boolean {
  */
 export function detectAuto(u: Mask): number[][] {
   const boxes: number[][] = [];
-  for (const [r0, r1] of runs(rowProfile(u).map((v) => v > 0.002), Math.max(2, Math.floor(0.015 * u.h)))) {
+  for (const [r0, r1] of runs(
+    rowProfile(u).map((v) => v > 0.002),
+    Math.max(2, Math.floor(0.015 * u.h)),
+  )) {
     if (r1 - r0 < 0.12 * u.h) continue;
-    for (const [c0, c1] of runs(colProfile(u, r0, r1).map((v) => v > 0.002), Math.max(2, Math.floor(0.03 * u.w)))) {
+    for (const [c0, c1] of runs(
+      colProfile(u, r0, r1).map((v) => v > 0.002),
+      Math.max(2, Math.floor(0.03 * u.w)),
+    )) {
       if (c1 - c0 >= 0.25 * u.w) boxes.push(toRel(r0, r1, c0, c1, u));
     }
   }
@@ -110,7 +124,13 @@ export function detectAuto(u: Mask): number[][] {
 }
 
 /** Bounding box `[r0, r1, c0, c1]` of all content in a region. */
-function contentBox(m: Mask, y0: number, y1: number, x0: number, x1: number): [number, number, number, number] | null {
+function contentBox(
+  m: Mask,
+  y0: number,
+  y1: number,
+  x0: number,
+  x1: number,
+): [number, number, number, number] | null {
   let r0 = -1;
   let r1 = -1;
   let c0 = x1;
@@ -180,13 +200,19 @@ export function detectImages(pages: readonly number[][][], portrait: boolean): n
     const boxes: number[][] = [];
     for (const r of rects) {
       const rel = [Math.max(0, r[0]!), Math.max(0, r[1]!), Math.min(1, r[2]!), Math.min(1, r[3]!)];
-      if ((rel[2]! - rel[0]!) * (rel[3]! - rel[1]!) >= 0.12 && !boxes.some((b) => overlapRatio(rel, b) > 0.5)) boxes.push(rel);
+      if (
+        (rel[2]! - rel[0]!) * (rel[3]! - rel[1]!) >= 0.12 &&
+        !boxes.some((b) => overlapRatio(rel, b) > 0.5)
+      )
+        boxes.push(rel);
     }
     return boxes.sort((a, b) => Math.round(a[1]! * 10) - Math.round(b[1]! * 10) || a[0]! - b[0]!);
   });
   if (layouts.length === 0) return null;
   const counts = layouts.map((l) => l.length);
-  const n = [...new Set(counts)].sort((a, b) => counts.filter((c) => c === b).length - counts.filter((c) => c === a).length || b - a)[0]!;
+  const n = [...new Set(counts)].sort(
+    (a, b) => counts.filter((c) => c === b).length - counts.filter((c) => c === a).length || b - a,
+  )[0]!;
   if (n === 0 || (n === 1 && !portrait)) return null;
   const same = layouts.filter((l) => l.length === n);
   if (same.length < Math.max(1, 0.6 * layouts.length)) return null;
@@ -218,7 +244,9 @@ export interface LayoutInput {
 export function detectBoxes(input: LayoutInput, mode = 'auto'): number[][] {
   const union = unionMasks(input.sampleMasks);
   if (mode === 'auto' || !(mode in LAYOUT_MODES)) {
-    return detectImages(input.sampleImages, input.portrait) ?? (union ? detectAuto(union) : [FULL_PAGE]);
+    return (
+      detectImages(input.sampleImages, input.portrait) ?? (union ? detectAuto(union) : [FULL_PAGE])
+    );
   }
   const [rows, cols] = mode.split('x').map(Number);
   return union ? detectGrid(union, rows!, cols!) : [FULL_PAGE];
@@ -242,4 +270,90 @@ export function nonEmptyBoxes(mask: Mask, boxes: readonly number[][]): number[] 
     if ((r1 - r0) * (c1 - c0) > 0 && n / ((r1 - r0) * (c1 - c0)) > 0.003) out.push(b);
   });
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Re-layout: keep notes and cards on the right slide
+// ---------------------------------------------------------------------------
+
+/** A slide position: PDF page and box (relative `[x0, y0, x1, y1]`). */
+export interface SlidePlace {
+  page: number;
+  box: number[];
+}
+
+/** Overlap of two boxes relative to the smaller one (0..1). */
+function boxOverlap(a: number[], b: number[]): number {
+  const w = Math.min(a[2]!, b[2]!) - Math.max(a[0]!, b[0]!);
+  const h = Math.min(a[3]!, b[3]!) - Math.max(a[1]!, b[1]!);
+  if (w <= 0 || h <= 0) return 0;
+  const area = (r: number[]): number => (r[2]! - r[0]!) * (r[3]! - r[1]!);
+  return (w * h) / Math.max(1e-9, Math.min(area(a), area(b)));
+}
+
+/** Plan of {@link planRelayout}. */
+export interface RelayoutPlan {
+  /** For each new slide: index of the old slide whose Rem is reused, or `null` (create one). */
+  reuse: (number | null)[];
+  /** Old slides that are not reused: index of the new slide that receives their content. */
+  moveTo: Map<number, number>;
+}
+
+/**
+ * Maps the slides of an old layout onto a new one, so that notes, cards and
+ * drawings follow the *place* on the PDF page they were written for - not
+ * the slide number (which shifts when a page is split differently).
+ *
+ * Every old slide either keeps its Rem for the best-overlapping new slide on
+ * the same page, or hands its content to the closest new slide (same page,
+ * otherwise the nearest page). Old slides without content can be reused for
+ * new slides that have no match.
+ *
+ * @param old Old slide places (in slide order).
+ * @param next New slide places (in slide order).
+ * @param hasContent Whether an old slide has notes, cards or drawings.
+ */
+export function planRelayout(
+  old: readonly SlidePlace[],
+  next: readonly SlidePlace[],
+  hasContent: (oldIndex: number) => boolean,
+): RelayoutPlan {
+  const reuse: (number | null)[] = next.map(() => null);
+  const used = new Set<number>();
+  // 1. Best overlapping old slide on the same page (strongest pairs first).
+  const pairs: [number, number, number][] = [];
+  next.forEach((n, ni) =>
+    old.forEach((o, oi) => o.page === n.page && pairs.push([ni, oi, boxOverlap(n.box, o.box)])),
+  );
+  pairs.sort((a, b) => b[2] - a[2]);
+  for (const [ni, oi, score] of pairs) {
+    if (score < 0.3 || reuse[ni] !== null || used.has(oi)) continue;
+    reuse[ni] = oi;
+    used.add(oi);
+  }
+  // 2. Unmatched new slides reuse empty old slides (fewer Rems created and deleted).
+  const empties = old.map((_, i) => i).filter((i) => !used.has(i) && !hasContent(i));
+  next.forEach((_, ni) => {
+    if (reuse[ni] === null && empties.length) {
+      const oi = empties.shift()!;
+      reuse[ni] = oi;
+      used.add(oi);
+    }
+  });
+  // 3. Remaining old slides with content move it to the closest new slide.
+  const moveTo = new Map<number, number>();
+  old.forEach((o, oi) => {
+    if (used.has(oi) || !hasContent(oi) || next.length === 0) return;
+    let best = 0;
+    let bestScore = -Infinity;
+    next.forEach((n, ni) => {
+      const score = n.page === o.page ? 10 + boxOverlap(n.box, o.box) : -Math.abs(n.page - o.page);
+      if (score > bestScore) {
+        bestScore = score;
+        best = ni;
+      }
+    });
+    moveTo.set(oi, best);
+  });
+  return { reuse, moveTo };
 }
