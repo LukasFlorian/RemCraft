@@ -2,7 +2,8 @@
  * Supabase implementation of the {@link RemoteBackend} and authentication.
  *
  * Data model: one generic table `records(user_id, collection, id, data,
- * deleted, updated_at, seq)` protected by row-level security (see
+ * deleted, updated_at, seq)` protected by row-level security, plus
+ * `space_records` for subtrees shared live with others (see
  * `supabase/migrations`). A trigger assigns a monotonically increasing `seq`
  * on every write and rejects writes older than the stored row, which makes
  * concurrent pushes from several devices safe.
@@ -30,42 +31,55 @@ export class SupabaseBackend implements RemoteBackend {
   ) {}
 
   async pull(sinceSeq: number, limit: number): Promise<PulledRow[]> {
-    const { data, error } = await this.client
-      .from('records')
-      .select('collection,id,data,deleted,updated_at,seq')
-      .gt('seq', sinceSeq)
-      .order('seq', { ascending: true })
-      .limit(limit);
+    // `pull_changes` returns the user's own rows plus the rows of every space
+    // they are a member of, ordered by the global change sequence.
+    const { data, error } = await this.client.rpc('pull_changes', { since: sinceSeq, lim: limit });
     if (error) throw new Error(`Pull failed: ${error.message}`);
-    return (data ?? []).map((r) => ({
+    return ((data ?? []) as PulledRow[]).map((r) => ({
       ...r,
       updated_at: Number(r.updated_at),
       seq: Number(r.seq),
-    })) as PulledRow[];
+    }));
   }
 
   async push(rows: readonly RemoteRow[]): Promise<void> {
     if (rows.length === 0) return;
-    const payload = rows.map((r) => ({ ...r, user_id: this.userId }));
-    const { error } = await this.client
-      .from('records')
-      .upsert(payload, { onConflict: 'user_id,collection,id' });
-    if (error) throw new Error(`Push failed: ${error.message}`);
+    const personal = rows
+      .filter((r) => !r.space)
+      .map(({ space: _s, ...r }) => ({ ...r, user_id: this.userId }));
+    const shared = rows
+      .filter((r) => r.space)
+      .map(({ space, ...r }) => ({ ...r, space_id: space }));
+    if (personal.length > 0) {
+      const { error } = await this.client
+        .from('records')
+        .upsert(personal, { onConflict: 'user_id,collection,id' });
+      if (error) throw new Error(`Push failed: ${error.message}`);
+    }
+    if (shared.length > 0) {
+      const { error } = await this.client
+        .from('space_records')
+        .upsert(shared, { onConflict: 'space_id,collection,id' });
+      if (error) throw new Error(`Push failed (shared): ${error.message}`);
+    }
   }
 
   subscribe(onChange: () => void): () => void {
     let timer: ReturnType<typeof setTimeout> | null = null;
+    // Debounce bursts (a push from another device touches many rows).
+    const notify = (): void => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(onChange, 400);
+    };
     const channel = this.client
       .channel(`records-${this.userId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${this.userId}` },
-        () => {
-          // Debounce bursts (a push from another device touches many rows).
-          if (timer) clearTimeout(timer);
-          timer = setTimeout(onChange, 400);
-        },
+        notify,
       )
+      // Shared spaces: row-level security limits events to spaces I belong to.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'space_records' }, notify)
       .subscribe();
     return () => {
       if (timer) clearTimeout(timer);
@@ -81,11 +95,18 @@ export class SupabaseBackend implements RemoteBackend {
   }
 
   async downloadFile(id: string): Promise<Blob> {
-    const { data, error } = await this.client.storage
-      .from(FILE_BUCKET)
-      .download(`${this.userId}/${id}`);
-    if (error || !data) throw new Error(`Download failed: ${error?.message ?? 'no data'}`);
-    return data;
+    const own = await this.client.storage.from(FILE_BUCKET).download(`${this.userId}/${id}`);
+    if (own.data) return own.data;
+    // Files of shared subtrees live in their space's folder.
+    const { data: spaces } = await this.client
+      .from('space_members')
+      .select('space_id')
+      .eq('user_id', this.userId);
+    for (const { space_id } of (spaces ?? []) as { space_id: string }[]) {
+      const res = await this.client.storage.from(FILE_BUCKET).download(`spaces/${space_id}/${id}`);
+      if (res.data) return res.data;
+    }
+    throw new Error(`Download failed: ${own.error?.message ?? 'no data'}`);
   }
 }
 

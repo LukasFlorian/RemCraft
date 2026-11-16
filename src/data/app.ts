@@ -19,10 +19,13 @@ import { LectureService } from './services/lectures';
 import { PracticeService } from './services/practice';
 import { RemService } from './services/rems';
 import { SettingsService } from './services/settings';
+import { SharingService } from './services/sharing';
 import { Store } from './store/store';
 import type { SyncStatus } from './sync/engine';
 import { SyncEngine } from './sync/engine';
 import type { RemoteBackend } from './sync/remote';
+import type { ShareBackend } from './sync/shareBackend';
+import { SupabaseShareBackend } from './sync/supabaseShare';
 import type { AuthUser } from './sync/supabase';
 import { AuthService, createSupabase, SupabaseBackend } from './sync/supabase';
 import { TabSync } from './sync/tabs';
@@ -40,6 +43,8 @@ export interface AppOptions {
   backend?: BackendConfig | null;
   /** Remote backend factory (tests inject a fake). */
   remoteFactory?: (user: AuthUser) => RemoteBackend;
+  /** Sharing backend factory (`null` user = anonymous visitor; tests inject a fake). */
+  shareFactory?: (user: AuthUser | null) => ShareBackend;
   /** Seed a fresh installation with the welcome document (default true). */
   seed?: boolean;
 }
@@ -62,6 +67,7 @@ export class RemCraftApp {
   readonly io = new ImportExportService(this.store, this.rems);
   readonly files: FileService;
   readonly lectures: LectureService;
+  readonly sharing: SharingService;
   readonly auth: AuthService | null;
 
   private readonly persister: Persister;
@@ -75,14 +81,19 @@ export class RemCraftApp {
     readonly persistence: PersistenceAdapter,
     private readonly backend: BackendConfig | null,
     private readonly remoteFactory: ((user: AuthUser) => RemoteBackend) | null,
+    private readonly shareFactory: ((user: AuthUser | null) => ShareBackend) | null,
   ) {
     this.persister = new Persister(this.store, persistence);
     this.files = new FileService(persistence);
     this.lectures = new LectureService(this.store, this.rems, this.files);
+    this.sharing = new SharingService(this.store, this.files, persistence);
     const client = backend ? createSupabase(backend) : null;
     this.auth = client ? new AuthService(client) : null;
     this.remoteFactory =
       remoteFactory ?? (client ? (user) => new SupabaseBackend(client, user.id) : null);
+    this.shareFactory = shareFactory ?? (client ? (user) => new SupabaseShareBackend(client, user?.id ?? null) : null);
+    // Anonymous visitors can open read-only share links.
+    this.sharing.backend = this.shareFactory?.(null) ?? null;
     this.account = {
       configured: Boolean(backend) || Boolean(remoteFactory),
       user: null,
@@ -97,7 +108,7 @@ export class RemCraftApp {
   static async create(options: AppOptions = {}): Promise<RemCraftApp> {
     const persistence = options.persistence ?? (await openPersistence());
     const backend = options.backend === undefined ? getBackendConfig() : options.backend;
-    const app = new RemCraftApp(persistence, backend, options.remoteFactory ?? null);
+    const app = new RemCraftApp(persistence, backend, options.remoteFactory ?? null, options.shareFactory ?? null);
     await app.init(options.seed ?? true);
     return app;
   }
@@ -149,7 +160,16 @@ export class RemCraftApp {
     }
     const remote = this.remoteFactory(user);
     this.files.remote = remote;
-    this.sync = new SyncEngine(this.store, this.persistence, remote);
+    this.sharing.backend = this.shareFactory?.(user) ?? null;
+    const sync = new SyncEngine(this.store, this.persistence, remote, {
+      beforePush: () => this.sharing.reconcile(),
+      canPush: (space) => this.sharing.canPush(space),
+    });
+    this.sync = sync;
+    this.sharing.onJoined = async () => {
+      await sync.resetCursor();
+      await sync.syncNow();
+    };
     this.unsubscribeSyncStatus = this.sync.onStatus((sync) => this.setAccount({ sync }));
     this.setAccount({ user, sync: this.sync.getStatus() });
     this.sync.start();
@@ -159,6 +179,8 @@ export class RemCraftApp {
     this.sync?.stop();
     this.sync = null;
     this.files.remote = null;
+    this.sharing.backend = this.shareFactory?.(null) ?? null;
+    this.sharing.onJoined = null;
     this.unsubscribeSyncStatus?.();
     this.unsubscribeSyncStatus = null;
   }

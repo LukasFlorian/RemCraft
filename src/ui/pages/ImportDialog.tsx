@@ -36,7 +36,7 @@ interface Source {
   label: string;
   icon: ReactNode;
   accept: string;
-  format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus';
+  format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus' | 'share';
   help: string;
   csvDefaults?: { delimiterHint: string };
 }
@@ -57,6 +57,14 @@ const SOURCES: Source[] = [
     accept: '.json',
     format: 'fokus',
     help: 'Karten aus dem Skill fokus-flashcards: jede Karte wird über PDF-Seite und Zitat ihrer Folie zugeordnet. Der passende Foliensatz wird anhand des PDF-Namens gefunden.',
+  },
+  {
+    id: 'share',
+    label: 'Freigabe (.remcraft.json)',
+    icon: <FileJson size={22} color="#3fb37f" />,
+    accept: '.json',
+    format: 'share',
+    help: 'Von jemandem als Datei geteilte Mappe, Notizen oder Karten: wird als eigene Kopie (mit neuen IDs, ohne fremden Lernfortschritt) eingefügt.',
   },
   {
     id: 'remnote',
@@ -210,6 +218,13 @@ export function ImportDialog({
         let last: RemId | null = null;
         for (const f of files) last = await app.lectures.importPdf(f, parent);
         if (last) navigate(`/rem/${last}`);
+        onClose();
+        return;
+      }
+      if (source.format === 'share') {
+        let root: RemId | undefined;
+        for (const f of files) root = await app.sharing.clone(await app.sharing.readFile(f), parent);
+        if (root) navigate(`/rem/${root}`);
         onClose();
         return;
       }

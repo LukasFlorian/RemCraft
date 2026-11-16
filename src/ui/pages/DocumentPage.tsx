@@ -18,6 +18,7 @@ import {
   MoreHorizontal,
   Presentation,
   Redo2,
+  Share2,
   Star,
   Undo2,
 } from 'lucide-react';
@@ -33,6 +34,8 @@ import { RemContent } from '../editor/RemBlock';
 import { TitleEditor } from '../editor/TitleEditor';
 import { FileView } from '../editor/blocks';
 import { DeckPanel } from '../lecture/DeckPanel';
+import { ShareDialog, useSpaces } from '../sharing/ShareDialog';
+import { ROLE_LABELS } from '@core/sharing/spaces';
 import { pickFiles } from '../hooks/useFilePicker';
 import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
@@ -104,6 +107,9 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   const due = useSelector((s) => selectDueCounts(s, now).get(remId) ?? 0);
   const priority = useSelector((s) => selectInheritance(s, now).get(remId)?.priority ?? 'none');
   const [menu, setMenu] = useState<{ anchor: HTMLElement; entries: MenuEntry[] } | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const spaces = useSpaces();
+  const space = rem.spaceId ? spaces.find((s) => s.id === rem.spaceId) : undefined;
   const isNew = rem.text.length === 0 && Date.now() - rem.createdAt < 5000;
 
   /** Moves the caret from the title into the outline. */
@@ -178,6 +184,14 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
           <Redo2 size={17} />
         </button>
         <button
+          className={`icon-btn${rem.spaceId ? ' active' : ''}`}
+          title={space ? `Geteilt: ${space.name} (${ROLE_LABELS[space.role]})` : 'Teilen'}
+          aria-label="Teilen"
+          onClick={() => setSharing(true)}
+        >
+          <Share2 size={17} />
+        </button>
+        <button
           className={`icon-btn${rem.pinned ? ' active' : ''}`}
           title={rem.pinned ? 'Unpin' : 'Pin to sidebar'}
           aria-label="Pin"
@@ -198,6 +212,9 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
         onMouseDown={(e) => e.target === e.currentTarget && controller.clearSelection()}
       >
         <div className="page doc-page">
+          {space?.role === 'reader' && (
+            <div className="readonly-banner">Nur lesen: geteilt von einer anderen Person. Deine Änderungen werden nicht synchronisiert - klone den Bereich, um ihn zu bearbeiten.</div>
+          )}
           {rem.dailyDate && <DailyNav date={rem.dailyDate} />}
           <div className={`doc-title-row${rem.isFolder ? ' is-folder' : ''}`}>
             {rem.isFolder && <Folder size={26} className="icon-folder" />}
@@ -221,6 +238,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
           <ReferencesPanel remId={remId} />
         </div>
       </div>
+      {sharing && <ShareDialog remId={remId} onClose={() => setSharing(false)} />}
       {menu && (
         <Menu
           anchor={menu.anchor}

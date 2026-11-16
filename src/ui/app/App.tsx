@@ -20,6 +20,7 @@ import { HandoutPage } from '../lecture/HandoutPage';
 import { LecturePage } from '../lecture/LecturePage';
 import { LecturesPage } from '../lecture/LecturesPage';
 import { ReviewPage } from '../lecture/ReviewPage';
+import { JoinSpacePage, SharedSnapshotPage } from '../sharing/SharedPages';
 import { AppContext, useApp } from './context';
 import { ModalProvider } from './modals';
 
@@ -42,6 +43,8 @@ const router = createHashRouter([
       { path: 'lectures/:lectureId', element: <LecturesPage /> },
       { path: 'review/:deckId', element: <ReviewPage /> },
       { path: 'handout/:deckId', element: <HandoutPage /> },
+      { path: 's/:token', element: <SharedSnapshotPage /> },
+      { path: 'join/:token', element: <JoinSpacePage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/:section', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },

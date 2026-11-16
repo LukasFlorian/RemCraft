@@ -282,6 +282,11 @@ export interface Rem {
   // --- sharing -----------------------------------------------------------------
   /** Shared space the Rem is synchronised in (absent = the owner's personal space). */
   spaceId?: string;
+  /**
+   * Set on the root of a shared subtree (value = its space id). Descendants
+   * inherit `spaceId` from their parent; only roots carry this marker.
+   */
+  spaceRoot?: string;
 
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -535,6 +540,8 @@ export interface TextMark {
 /** Drawings, text boxes and highlights of one slide (id = slide Rem id). */
 export interface SlideAnnotations {
   id: RemId;
+  /** Space of the slide (annotations are shared together with the slide). */
+  spaceId?: string;
   strokes: Stroke[];
   boxes: TextBox[];
   marks: TextMark[];
