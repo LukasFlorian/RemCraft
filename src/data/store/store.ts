@@ -25,6 +25,8 @@ export interface Change<K extends CollectionName = CollectionName> {
   id: string;
   before: RecordOf<K> | undefined;
   after: RecordOf<K> | undefined;
+  /** Logical time of a deletion (tombstone timestamp for synchronisation). */
+  at?: number;
 }
 
 /** Where a change came from. Persistence and sync react differently. */
@@ -130,7 +132,7 @@ export class Transaction {
     const prev = this.pending.get(key);
     const before = prev ? prev.before : this.store.getRecord(collection, id);
     if (!before && !prev) return;
-    this.pending.set(key, { collection, id, before, after: undefined } as Change);
+    this.pending.set(key, { collection, id, before, after: undefined, at: this.store.clock.now() } as Change);
   }
 }
 

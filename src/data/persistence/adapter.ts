@@ -68,7 +68,7 @@ export function outboxEntryOf(change: Change): OutboxEntry {
     key: `${change.collection}:${change.id}`,
     collection: change.collection,
     id: change.id,
-    updatedAt: change.after?.updatedAt ?? Date.now(),
+    updatedAt: change.after?.updatedAt ?? change.at ?? Date.now(),
     deleted: change.after === undefined,
   };
 }

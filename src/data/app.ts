@@ -15,6 +15,7 @@ import { seedStore } from './seed';
 import { ExamService } from './services/exams';
 import { FileService } from './services/files';
 import { ImportExportService } from './services/io';
+import { LectureService } from './services/lectures';
 import { PracticeService } from './services/practice';
 import { RemService } from './services/rems';
 import { SettingsService } from './services/settings';
@@ -60,6 +61,7 @@ export class RemCraftApp {
   readonly settings = new SettingsService(this.store);
   readonly io = new ImportExportService(this.store, this.rems);
   readonly files: FileService;
+  readonly lectures: LectureService;
   readonly auth: AuthService | null;
 
   private readonly persister: Persister;
@@ -76,6 +78,7 @@ export class RemCraftApp {
   ) {
     this.persister = new Persister(this.store, persistence);
     this.files = new FileService(persistence);
+    this.lectures = new LectureService(this.store, this.rems, this.files);
     const client = backend ? createSupabase(backend) : null;
     this.auth = client ? new AuthService(client) : null;
     this.remoteFactory =

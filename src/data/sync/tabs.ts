@@ -29,7 +29,7 @@ export class TabSync {
         collection: c.collection,
         id: c.id,
         record: c.after,
-        updatedAt: c.after?.updatedAt ?? store.clock.now(),
+        updatedAt: c.after?.updatedAt ?? c.at ?? store.clock.now(),
       }));
       this.channel.postMessage(items);
     });
