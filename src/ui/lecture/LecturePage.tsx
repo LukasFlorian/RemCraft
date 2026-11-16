@@ -54,6 +54,8 @@ import {
   SummaryDialog,
 } from './LectureDialogs';
 import { SlideCards } from './SlideCards';
+import { ReviewContent } from './ReviewPage';
+import { DeckLecturesPanel } from './LecturesPage';
 import type { SlideTool } from './SlideView';
 import { PEN_COLORS, SlideView } from './SlideView';
 import {
@@ -100,6 +102,14 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const toast = useToast();
   const controller = useController();
   const [params, setParams] = useSearchParams();
+  // Review / statistics shown inside lecture mode (`?view=review|stats`).
+  const view = (['review', 'stats'] as const).find((v) => v === params.get('view')) ?? null;
+  const setView = (v: 'review' | 'stats' | null): void => {
+    const p = new URLSearchParams(params);
+    if (v) p.set('view', v);
+    else p.delete('view');
+    setParams(p);
+  };
   // Re-attach notes/cards that an earlier layout change detached from their slide.
   useEffect(() => {
     const n = app.lectures.repairDeck(deckId);
@@ -136,12 +146,20 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const checkin = state ? openCheckin(state) : null;
 
   /** Navigates to a slide (and records it in the running lecture). */
-  const go = (i: number): void => {
+  const go = (i: number, dropParams: string[] = []): void => {
     const next = Math.min(Math.max(0, i), slides.length - 1);
-    if (next === index) return;
+    if (next === index) {
+      if (dropParams.length) {
+        const p = new URLSearchParams(params);
+        for (const k of dropParams) p.delete(k);
+        setParams(p);
+      }
+      return;
+    }
     setLastSlide(next);
     const p = new URLSearchParams(params);
     p.delete('slide');
+    for (const k of dropParams) p.delete(k);
     setParams(p, { replace: true });
     if (lectureId && (running || paused)) app.lectures.record(lectureId, 'slide', { slide: next });
   };
@@ -398,18 +416,18 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
           </button>
         )}
         <button
-          className="icon-btn"
           title="Nacharbeiten"
           aria-label="Nacharbeiten"
-          onClick={() => navigate(`/review/${deckId}`)}
+          className={`icon-btn${view === 'review' ? ' active' : ''}`}
+          onClick={() => setView(view === 'review' ? null : 'review')}
         >
           <ListChecks size={17} />
         </button>
         <button
-          className="icon-btn"
           title="Auswertung"
           aria-label="Auswertung"
-          onClick={() => navigate(`/lectures?deck=${deckId}`)}
+          className={`icon-btn${view === 'stats' ? ' active' : ''}`}
+          onClick={() => setView(view === 'stats' ? null : 'stats')}
         >
           <BarChart3 size={17} />
         </button>
@@ -457,7 +475,30 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         </div>
       )}
       <div className="lecture-body">
-        {focusMode ? (
+        {view ? (
+          <div className="lecture-panel">
+            <div className="lecture-panel-bar">
+              <button className="btn btn-sm" onClick={() => setView(null)}>
+                ← Zurück zu den Folien
+              </button>
+            </div>
+            <div className="lecture-panel-body">
+              {view === 'review' ? (
+                <ReviewContent
+                  deckId={deckId}
+                  lectureFilter={null}
+                  onOpenSlide={(i) => go(i, ['view'])}
+                />
+              ) : (
+                <DeckLecturesPanel
+                  deckId={deckId}
+                  onSlides={() => setView(null)}
+                  onReview={() => setView('review')}
+                />
+              )}
+            </div>
+          </div>
+        ) : focusMode ? (
           <div className="focus-layout">
             <div className="focus-slide">{currentWidget}</div>
             <div className="focus-notes">{notesWidget}</div>

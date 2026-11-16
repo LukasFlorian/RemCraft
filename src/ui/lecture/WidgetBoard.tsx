@@ -41,12 +41,20 @@ export interface WidgetBoardProps {
 }
 
 /** The widget board. */
-export function WidgetBoard({ storageKey, widgets, defaults, editing, onEditingChange }: WidgetBoardProps): ReactNode {
+export function WidgetBoard({
+  storageKey,
+  widgets,
+  defaults,
+  editing,
+  onEditingChange,
+}: WidgetBoardProps): ReactNode {
   const [layout, setLayout] = useLocalState<Record<string, WidgetRect>>(storageKey, defaults);
   const [order, setOrder] = useState<string[]>(widgets.map((w) => w.id));
   const boardRef = useRef<HTMLDivElement>(null);
-  const rectOf = (id: string): WidgetRect => layout[id] ?? defaults[id] ?? { x: 0, y: 0, w: 8, h: 8 };
-  const setRect = (id: string, patch: Partial<WidgetRect>): void => setLayout((l) => ({ ...l, [id]: { ...rectOf(id), ...l[id], ...patch } }));
+  const rectOf = (id: string): WidgetRect =>
+    layout[id] ?? defaults[id] ?? { x: 0, y: 0, w: 8, h: 8 };
+  const setRect = (id: string, patch: Partial<WidgetRect>): void =>
+    setLayout((l) => ({ ...l, [id]: { ...rectOf(id), ...l[id], ...patch } }));
   const raise = (id: string): void => setOrder((o) => [...o.filter((x) => x !== id), id]);
 
   /** Drag (move or resize) in grid units. */
@@ -61,8 +69,16 @@ export function WidgetBoard({ storageKey, widgets, defaults, editing, onEditingC
     const move = (ev: PointerEvent): void => {
       const dx = Math.round(((ev.clientX - sx) / board.width) * GRID);
       const dy = Math.round(((ev.clientY - sy) / board.height) * GRID);
-      if (mode === 'move') setRect(id, { x: Math.min(GRID - start.w, Math.max(0, start.x + dx)), y: Math.min(GRID - start.h, Math.max(0, start.y + dy)) });
-      else setRect(id, { w: Math.min(GRID - start.x, Math.max(3, start.w + dx)), h: Math.min(GRID - start.y, Math.max(2, start.h + dy)) });
+      if (mode === 'move')
+        setRect(id, {
+          x: Math.min(GRID - start.w, Math.max(0, start.x + dx)),
+          y: Math.min(GRID - start.h, Math.max(0, start.y + dy)),
+        });
+      else
+        setRect(id, {
+          w: Math.min(GRID - start.x, Math.max(3, start.w + dx)),
+          h: Math.min(GRID - start.y, Math.max(2, start.h + dy)),
+        });
     };
     const up = (): void => {
       window.removeEventListener('pointermove', move);
@@ -77,9 +93,15 @@ export function WidgetBoard({ storageKey, widgets, defaults, editing, onEditingC
     <div className={`widget-board${editing ? ' editing' : ''}`} ref={boardRef}>
       {editing && (
         <div className="board-bar">
-          <span>Layout bearbeiten: Kopfzeile ziehen = verschieben, Ecke = Größe, × = ausblenden.</span>
+          <span>
+            Layout bearbeiten: Kopfzeile ziehen = verschieben, Ecke = Größe, × = ausblenden.
+          </span>
           {hidden.map((w) => (
-            <button key={w.id} className="btn btn-sm" onClick={() => setRect(w.id, { hidden: false })}>
+            <button
+              key={w.id}
+              className="btn btn-sm"
+              onClick={() => setRect(w.id, { hidden: false })}
+            >
               + {w.title}
             </button>
           ))}
@@ -100,7 +122,13 @@ export function WidgetBoard({ storageKey, widgets, defaults, editing, onEditingC
               key={w.id}
               className="widget"
               data-w={w.id}
-              style={{ left: `${(r.x / GRID) * 100}%`, top: `${(r.y / GRID) * 100}%`, width: `${(r.w / GRID) * 100}%`, height: `${(r.h / GRID) * 100}%`, zIndex: order.indexOf(w.id) + 1 }}
+              style={{
+                left: `${(r.x / GRID) * 100}%`,
+                top: `${(r.y / GRID) * 100}%`,
+                width: `${(r.w / GRID) * 100}%`,
+                height: `${(r.h / GRID) * 100}%`,
+                zIndex: order.indexOf(w.id) + 1,
+              }}
               onPointerDown={() => raise(w.id)}
             >
               <header className="widget-head" onPointerDown={(e) => drag(w.id, e, 'move')}>
@@ -108,13 +136,19 @@ export function WidgetBoard({ storageKey, widgets, defaults, editing, onEditingC
                 <span className="spacer" />
                 {w.actions}
                 {editing && (
-                  <button className="icon-btn" aria-label="Ausblenden" onClick={() => setRect(w.id, { hidden: true })}>
+                  <button
+                    className="icon-btn"
+                    aria-label="Ausblenden"
+                    onClick={() => setRect(w.id, { hidden: true })}
+                  >
                     <X size={14} />
                   </button>
                 )}
               </header>
               <div className="widget-body">{w.render()}</div>
-              {editing && <span className="widget-resize" onPointerDown={(e) => drag(w.id, e, 'resize')} />}
+              {editing && (
+                <span className="widget-resize" onPointerDown={(e) => drag(w.id, e, 'resize')} />
+              )}
             </section>
           );
         })}

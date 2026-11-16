@@ -813,3 +813,23 @@
   font-size: 12px;
   margin-left: 4px;
 }
+
+/* Review / statistics inside lecture mode */
+.lecture-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.lecture-panel-bar {
+  padding: 8px 16px 0;
+}
+.lecture-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 24px 32px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}

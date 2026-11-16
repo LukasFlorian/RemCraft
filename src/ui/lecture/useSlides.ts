@@ -28,14 +28,20 @@ export function useDeckSlides(deckId: RemId | null): Rem[] {
 export function useDeckPdf(deckId: RemId | null): { pdf: PdfDoc | null; error: string | null } {
   const app = useApp();
   const src = useSelector((s) => (deckId ? s.get(deckId)?.deck?.src : undefined));
-  const [state, setState] = useState<{ pdf: PdfDoc | null; error: string | null }>({ pdf: null, error: null });
+  const [state, setState] = useState<{ pdf: PdfDoc | null; error: string | null }>({
+    pdf: null,
+    error: null,
+  });
   useEffect(() => {
     if (!deckId || !src) return;
     let alive = true;
     app.lectures
       .openDeck(deckId)
       .then((pdf) => alive && setState({ pdf, error: null }))
-      .catch((e: unknown) => alive && setState({ pdf: null, error: e instanceof Error ? e.message : String(e) }));
+      .catch(
+        (e: unknown) =>
+          alive && setState({ pdf: null, error: e instanceof Error ? e.message : String(e) }),
+      );
     return () => {
       alive = false;
     };
@@ -50,7 +56,11 @@ export function useDeckPdf(deckId: RemId | null): { pdf: PdfDoc | null; error: s
  * @param slide Slide Rem.
  * @param width Target width in CSS pixels (rounded up to a step to reuse renders).
  */
-export function useSlideImage(deckId: RemId | null, slide: Rem | undefined, width: number): string | null {
+export function useSlideImage(
+  deckId: RemId | null,
+  slide: Rem | undefined,
+  width: number,
+): string | null {
   const app = useApp();
   const deck = useSelector((s) => (deckId ? s.get(deckId)?.deck : undefined));
   const [url, setUrl] = useState<string | null>(null);
@@ -66,7 +76,15 @@ export function useSlideImage(deckId: RemId | null, slide: Rem | undefined, widt
       job = app.lectures
         .openDeck(deckId)
         .then((pdf) => pdf.render(page, step, box))
-        .then((canvas) => new Promise<string>((resolve) => canvas.toBlob((b) => resolve(b ? URL.createObjectURL(b) : canvas.toDataURL()), 'image/png')));
+        .then(
+          (canvas) =>
+            new Promise<string>((resolve) =>
+              canvas.toBlob(
+                (b) => resolve(b ? URL.createObjectURL(b) : canvas.toDataURL()),
+                'image/png',
+              ),
+            ),
+        );
       job.catch(() => imageCache.delete(key));
       imageCache.set(key, job);
     }
@@ -99,8 +117,20 @@ export function useSlideText(deckId: RemId | null, slide: Rem | undefined): Text
         if (!alive) return;
         setItems(
           all
-            .filter((t) => (t.x0 + t.x1) / 2 >= box[0]! && (t.x0 + t.x1) / 2 <= box[2]! && (t.y0 + t.y1) / 2 >= box[1]! && (t.y0 + t.y1) / 2 <= box[3]!)
-            .map((t) => ({ str: t.str, x0: (t.x0 - box[0]!) / bw, x1: (t.x1 - box[0]!) / bw, y0: (t.y0 - box[1]!) / bh, y1: (t.y1 - box[1]!) / bh })),
+            .filter(
+              (t) =>
+                (t.x0 + t.x1) / 2 >= box[0]! &&
+                (t.x0 + t.x1) / 2 <= box[2]! &&
+                (t.y0 + t.y1) / 2 >= box[1]! &&
+                (t.y0 + t.y1) / 2 <= box[3]!,
+            )
+            .map((t) => ({
+              str: t.str,
+              x0: (t.x0 - box[0]!) / bw,
+              x1: (t.x1 - box[0]!) / bw,
+              y0: (t.y0 - box[1]!) / bh,
+              y1: (t.y1 - box[1]!) / bh,
+            })),
         );
       })
       .catch(() => alive && setItems([]));
