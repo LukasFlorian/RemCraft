@@ -13,3 +13,4 @@ playwright-report
 *.tsbuildinfo
 public/remcraft-flashcards.zip
 __pycache__/
+supabase/.temp/
