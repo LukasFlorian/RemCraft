@@ -393,8 +393,19 @@ export class LectureService {
     );
   }
 
-  /** Updates the annotations of a slide (one undo step per edit). */
-  setAnnotations(slideRemId: RemId, patch: Partial<Omit<SlideAnnotations, 'id'>>): void {
+  /**
+   * Updates the annotations of a slide (one undo step per edit).
+   *
+   * @param slideRemId Slide Rem.
+   * @param patch Fields to replace.
+   * @param options `coalesceKey` merges consecutive edits with the same key
+   *   (e.g. typing into one text box) into one undo step.
+   */
+  setAnnotations(
+    slideRemId: RemId,
+    patch: Partial<Omit<SlideAnnotations, 'id'>>,
+    options: { coalesceKey?: string } = {},
+  ): void {
     const current = this.annotations(slideRemId);
     this.store.transact(
       (tx) =>
@@ -403,6 +414,7 @@ export class LectureService {
           ...patch,
           createdAt: current.createdAt || this.store.clock.now(),
         }),
+      options,
     );
   }
 
