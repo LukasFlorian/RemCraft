@@ -53,14 +53,12 @@ export function resolveInheritance(
     schedulerId: string | undefined;
     examIds: readonly string[];
   };
-  const stack: Frame[] = graph
-    .children(null)
-    .map((r) => ({
-      id: r.id,
-      priority: 'none' as Priority,
-      schedulerId: undefined,
-      examIds: [] as readonly string[],
-    }));
+  const stack: Frame[] = graph.children(null).map((r) => ({
+    id: r.id,
+    priority: 'none' as Priority,
+    schedulerId: undefined,
+    examIds: [] as readonly string[],
+  }));
   // Reverse so that traversal happens in document order (not required, but deterministic).
   stack.reverse();
 

@@ -36,7 +36,8 @@ SCHEDULERS.register({
 SCHEDULERS.register({
   id: 'fsrs',
   label: 'FSRS-6',
-  description: 'Memory model (stability, difficulty) that targets a desired retention; ~20-30 % fewer reviews.',
+  description:
+    'Memory model (stability, difficulty) that targets a desired retention; ~20-30 % fewer reviews.',
   create: (c) => createFsrsScheduler(c.fsrs),
 });
 SCHEDULERS.register({

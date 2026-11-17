@@ -18,11 +18,22 @@ export function createExponentialScheduler(): Scheduler {
     review(state: CardState, rating: Rating, now: number): CardState {
       if (rating === 1) {
         const lapsed = state.phase === 'review' ? state.lapses + 1 : state.lapses;
-        return bookkeeping(state, { phase: 'relearning', step: 0, interval: 0, lapses: lapsed, due: now + 10 * MINUTE }, rating, now);
+        return bookkeeping(
+          state,
+          { phase: 'relearning', step: 0, interval: 0, lapses: lapsed, due: now + 10 * MINUTE },
+          rating,
+          now,
+        );
       }
       const base = Math.max(state.interval, rating === 4 ? 2 : 1);
-      const days = state.phase === 'review' ? Math.round(base * FACTORS[rating]) : rating === 4 ? 4 : 1;
-      return bookkeeping(state, { phase: 'review', step: 0, interval: days, due: now + days * DAY }, rating, now);
+      const days =
+        state.phase === 'review' ? Math.round(base * FACTORS[rating]) : rating === 4 ? 4 : 1;
+      return bookkeeping(
+        state,
+        { phase: 'review', step: 0, interval: days, due: now + days * DAY },
+        rating,
+        now,
+      );
     },
     retrievability(state, now) {
       if (state.phase === 'new' || state.lastReview === null) return 1;

@@ -159,6 +159,21 @@ export function selectQueueEntries(store: Store, now: Timestamp): QueueEntry[] {
     () => {
       const index = selectCardIndex(store);
       const inherited = selectInheritance(store, now);
+      // Group = the nearest document/slide deck above a card's Rem (its
+      // lecture), so the queue can mix lectures instead of finishing one first.
+      const groups = new Map<RemId, string>();
+      const groupOf = (remId: RemId): string => {
+        const known = groups.get(remId);
+        if (known !== undefined) return known;
+        const rem = store.get(remId);
+        const group = !rem
+          ? remId
+          : rem.isDocument || rem.deck || rem.isFolder || !rem.parentId
+            ? rem.id
+            : groupOf(rem.parentId);
+        groups.set(remId, group);
+        return group;
+      };
       return index.specs.map((spec) => {
         const info = inherited.get(spec.remId);
         return {
@@ -168,6 +183,7 @@ export function selectQueueEntries(store: Store, now: Timestamp): QueueEntry[] {
           priority: info?.priority ?? 'none',
           examIds: info?.examIds ?? [],
           docOrder: index.docOrder.get(spec.remId) ?? 0,
+          groupId: groupOf(store.get(spec.remId)?.parentId ?? spec.remId),
         };
       });
     },
