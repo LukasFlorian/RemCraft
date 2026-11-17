@@ -326,14 +326,15 @@ export function PracticePage(): ReactNode {
   );
 }
 
-/** Outliner around the card's Rem for quick edits. */
+/** The card's Rem (with its children) for quick edits - only this card. */
 function EditCard({ remId }: { remId: string }): ReactNode {
   const parentId = useSelector((s) => s.get(remId)?.parentId ?? null);
   if (!parentId)
     return (
       <div className="muted">This card is a top-level Rem; open it from the sidebar to edit.</div>
     );
-  return <Outliner rootId={parentId} embedded />;
+  // Rendered inside its parent so the answer mode inherited from it applies.
+  return <Outliner rootId={parentId} only={remId} embedded />;
 }
 
 /** Session summary. */

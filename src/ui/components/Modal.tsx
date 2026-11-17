@@ -27,23 +27,32 @@ export function Modal({
   headerExtra,
 }: ModalProps): ReactNode {
   const ref = useRef<HTMLDivElement>(null);
+  // Latest close handler: callers often pass a new function on every render,
+  // which must not re-run the mount effect below.
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        close.current();
       }
     };
     window.addEventListener('keydown', onKey, true);
-    // Focus the first focusable element for keyboard users.
+    // Focus the first focusable element for keyboard users - once, when the
+    // dialog opens. (Doing it on every render took the focus away from an
+    // editor inside the dialog after each keystroke.)
     const first = ref.current?.querySelector<HTMLElement>(
       'input, select, textarea, button:not(.modal-close)',
     );
     first?.focus();
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
+  }, []);
   return createPortal(
-    <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="modal-backdrop"
+      onMouseDown={(e) => e.target === e.currentTarget && close.current()}
+    >
       <div
         ref={ref}
         className={`modal${wide ? ' modal-wide' : ''}`}

@@ -1,11 +1,14 @@
 /**
- * "Was ist neu" popup: shown once after an update with the release notes the
- * user has not seen yet (see `releases.ts`). The last seen release is kept per
- * device in `localStorage`.
+ * "Was ist neu" popup: shown once per user after an update with the release
+ * notes they have not seen yet (see `releases.ts`). The last seen release is
+ * kept in the synced settings (so another device does not show it again) and
+ * in `localStorage` (before signing in / offline).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
+import { selectSettings } from '@data/selectors';
+import { useApp, useSelector } from '../app/context';
 import { Modal } from '../components/Modal';
 import { RELEASES, unseenReleases } from './releases';
 
@@ -34,30 +37,46 @@ function usedBefore(): boolean {
   }
 }
 
-/** Remembers the newest release as seen. */
-function markSeen(): void {
+/** Stores the last seen release id on this device. */
+function writeSeen(id: string): void {
   try {
-    if (RELEASES[0]) localStorage.setItem(SEEN_KEY, RELEASES[0].id);
+    localStorage.setItem(SEEN_KEY, id);
   } catch {
-    // Private mode: the popup may show again, which is harmless.
+    // Private mode: the synced setting still remembers it when signed in.
   }
 }
 
 /** The popup (renders nothing when there is nothing new). */
 export function WhatsNew(): ReactNode {
-  const [releases] = useState(() => {
-    // Existing users without a stored version see all notes once.
-    const seen = readSeen() ?? (usedBefore() ? '' : null);
-    const unseen = unseenReleases(seen);
-    // First start: nothing is "new", just remember the current version.
-    if (seen === null || unseen.length === 0) markSeen();
-    return unseen;
-  });
-  const [open, setOpen] = useState(releases.length > 0);
-  if (!open) return null;
+  const app = useApp();
+  // Seen on another device? The synced setting wins (it may arrive after start).
+  const synced = useSelector((s) => selectSettings(s).whatsNewSeen ?? null);
+  const [local] = useState(() => readSeen() ?? (usedBefore() ? '' : null));
+  const seen = synced !== null && (local === null || synced > local) ? synced : local;
+  const releases = unseenReleases(seen);
+  const [dismissed, setDismissed] = useState(false);
+  const newest = RELEASES[0]?.id;
+
+  /** Remembers the newest release as seen, on this device and in the account. */
+  const markSeen = (): void => {
+    if (!newest) return;
+    writeSeen(newest);
+    if (synced !== newest)
+      app.store.transact(
+        (tx) => void tx.put('settings', { ...selectSettings(app.store), whatsNewSeen: newest }),
+        { undoable: false },
+      );
+  };
+  // First start ever: nothing is "new" - just remember the current version.
+  useEffect(() => {
+    if (seen === null) markSeen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (dismissed || releases.length === 0) return null;
   const close = (): void => {
     markSeen();
-    setOpen(false);
+    setDismissed(true);
   };
   return (
     <Modal title="Was ist neu" onClose={close}>

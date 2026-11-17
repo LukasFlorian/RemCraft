@@ -142,3 +142,24 @@ test('multi-line answers are graded item by item with one reveal button', async 
   await expect(page.getByText('2/3 gewusst', { exact: false })).toBeVisible();
   await expect(page.locator('.rating-2')).toHaveClass(/is-suggested/);
 });
+
+test('editing a card while practising shows only that card and keeps the focus', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+  await page.keyboard.type('Edit Deck');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Eins >> 1');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Zwei >> 2');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /2 Due/ }).click();
+  await page.getByRole('button', { name: 'Edit card' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator('.rem')).toHaveCount(1);
+  await dialog.locator('.rem-text').first().click();
+  await page.keyboard.press('End');
+  await page.keyboard.type('abc');
+  // All three characters arrived: the editor kept the focus while typing.
+  await expect(dialog.locator('.rem').first()).toContainText('abc');
+});

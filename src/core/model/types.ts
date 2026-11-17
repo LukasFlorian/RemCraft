@@ -494,6 +494,8 @@ export type DailyGoalMode = 'exam-and-active' | 'all-due' | 'custom-number';
 /** User preferences (synchronised across devices). */
 export interface Settings {
   id: 'settings';
+  /** Newest release note ("Was ist neu") the user has seen (synced across devices). */
+  whatsNewSeen?: string;
   defaultSchedulerId: string;
   dailyGoalMode: DailyGoalMode;
   /** Used when `dailyGoalMode` is `custom-number`. */

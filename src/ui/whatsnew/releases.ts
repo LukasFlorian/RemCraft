@@ -1,10 +1,11 @@
 /**
  * Release notes shown once after an update ("Was ist neu").
  *
- * Add an entry at the TOP for every deployed version with user-visible
- * changes (see `docs/development.md`). `id` must be unique and increase
- * (date plus a letter works well); users who have not seen it get a short
- * popup with all entries newer than the last one they saw.
+ * One entry per DEPLOYMENT (merge into `main`), not per commit: while a
+ * branch is being worked on, new items go into the top entry as long as that
+ * entry is not on `main` yet (`git show origin/main:src/ui/whatsnew/releases.ts`);
+ * only after it was deployed does a new entry start. `id` must be unique and
+ * increase (date plus a letter). Each user sees unseen entries once.
  */
 
 /** One deployed version. */
@@ -34,6 +35,8 @@ export const RELEASES: Release[] = [
       'Geteilte Folien laden zuverlässig, auch auf anderen Geräten.',
       'Suche springt direkt zur Fundstelle im Dokument.',
       'Zeilen und Bilder mit „Up“/„Down“ in der Bearbeiten-Leiste verschieben.',
+      'Karte beim Üben bearbeiten: nur noch diese Karte im Editor, und die Tastatur bleibt beim Tippen offen.',
+      'Vorlesungsansicht auf dem Handy: aktuelle Folie groß oben, darunter Notizen und Karten.',
     ],
   },
 ];
