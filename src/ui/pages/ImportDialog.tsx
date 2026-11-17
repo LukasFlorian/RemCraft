@@ -418,7 +418,13 @@ export function ImportDialog({
             {source.format === 'fokus-data' ? (
               <button
                 className="btn"
-                onClick={() => void pickFolder().then((f) => f.length && setFiles(f))}
+                onClick={() => {
+                  setProgress('Ordner wird eingelesen …');
+                  void pickFolder().then((f) => {
+                    setProgress('');
+                    if (f.length) setFiles(f);
+                  });
+                }}
               >
                 <FolderInput size={15} /> Ordner „data“ wählen
               </button>
@@ -435,7 +441,7 @@ export function ImportDialog({
               </button>
             )}
             <span className="muted ellipsis">
-              {busy && progress
+              {progress
                 ? progress
                 : files.length
                   ? source.format === 'fokus-data'

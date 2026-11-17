@@ -3,29 +3,39 @@
  */
 
 /**
+ * Opens a hidden file input and resolves with the chosen files.
+ *
+ * Cancelling is detected with the input's `cancel` event (all current
+ * browsers). Large folders can take seconds to enumerate after the user
+ * confirms, so there is deliberately no timeout: the promise resolves when
+ * the browser delivers the files.
+ */
+function openPicker(configure: (input: HTMLInputElement) => void): Promise<File[]> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.style.display = 'none';
+    configure(input);
+    const done = (files: File[]): void => {
+      resolve(files);
+      input.remove();
+    };
+    input.addEventListener('change', () => done([...(input.files ?? [])]));
+    input.addEventListener('cancel', () => done([]));
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
+/**
  * @param accept MIME types / extensions accepted.
  * @param multiple Allow several files.
  * @returns The chosen files (empty when cancelled).
  */
 export function pickFiles(accept: string, multiple = false): Promise<File[]> {
-  return new Promise((resolve) => {
-    const input = document.createElement('input');
-    input.type = 'file';
+  return openPicker((input) => {
     input.accept = accept;
     input.multiple = multiple;
-    input.style.display = 'none';
-    input.addEventListener('change', () => {
-      resolve([...(input.files ?? [])]);
-      input.remove();
-    });
-    // Resolve with nothing if the dialog is dismissed (focus returns to the window).
-    window.addEventListener(
-      'focus',
-      () => setTimeout(() => !input.files?.length && resolve([]), 500),
-      { once: true },
-    );
-    document.body.appendChild(input);
-    input.click();
   });
 }
 
@@ -34,23 +44,9 @@ export function pickFiles(accept: string, multiple = false): Promise<File[]> {
  * paths in `webkitRelativePath`). Supported by all current desktop browsers.
  */
 export function pickFolder(): Promise<File[]> {
-  return new Promise((resolve) => {
-    const input = document.createElement('input');
-    input.type = 'file';
+  return openPicker((input) => {
     input.setAttribute('webkitdirectory', '');
     input.multiple = true;
-    input.style.display = 'none';
-    input.addEventListener('change', () => {
-      resolve([...(input.files ?? [])]);
-      input.remove();
-    });
-    window.addEventListener(
-      'focus',
-      () => setTimeout(() => !input.files?.length && resolve([]), 500),
-      { once: true },
-    );
-    document.body.appendChild(input);
-    input.click();
   });
 }
 
