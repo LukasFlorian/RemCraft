@@ -30,7 +30,8 @@ import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { pickFiles, pickFolder } from '../hooks/useFilePicker';
 import { archiveFromFiles } from '@data/services/fokusImport';
-import { importCardFile, SKILL_URL } from '../lecture/DeckPanel';
+import { importCardFile } from '../lecture/DeckPanel';
+import { SkillDownloadLink } from '../lecture/SkillDownloadLink';
 
 /** An import source. */
 interface Source {
@@ -73,11 +74,8 @@ const SOURCES: Source[] = [
       <>
         Karteikarten mit Folienzuordnung: jede Karte landet über PDF-Seite und ein wörtliches Zitat
         auf ihrer Folie; der passende Foliensatz wird am PDF-Namen erkannt. Solche Dateien erstellt
-        Claude mit dem{' '}
-        <a href={SKILL_URL} download>
-          RemCraft-Skill (herunterladen)
-        </a>{' '}
-        aus deinen Folien.
+        Claude mit dem <SkillDownloadLink>RemCraft-Skill (herunterladen)</SkillDownloadLink> aus
+        deinen Folien.
       </>
     ),
   },

@@ -165,6 +165,8 @@ export interface DeckInfo {
   /** Layout mode: `auto` or `RxC` (rows × columns). */
   layout: string;
   boxes: number[][];
+  /** Version of the title detection the slide titles come from (absent = first-line titles). */
+  titles?: number;
 }
 
 /** Position of a slide inside its deck. */
@@ -501,6 +503,11 @@ export interface Settings {
   typeInAnswerGrading: 'exact' | 'lenient';
   /** Shuffle the global queue instead of ordering by due date. */
   shuffleQueue: boolean;
+  /**
+   * Multiple choice: show whether one or several answers are correct (radio
+   * buttons vs. checkboxes). Off: always checkboxes, no hint (default).
+   */
+  mcShowAnswerKind?: boolean;
   /** Learning cards may be shown this many minutes early at the end of the queue (RemNote: 15). */
   learnAheadMinutes?: number;
   /** Lecture mode (Fokus) options; defaults apply when absent. */

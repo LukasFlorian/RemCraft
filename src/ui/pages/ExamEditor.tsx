@@ -13,11 +13,21 @@ import { Field, Switch } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { useRemTitle } from '../hooks/useRemTitle';
 
-/** Formats a timestamp for `<input type="datetime-local">`. */
+/** Formats a timestamp for `<input type="date">` (local date). */
 function toLocalInput(t: number): string {
   const d = new Date(t);
   const pad = (n: number): string => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * Exams only have a date: it is stored as noon of that day, safely inside the
+ * study day whatever the day-start hour (the planner works in study days, so
+ * with a final review everything is in place on the days before the exam).
+ */
+function fromLocalInput(value: string): number {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y!, (m ?? 1) - 1, d ?? 1, 12).getTime();
 }
 
 /** The exam editor dialog. */
@@ -37,7 +47,7 @@ export function ExamEditor({
     existing?.name ?? (initialScope?.[0] ? `${app.rems.title(initialScope[0])} exam` : 'Exam'),
   );
   const [date, setDate] = useState(
-    toLocalInput(existing?.date ?? new Date(new Date().setHours(9, 0, 0, 0) + 14 * DAY).getTime()),
+    toLocalInput(existing?.date ?? new Date(new Date().setHours(12, 0, 0, 0) + 14 * DAY).getTime()),
   );
   const [scope, setScope] = useState<RemId[]>(existing?.scope ?? initialScope ?? []);
   const [newCardMode, setNewCardMode] = useState<NewCardMode>(existing?.newCardMode ?? 'spread');
@@ -50,7 +60,7 @@ export function ExamEditor({
   const save = (): void => {
     const data: Partial<Exam> = {
       name: name.trim() || 'Exam',
-      date: new Date(date).getTime(),
+      date: fromLocalInput(date),
       scope,
       newCardMode,
       finalReview,
@@ -85,10 +95,10 @@ export function ExamEditor({
         <Field label="Name">
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Exam date and time">
+        <Field label="Exam date">
           <input
             className="input"
-            type="datetime-local"
+            type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />

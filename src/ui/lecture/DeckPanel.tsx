@@ -23,9 +23,10 @@ import type { RemId } from '@core/model/types';
 import { toPlainText } from '@core/richtext/ops';
 import { exportForAi } from '@data/lecture/context';
 import { useApp, useSelector } from '../app/context';
+import { SkillDownloadLink } from './SkillDownloadLink';
 import { useToast } from '../components/Toast';
 import { downloadText, pickFiles } from '../hooks/useFilePicker';
-import { useDeckSlides } from './useSlides';
+import { useDeckSlides, useUpToDateTitles } from './useSlides';
 import { SlideView } from './SlideView';
 
 /** Imports a card file into a deck and reports the result. */
@@ -59,15 +60,13 @@ export async function importCardFile(
   }
 }
 
-/** Download URL of the `remcraft-flashcards` Claude skill (built by `scripts/build-skill.mjs`). */
-export const SKILL_URL = `${import.meta.env.BASE_URL}remcraft-flashcards.zip`;
-
 /** The deck header. */
 export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
   const toast = useToast();
   const slides = useDeckSlides(deckId);
+  useUpToDateTitles(deckId);
   const deck = useSelector((s) => s.get(deckId));
   const base = (deck?.deck?.pdfName ?? toPlainText(deck?.text ?? [])).replace(/\.pdf$/i, '');
   return (
@@ -104,14 +103,12 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
         >
           <FileJson size={14} /> Karten exportieren
         </button>
-        <a
+        <SkillDownloadLink
           className="btn btn-sm"
-          href={SKILL_URL}
-          download
           title="Claude-Skill, der aus Folien Karten mit Folienzuordnung erstellt (Datei in Claude unter Einstellungen → Skills hochladen)"
         >
           <Sparkles size={14} /> Claude-Skill
-        </a>
+        </SkillDownloadLink>
         <button
           className="btn btn-sm"
           onClick={() =>

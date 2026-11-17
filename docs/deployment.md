@@ -42,8 +42,8 @@ project is not paused. GitHub disables scheduled workflows in repositories witho
 
 ## Optional: Todoist daily tasks
 
-Deploy the Edge Function `todoist-daily` and schedule it hourly - see
-[integrations.md](integrations.md#setup).
+Deploy the Edge Function `todoist-daily` (GitHub workflow _Supabase functions_, dashboard editor
+or CLI) and schedule it hourly - see [integrations.md](integrations.md#setup).
 
 ## Optional: own (sub)domain
 

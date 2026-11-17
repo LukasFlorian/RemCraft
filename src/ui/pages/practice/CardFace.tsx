@@ -8,6 +8,7 @@ import { gradeTypedAnswer } from '@core/cards/typein';
 import type { TypeInResult } from '@core/cards/typein';
 import type { Rating, RemId } from '@core/model/types';
 import { shuffle } from '@core/scheduling/queue';
+import { selectSettings } from '@data/selectors';
 import { useSelector } from '../../app/context';
 import { ImageView } from '../../editor/blocks';
 import { RemContent } from '../../editor/RemBlock';
@@ -57,12 +58,20 @@ function ContextTitle({ id }: { id: RemId }): ReactNode {
  */
 function SlideOrigin({ ids, revealed }: { ids: RemId[]; revealed: boolean }): ReactNode {
   const navigate = useNavigate();
-  const slide = useSelector((s) => [...ids].reverse().map((id) => s.get(id)).find((r) => r?.slide));
+  const slide = useSelector((s) =>
+    [...ids]
+      .reverse()
+      .map((id) => s.get(id))
+      .find((r) => r?.slide),
+  );
   if (!slide?.parentId || !slide.slide) return null;
   const n = slide.slide.index + 1;
   return (
     <div className="slide-origin">
-      <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/lecture/${slide.parentId}?slide=${n}`)}>
+      <button
+        className="btn btn-sm btn-ghost"
+        onClick={() => navigate(`/lecture/${slide.parentId}?slide=${n}`)}
+      >
         📄 Folie {n}
       </button>
       {revealed && (
@@ -87,6 +96,7 @@ export function CardFace({
   const [chosen, setChosen] = useState<RemId[]>([]);
   const [listShown, setListShown] = useState(0);
   const options = useMemo(() => (view.type === 'mc' ? shuffle(view.options) : []), [view]);
+  const showAnswerKind = useSelector((s) => Boolean(selectSettings(s).mcShowAnswerKind));
 
   useEffect(() => {
     setTyped('');
@@ -104,13 +114,15 @@ export function CardFace({
   };
 
   const origin = <SlideOrigin ids={view.context} revealed={revealed} />;
-  const extra = (revealed && view.extra.length > 0 && (
-    <div className="card-extra">
-      {view.extra.map((id) => (
-        <RemInline key={id} remId={id} />
-      ))}
-    </div>
-  )) || null;
+  const extra =
+    (revealed && view.extra.length > 0 && (
+      <div className="card-extra">
+        {view.extra.map((id) => (
+          <RemInline key={id} remId={id} />
+        ))}
+      </div>
+    )) ||
+    null;
   const extraAndOrigin = (
     <>
       {extra}
@@ -245,7 +257,9 @@ export function CardFace({
     }
     case 'mc': {
       const correctIds = options.filter((o) => o.correct).map((o) => o.remId);
-      const multi = correctIds.length > 1;
+      // Single choice (radio, answered on click) only when the user wants to see
+      // that there is exactly one correct answer; otherwise checkboxes + "Check".
+      const single = showAnswerKind && correctIds.length === 1;
       const check = (ids: RemId[]): void => {
         const right =
           ids.length === correctIds.length && ids.every((id) => correctIds.includes(id));
@@ -258,12 +272,16 @@ export function CardFace({
           <div className="card-question">
             <RichTextView value={view.question} />
           </div>
-          {multi && !revealed && (
+          {!revealed && (
             <div className="faint" style={{ fontSize: 13 }}>
-              Select all correct answers ({correctIds.length}).
+              {!showAnswerKind
+                ? 'Select all correct answers.'
+                : single
+                  ? 'One correct answer.'
+                  : 'Several correct answers - select all.'}
             </div>
           )}
-          <div className="mc-options">
+          <div className="mc-options" role={single ? 'radiogroup' : 'group'}>
             {options.map((o, i) => {
               const picked = chosen.includes(o.remId);
               const state = revealed
@@ -278,26 +296,31 @@ export function CardFace({
               return (
                 <button
                   key={o.remId}
+                  role={single ? 'radio' : 'checkbox'}
+                  aria-checked={picked}
                   className={`mc-option ${state}`}
                   disabled={revealed}
                   onClick={() => {
-                    if (multi)
+                    if (single) {
+                      setChosen([o.remId]);
+                      check([o.remId]);
+                    } else
                       setChosen((c) =>
                         c.includes(o.remId) ? c.filter((x) => x !== o.remId) : [...c, o.remId],
                       );
-                    else {
-                      setChosen([o.remId]);
-                      check([o.remId]);
-                    }
                   }}
                 >
+                  <span
+                    className={`mc-mark ${single ? 'radio' : 'check'}${picked ? ' on' : ''}`}
+                    aria-hidden
+                  />
                   <span className="mc-letter">{String.fromCharCode(65 + i)}</span>
                   <RemInline remId={o.remId} />
                 </button>
               );
             })}
           </div>
-          {multi && !revealed && (
+          {!single && !revealed && (
             <button className="btn" disabled={chosen.length === 0} onClick={() => check(chosen)}>
               Check answer
             </button>

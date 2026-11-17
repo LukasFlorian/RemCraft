@@ -4,6 +4,7 @@
  * devices without a keyboard.
  */
 import { useRef, useState } from 'react';
+import { useLocation } from 'react-router';
 import type { ReactNode } from 'react';
 import {
   CheckSquare,
@@ -23,7 +24,7 @@ import { COMMAND_GROUPS, COMMANDS } from './commands';
 import { useController, useControllerState } from './controller';
 import { useCommandContextFactory } from './useCommandContext';
 
-/** The editing toolbar (visible while a Rem is focused). */
+/** The editing toolbar (visible while a Rem is being edited, never in practice). */
 export function EditToolbar(): ReactNode {
   const app = useApp();
   const controller = useController();
@@ -32,7 +33,9 @@ export function EditToolbar(): ReactNode {
   const [menu, setMenu] = useState<{ anchor: HTMLElement; entries: MenuEntry[] } | null>(null);
   const cardRef = useRef<HTMLButtonElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
-  if (!focus) return null;
+  const { pathname } = useLocation();
+  // Never while practising: the bar would cover the answer buttons.
+  if (!focus || pathname.startsWith('/practice')) return null;
   const rem = app.store.get(focus.remId);
   if (!rem) return null;
 

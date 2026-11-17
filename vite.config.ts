@@ -42,6 +42,9 @@ export default defineConfig(({ mode }) => ({
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          // Only app routes fall back to index.html; files such as the skill
+          // download (remcraft-flashcards.zip) must come from the network.
+          navigateFallbackDenylist: [/\/[^/?]+\.[a-z0-9]+(\?.*)?$/i],
         },
       }),
   ],

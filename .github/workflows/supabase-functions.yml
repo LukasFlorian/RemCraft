@@ -1,0 +1,75 @@
+# Deploys the Edge Function `todoist-daily` (Todoist daily study tasks) to your
+# Supabase project - no local Supabase CLI needed. Runs on demand and whenever
+# a push to `main` changes supabase/functions/**.
+#
+# Uses the same settings as `supabase-migrate.yml`:
+#   Secret   SUPABASE_ACCESS_TOKEN - personal access token (supabase.com/dashboard/account/tokens)
+#   Variable SUPABASE_PROJECT_REF  - the project reference (xyz in https://xyz.supabase.co)
+# Optional:
+#   Secret   CRON_SECRET           - shared secret of the hourly trigger; when set it is
+#                                    also stored as the function's secret, so it is
+#                                    maintained in one place (GitHub) only.
+# Without SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF the workflow ends with a
+# hint instead of failing. See docs/integrations.md.
+name: Supabase functions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+      - '.github/workflows/supabase-functions.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$PROJECT_REF" ]; then
+            echo "Supabase is not configured for deployments - nothing to do."
+            echo "Add the secret SUPABASE_ACCESS_TOKEN and the variable SUPABASE_PROJECT_REF"
+            echo "(Settings -> Secrets and variables -> Actions), see docs/integrations.md."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.skip != 'true'
+
+      - uses: supabase/setup-cli@v1
+        if: steps.config.outputs.skip != 'true'
+        with:
+          version: latest
+
+      - name: Deploy todoist-daily
+        if: steps.config.outputs.skip != 'true'
+        # verify_jwt = false is also set in supabase/config.toml; the flag makes
+        # it explicit (the function checks the cron secret or the user's JWT itself).
+        run: supabase functions deploy todoist-daily --no-verify-jwt --project-ref "$PROJECT_REF"
+
+      - name: Store CRON_SECRET as function secret
+        if: steps.config.outputs.skip != 'true'
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Secret CRON_SECRET is not set on GitHub - leaving the function's secret unchanged."
+            exit 0
+          fi
+          supabase secrets set "CRON_SECRET=$CRON_SECRET" --project-ref "$PROJECT_REF"
+          echo "CRON_SECRET updated."
