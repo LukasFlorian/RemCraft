@@ -63,3 +63,44 @@ test('shares a course as a file and imports it as a copy', async ({ page }) => {
   // Two independent course folders now exist.
   await expect(page.getByRole('treeitem', { name: /Demo-Kurs/ })).toHaveCount(2);
 });
+
+test('text boxes keep their text, can be deselected and move in one undo step', async ({
+  page,
+}) => {
+  const slide = page.locator('[data-w="current"] .boxes-layer');
+  const box = (n: number) => slide.locator('.text-box').nth(n);
+  await page.getByTitle('Textfeld (T)').click();
+  const area = await slide.boundingBox();
+  if (!area) throw new Error('no slide');
+
+  // First box: type, then create a second box elsewhere - the text must stay.
+  await page.mouse.click(area.x + area.width * 0.2, area.y + area.height * 0.2);
+  await expect(slide.locator('textarea')).toBeFocused();
+  await page.keyboard.type('Erstes');
+  await page.mouse.click(area.x + area.width * 0.2, area.y + area.height * 0.6);
+  await expect(slide.locator('textarea')).toBeFocused();
+  await page.keyboard.type('Zweites');
+  await page.getByTitle('Auswählen / Text markieren (Esc)').click();
+  await expect(box(0)).toHaveText('Erstes');
+  await expect(box(1)).toHaveText('Zweites');
+
+  // Select, then click on an empty spot: the box is deselected.
+  await box(0).click();
+  await expect(box(0)).toHaveClass(/selected/);
+  await page.mouse.click(area.x + area.width * 0.8, area.y + area.height * 0.9);
+  await expect(box(0)).not.toHaveClass(/selected/);
+
+  // Drag in many steps; a single undo restores the start position.
+  const before = await box(0).boundingBox();
+  await page.mouse.move(before!.x + 10, before!.y + 10);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i++) await page.mouse.move(before!.x + 10 + i * 15, before!.y + 10);
+  await page.mouse.up();
+  const after = await box(0).boundingBox();
+  expect(after!.x).toBeGreaterThan(before!.x + 100);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect
+    .poll(async () => Math.round((await box(0).boundingBox())!.x))
+    .toBe(Math.round(before!.x));
+});

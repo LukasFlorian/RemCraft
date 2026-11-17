@@ -35,7 +35,7 @@ No local tools are needed if you use variant A or B for the function.
 ### 1. Database
 
 Run the migrations: paste `supabase/migrations/20261118000000_integrations.sql` into the
-dashboard's **SQL Editor** (or run the _Supabase migrate_ workflow / `supabase db push`).
+dashboard's **SQL Editor** (or run the _Supabase migrate_ workflow / `supabase db push --remote`).
 
 ### 2. Edge Function and `CRON_SECRET`
 
@@ -77,11 +77,11 @@ After changes to the function, paste the file again (`single-file.ts` is regener
 #### Variant C - Supabase CLI
 
 ```bash
-supabase functions deploy todoist-daily --no-verify-jwt --project-ref <ref>
+supabase functions deploy todoist-daily --no-verify-jwt --remote=<ref>
 ```
 
 ```bash
-supabase secrets set CRON_SECRET=<long random string> --project-ref <ref>
+supabase secrets set CRON_SECRET=<long random string> --remote=<ref>
 ```
 
 ### 3. Hourly trigger

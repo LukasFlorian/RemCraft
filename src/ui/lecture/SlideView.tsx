@@ -11,7 +11,7 @@
  * same at every size, on every device and in the handout.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { Copy, MessageSquareText, Sparkles, StickyNote, Trash2 } from 'lucide-react';
 import type { Rem, RemId, Stroke, TextBox, TextMark } from '@core/model/types';
 import { newId } from '@core/util/ids';
@@ -146,7 +146,14 @@ export function SlideView({
             boxes={ann?.boxes ?? []}
             tool={interactive ? tool : 'select'}
             interactive={interactive}
-            onChange={(boxes) => save({ boxes })}
+            onChange={(edit, coalesceKey) => {
+              // Applied to the stored boxes, not to the rendered ones: a
+              // handler may run after a newer edit (e.g. a blur after the
+              // next box was created) and must not overwrite it.
+              if (!slide) return;
+              const current = app.lectures.annotations(slide.id).boxes;
+              app.lectures.setAnnotations(slide.id, { boxes: edit(current) }, { coalesceKey });
+            }}
           />
         </div>
       )}
@@ -445,6 +452,14 @@ function MarksLayer({
 // Text boxes
 // ---------------------------------------------------------------------------
 
+/** Edit of the stored text boxes (current boxes → new boxes). */
+type BoxesEdit = (boxes: TextBox[]) => TextBox[];
+
+/** Removes empty boxes except `keep` (a box that is being typed into). */
+function dropEmpty(boxes: TextBox[], keep: string | null = null): TextBox[] {
+  return boxes.filter((b) => b.id === keep || b.text.trim());
+}
+
 /** Sticky-note text boxes on the slide. */
 function TextBoxesLayer({
   boxes,
@@ -455,14 +470,73 @@ function TextBoxesLayer({
   boxes: TextBox[];
   tool: SlideTool;
   interactive: boolean;
-  onChange: (b: TextBox[]) => void;
+  /** Applies an edit; edits with the same `coalesceKey` form one undo step. */
+  onChange: (edit: BoxesEdit, coalesceKey?: string) => void;
 }): ReactNode {
   const ref = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const update = (id: string, patch: Partial<TextBox>): void =>
-    onChange(boxes.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+  /** Position/width while a box is dragged or resized (committed on release). */
+  const [preview, setPreview] = useState<{ id: string; patch: Partial<TextBox> } | null>(null);
+  const update = (id: string, patch: Partial<TextBox>, coalesceKey?: string): void =>
+    onChange((all) => all.map((b) => (b.id === id ? { ...b, ...patch } : b)), coalesceKey);
   const width = ref.current?.clientWidth ?? 800;
+
+  /** Ends editing: the typed text is already stored; empty boxes are removed. */
+  const finishEditing = (): void => {
+    setEditing(null);
+    onChange((all) => dropEmpty(all));
+  };
+
+  // A click outside the selected box (anywhere, also outside the slide) deselects it.
+  useEffect(() => {
+    if (!selected) return;
+    const down = (e: PointerEvent): void => {
+      const target = e.target as Element | null;
+      const box = target?.closest?.('.text-box');
+      if (box && box.getAttribute('data-box') === selected) return;
+      setSelected(null);
+    };
+    const key = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && !editing) setSelected(null);
+    };
+    // Capture phase: runs before the layer creates a new box and selects it.
+    document.addEventListener('pointerdown', down, true);
+    document.addEventListener('keydown', key);
+    return () => {
+      document.removeEventListener('pointerdown', down, true);
+      document.removeEventListener('keydown', key);
+    };
+  }, [selected, editing]);
+
+  /**
+   * Drags a box edge or the whole box; the store is written once on release,
+   * so one gesture is one undo step.
+   */
+  const drag = (
+    e: ReactPointerEvent,
+    id: string,
+    patchAt: (dx: number, dy: number) => Partial<TextBox>,
+  ): void => {
+    const layer = ref.current!.getBoundingClientRect();
+    const sx = e.clientX;
+    const sy = e.clientY;
+    let last: Partial<TextBox> | null = null;
+    const move = (ev: PointerEvent): void => {
+      last = patchAt((ev.clientX - sx) / layer.width, (ev.clientY - sy) / layer.height);
+      setPreview({ id, patch: last });
+    };
+    const up = (): void => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      setPreview(null);
+      if (last) update(id, last);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  };
 
   return (
     <div
@@ -484,135 +558,118 @@ function TextBoxesLayer({
           bg: 'note',
           text: '',
         };
-        onChange([...boxes, box]);
+        // The box typed into so far keeps its text (stored while typing);
+        // empty ones disappear.
+        onChange((all) => [...dropEmpty(all), box]);
         setSelected(box.id);
         setEditing(box.id);
       }}
     >
-      {boxes.map((b) => (
-        <div
-          key={b.id}
-          className={`text-box bg-${b.bg}${selected === b.id ? ' selected' : ''}`}
-          style={{
-            left: `${b.x * 100}%`,
-            top: `${b.y * 100}%`,
-            width: `${b.w * 100}%`,
-            fontSize: b.s * width,
-            color: b.c,
-            pointerEvents: interactive ? 'auto' : 'none',
-          }}
-          onPointerDown={(e) => {
-            if (editing === b.id) return;
-            e.stopPropagation();
-            setSelected(b.id);
-            const layer = ref.current!.getBoundingClientRect();
-            const sx = e.clientX;
-            const sy = e.clientY;
-            const ox = b.x;
-            const oy = b.y;
-            const move = (ev: PointerEvent): void =>
-              update(b.id, {
-                x: Math.min(0.98, Math.max(0, ox + (ev.clientX - sx) / layer.width)),
-                y: Math.min(0.98, Math.max(0, oy + (ev.clientY - sy) / layer.height)),
-              });
-            const up = (): void => {
-              window.removeEventListener('pointermove', move);
-              window.removeEventListener('pointerup', up);
-            };
-            window.addEventListener('pointermove', move);
-            window.addEventListener('pointerup', up);
-          }}
-          onDoubleClick={() => setEditing(b.id)}
-        >
-          {editing === b.id ? (
-            <textarea
-              ref={(el) => {
-                // Focus once mounted, after the creating click has finished.
-                if (el && document.activeElement !== el) requestAnimationFrame(() => el.focus());
-              }}
-              className="text-box-input"
-              defaultValue={b.text}
-              onBlur={(e) => {
-                const text = e.target.value;
-                setEditing(null);
-                if (!text.trim()) onChange(boxes.filter((x) => x.id !== b.id));
-                else update(b.id, { text });
-              }}
-              onKeyDown={(e) =>
-                e.key === 'Escape' && (e.currentTarget as HTMLTextAreaElement).blur()
-              }
-            />
-          ) : (
-            <span className="text-box-text">{b.text}</span>
-          )}
-          {selected === b.id && editing !== b.id && interactive && (
-            <div className="box-bar" onPointerDown={(e) => e.stopPropagation()}>
-              {['#111111', '#d0021b', '#1d4ed8', '#047857'].map((c) => (
-                <button
-                  key={c}
-                  className="mark-swatch"
-                  style={{ background: c }}
-                  aria-label="Textfarbe"
-                  onClick={() => update(b.id, { c })}
-                />
-              ))}
-              <button
-                className="icon-btn"
-                title="Kleiner"
-                onClick={() => update(b.id, { s: Math.max(0.008, b.s - 0.003) })}
-              >
-                −
-              </button>
-              <button
-                className="icon-btn"
-                title="Größer"
-                onClick={() => update(b.id, { s: Math.min(0.08, b.s + 0.003) })}
-              >
-                +
-              </button>
-              <button
-                className="icon-btn"
-                title="Hintergrund"
-                onClick={() =>
-                  update(b.id, {
-                    bg: b.bg === 'note' ? 'white' : b.bg === 'white' ? 'none' : 'note',
-                  })
+      {boxes.map((stored) => {
+        const b = preview?.id === stored.id ? { ...stored, ...preview.patch } : stored;
+        return (
+          <div
+            key={b.id}
+            data-box={b.id}
+            className={`text-box bg-${b.bg}${selected === b.id ? ' selected' : ''}`}
+            style={{
+              left: `${b.x * 100}%`,
+              top: `${b.y * 100}%`,
+              width: `${b.w * 100}%`,
+              fontSize: b.s * width,
+              color: b.c,
+              pointerEvents: interactive ? 'auto' : 'none',
+            }}
+            onPointerDown={(e) => {
+              if (editing === b.id) return;
+              e.stopPropagation();
+              setSelected(b.id);
+              drag(e, b.id, (dx, dy) => ({
+                x: Math.min(0.98, Math.max(0, stored.x + dx)),
+                y: Math.min(0.98, Math.max(0, stored.y + dy)),
+              }));
+            }}
+            onDoubleClick={() => setEditing(b.id)}
+          >
+            {editing === b.id ? (
+              <textarea
+                ref={(el) => {
+                  // Focus once mounted, after the creating click has finished.
+                  if (el && document.activeElement !== el) requestAnimationFrame(() => el.focus());
+                }}
+                className="text-box-input"
+                defaultValue={b.text}
+                // Stored on every keystroke (one undo step per typing burst),
+                // so nothing is lost when the box closes without a blur.
+                onChange={(e) => update(b.id, { text: e.target.value }, `box-text:${b.id}`)}
+                onBlur={finishEditing}
+                onKeyDown={(e) =>
+                  e.key === 'Escape' && (e.currentTarget as HTMLTextAreaElement).blur()
                 }
-              >
-                <StickyNote size={14} />
-              </button>
-              <button
-                className="icon-btn"
-                title="Löschen"
-                onClick={() => onChange(boxes.filter((x) => x.id !== b.id))}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          )}
-          {selected === b.id && interactive && (
-            <span
-              className="box-resize"
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                const layer = ref.current!.getBoundingClientRect();
-                const sx = e.clientX;
-                const ow = b.w;
-                const move = (ev: PointerEvent): void =>
-                  update(b.id, {
-                    w: Math.min(1, Math.max(0.04, ow + (ev.clientX - sx) / layer.width)),
-                  });
-                const up = (): void => {
-                  window.removeEventListener('pointermove', move);
-                  window.removeEventListener('pointerup', up);
-                };
-                window.addEventListener('pointermove', move);
-                window.addEventListener('pointerup', up);
-              }}
-            />
-          )}
-        </div>
-      ))}
+              />
+            ) : (
+              <span className="text-box-text">{b.text}</span>
+            )}
+            {selected === b.id && editing !== b.id && interactive && (
+              <div className="box-bar" onPointerDown={(e) => e.stopPropagation()}>
+                {['#111111', '#d0021b', '#1d4ed8', '#047857'].map((c) => (
+                  <button
+                    key={c}
+                    className="mark-swatch"
+                    style={{ background: c }}
+                    aria-label="Textfarbe"
+                    onClick={() => update(b.id, { c })}
+                  />
+                ))}
+                <button
+                  className="icon-btn"
+                  title="Kleiner"
+                  onClick={() => update(b.id, { s: Math.max(0.008, b.s - 0.003) })}
+                >
+                  −
+                </button>
+                <button
+                  className="icon-btn"
+                  title="Größer"
+                  onClick={() => update(b.id, { s: Math.min(0.08, b.s + 0.003) })}
+                >
+                  +
+                </button>
+                <button
+                  className="icon-btn"
+                  title="Hintergrund"
+                  onClick={() =>
+                    update(b.id, {
+                      bg: b.bg === 'note' ? 'white' : b.bg === 'white' ? 'none' : 'note',
+                    })
+                  }
+                >
+                  <StickyNote size={14} />
+                </button>
+                <button
+                  className="icon-btn"
+                  title="Löschen"
+                  onClick={() => {
+                    setSelected(null);
+                    onChange((all) => all.filter((x) => x.id !== b.id));
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )}
+            {selected === b.id && interactive && (
+              <span
+                className="box-resize"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  drag(e, b.id, (dx) => ({ w: Math.min(1, Math.max(0.04, stored.w + dx)) }));
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
