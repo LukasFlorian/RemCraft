@@ -102,9 +102,84 @@
   user-select: none;
 }
 
-.editing .widget-head {
-  cursor: move;
+.widget-head {
+  cursor: grab;
+}
+
+.widget.moving .widget-head {
+  cursor: grabbing;
   background: var(--accent-soft);
+}
+
+.widget.moving {
+  opacity: 0.85;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+.widget.swap-target > * {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+}
+
+.widget-hide {
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.widget-head:hover .widget-hide {
+  opacity: 1;
+}
+
+.widget-board.dragging,
+.widget-board.dragging * {
+  user-select: none;
+}
+
+/* Resize handles on the borders between widgets (like split panes). */
+.widget-edge {
+  position: absolute;
+  z-index: 1000;
+}
+
+.widget-edge::after {
+  content: '';
+  position: absolute;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.12s 0.08s;
+}
+
+.widget-edge:hover::after,
+.widget-edge.active::after {
+  opacity: 1;
+}
+
+.widget-edge.edge-x {
+  width: 10px;
+  margin-left: -5px;
+  cursor: col-resize;
+}
+
+.widget-edge.edge-x::after {
+  top: 8px;
+  bottom: 8px;
+  left: 4px;
+  width: 2px;
+}
+
+.widget-edge.edge-y {
+  height: 10px;
+  margin-top: -5px;
+  cursor: row-resize;
+}
+
+.widget-edge.edge-y::after {
+  left: 8px;
+  right: 8px;
+  top: 4px;
+  height: 2px;
 }
 
 .widget-body {
@@ -116,16 +191,6 @@
   background: var(--bg);
 }
 
-.widget-resize {
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 14px;
-  height: 14px;
-  border-right: 3px solid var(--accent);
-  border-bottom: 3px solid var(--accent);
-  cursor: nwse-resize;
-}
 
 @media (max-width: 860px) {
   .widget-board {
@@ -141,6 +206,9 @@
   }
   .widget[data-w='current'] {
     min-height: 60vh;
+  }
+  .widget-edge {
+    display: none;
   }
 }
 

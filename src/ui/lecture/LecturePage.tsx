@@ -442,7 +442,7 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         </button>
         <button
           className={`icon-btn${editingLayout ? ' active' : ''}`}
-          title="Layout"
+          title="Ausgeblendete Widgets / Standard-Layout"
           aria-label="Layout"
           onClick={() => setEditingLayout(!editingLayout)}
         >
