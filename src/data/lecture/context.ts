@@ -41,7 +41,8 @@ function slidesOf(store: Store, deckId: RemId): Rem[] {
 export function slideNotesText(store: Store, slideId: RemId): string {
   const lines: string[] = [];
   walkSubtree(store, slideId, (r) => {
-    if (r.id !== slideId) lines.push(toPlainText(r.text) + (r.back ? ` >> ${toPlainText(r.back)}` : ''));
+    if (r.id !== slideId)
+      lines.push(toPlainText(r.text) + (r.back ? ` >> ${toPlainText(r.back)}` : ''));
   });
   const ann = store.getRecord('annotations', slideId);
   for (const b of ann?.boxes ?? []) lines.push(b.text);
@@ -51,12 +52,23 @@ export function slideNotesText(store: Store, slideId: RemId): string {
 /** Markdown of one slide: text, markers, highlights and notes. */
 export function slideMarkdown(store: Store, slide: Rem, withNotes = true): string {
   const i = (slide.slide?.index ?? 0) + 1;
-  const parts = [`## Folie ${i} (PDF-Seite ${(slide.slide?.page ?? 0) + 1})`, slide.slideText ? `Folientext:\n${slide.slideText}` : ''];
-  if (slide.slideFlags?.length) parts.push(`Markierungen: ${slide.slideFlags.map((f) => (f === 'important' ? '★ wichtig' : '? unklar')).join(', ')}`);
+  const parts = [
+    `## Folie ${i} (PDF-Seite ${(slide.slide?.page ?? 0) + 1})`,
+    slide.slideText ? `Folientext:\n${slide.slideText}` : '',
+  ];
+  if (slide.slideFlags?.length)
+    parts.push(
+      `Markierungen: ${slide.slideFlags.map((f) => (f === 'important' ? '★ wichtig' : '? unklar')).join(', ')}`,
+    );
   const ann = store.getRecord('annotations', slide.id);
-  if (ann?.marks.length) parts.push(`Von mir auf der Folie markiert:\n${ann.marks.map((m) => `- „${m.text}“`).join('\n')}`);
-  if (ann?.boxes.length) parts.push(`Textfelder auf der Folie:\n${ann.boxes.map((b) => `- ${b.text}`).join('\n')}`);
-  if (withNotes && store.children(slide.id).length) parts.push(`Meine Notizen:\n${exportMarkdown(store, [slide.id], { includeRoot: false })}`);
+  if (ann?.marks.length)
+    parts.push(
+      `Von mir auf der Folie markiert:\n${ann.marks.map((m) => `- „${m.text}“`).join('\n')}`,
+    );
+  if (ann?.boxes.length)
+    parts.push(`Textfelder auf der Folie:\n${ann.boxes.map((b) => `- ${b.text}`).join('\n')}`);
+  if (withNotes && store.children(slide.id).length)
+    parts.push(`Meine Notizen:\n${exportMarkdown(store, [slide.id], { includeRoot: false })}`);
   const open = openQuestions(slideNotesText(store, slide.id));
   if (open.length) parts.push(`Offene Fragen:\n${open.map((q) => `- ${q}`).join('\n')}`);
   return parts.filter(Boolean).join('\n\n');
@@ -69,11 +81,18 @@ export function slideMarkdown(store: Store, slide: Rem, withNotes = true): strin
  * @param pos Current deck/slide/lecture.
  * @param chips Selected context.
  */
-export function buildContext(store: Store, pos: ContextPosition, chips: readonly ContextChip[]): string {
+export function buildContext(
+  store: Store,
+  pos: ContextPosition,
+  chips: readonly ContextChip[],
+): string {
   const deck = store.get(pos.deckId);
   const slides = slidesOf(store, pos.deckId);
   const out: string[] = [];
-  if (deck) out.push(`# Foliensatz: ${toPlainText(deck.text)} (${deck.deck?.pdfName ?? ''}, ${slides.length} Folien)`);
+  if (deck)
+    out.push(
+      `# Foliensatz: ${toPlainText(deck.text)} (${deck.deck?.pdfName ?? ''}, ${slides.length} Folien)`,
+    );
   for (const chip of chips) {
     switch (chip.kind) {
       case 'slide': {
@@ -82,18 +101,33 @@ export function buildContext(store: Store, pos: ContextPosition, chips: readonly
         break;
       }
       case 'range':
-        for (const s of slides.slice(Math.max(0, chip.from - 1), chip.to)) out.push(slideMarkdown(store, s));
+        for (const s of slides.slice(Math.max(0, chip.from - 1), chip.to))
+          out.push(slideMarkdown(store, s));
         break;
       case 'deck':
-        out.push(slides.map((s) => `Folie ${(s.slide?.index ?? 0) + 1} (S. ${(s.slide?.page ?? 0) + 1}): ${(s.slideText ?? '').replace(/\n/g, ' / ')}`).join('\n'));
+        out.push(
+          slides
+            .map(
+              (s) =>
+                `Folie ${(s.slide?.index ?? 0) + 1} (S. ${(s.slide?.page ?? 0) + 1}): ${(s.slideText ?? '').replace(/\n/g, ' / ')}`,
+            )
+            .join('\n'),
+        );
         break;
       case 'notes':
         for (const s of slides) {
-          if (store.children(s.id).length || s.slideFlags?.length || store.getRecord('annotations', s.id)?.marks.length) out.push(slideMarkdown(store, s));
+          if (
+            store.children(s.id).length ||
+            s.slideFlags?.length ||
+            store.getRecord('annotations', s.id)?.marks.length
+          )
+            out.push(slideMarkdown(store, s));
         }
         break;
       case 'cards': {
-        const md = slides.map((s) => exportMarkdown(store, [s.id], { includeRoot: false })).join('');
+        const md = slides
+          .map((s) => exportMarkdown(store, [s.id], { includeRoot: false }))
+          .join('');
         out.push(`## Vorhandene Karten und Notizen (RemNote-Syntax)\n${md || '(keine)'}`);
         break;
       }
@@ -106,7 +140,16 @@ export function buildContext(store: Store, pos: ContextPosition, chips: readonly
         const courseId = deck?.parentId;
         if (!courseId) break;
         const docs: string[] = [];
-        walkSubtree(store, courseId, (r) => void ((r.isDocument || r.isFolder) && r.id !== courseId && docs.push(`- ${toPlainText(r.text)}${r.deck ? ' (Foliensatz)' : ''}`)));
+        walkSubtree(
+          store,
+          courseId,
+          (r) =>
+            void (
+              (r.isDocument || r.isFolder) &&
+              r.id !== courseId &&
+              docs.push(`- ${toPlainText(r.text)}${r.deck ? ' (Foliensatz)' : ''}`)
+            ),
+        );
         out.push(`## Kurs: ${toPlainText(store.get(courseId)?.text ?? [])}\n${docs.join('\n')}`);
         break;
       }
@@ -129,8 +172,21 @@ export function lectureMarkdown(store: Store, lectureId: string): string {
     `Dauer: ${Math.round(s.durationMs / 60000)} min, außerhalb der App: ${Math.round(s.awayMs / 1000)} s, Abschweifen bemerkt: ${s.drifts}×`,
     st.goal ? `Ziel: ${st.goal}` : '',
     st.summary ? `Meine Zusammenfassung:\n${st.summary}` : '',
-    st.checkins.filter((c) => c.text).length ? `Check-ins:\n${st.checkins.filter((c) => c.text).map((c) => `- ${c.prompt} → ${c.text}${c.focus ? ` (Fokus ${c.focus}/5)` : ''}`).join('\n')}` : '',
-    stats.length ? `Zeit pro Folie:\n${stats.filter((x) => x.dwellMs > 0).map((x) => `- Folie ${x.slide + 1}: ${Math.round(x.dwellMs / 1000)} s${x.awayMs ? `, davon ${Math.round(x.awayMs / 1000)} s außerhalb` : ''}`).join('\n')}` : '',
+    st.checkins.filter((c) => c.text).length
+      ? `Check-ins:\n${st.checkins
+          .filter((c) => c.text)
+          .map((c) => `- ${c.prompt} → ${c.text}${c.focus ? ` (Fokus ${c.focus}/5)` : ''}`)
+          .join('\n')}`
+      : '',
+    stats.length
+      ? `Zeit pro Folie:\n${stats
+          .filter((x) => x.dwellMs > 0)
+          .map(
+            (x) =>
+              `- Folie ${x.slide + 1}: ${Math.round(x.dwellMs / 1000)} s${x.awayMs ? `, davon ${Math.round(x.awayMs / 1000)} s außerhalb` : ''}`,
+          )
+          .join('\n')}`
+      : '',
   ];
   return lines.filter(Boolean).join('\n\n');
 }
@@ -138,5 +194,12 @@ export function lectureMarkdown(store: Store, lectureId: string): string {
 /** The complete "Export für KI" of a deck (optionally with one lecture). */
 export function exportForAi(store: Store, deckId: RemId, lectureId: string | null): string {
   const intro = `Anleitung für die KI: Erkläre Unklares (★/? markierte Folien), beantworte offene Fragen, prüfe meine Check-in-Antworten, erstelle Karteikarten (RemNote-Syntax) und Übungsfragen.`;
-  return [intro, buildContext(store, { deckId, slideIndex: 0, lectureId }, [{ kind: 'notes' }, ...(lectureId ? [{ kind: 'lecture' } as const] : []), { kind: 'deck' }])].join('\n\n');
+  return [
+    intro,
+    buildContext(store, { deckId, slideIndex: 0, lectureId }, [
+      { kind: 'notes' },
+      ...(lectureId ? [{ kind: 'lecture' } as const] : []),
+      { kind: 'deck' },
+    ]),
+  ].join('\n\n');
 }

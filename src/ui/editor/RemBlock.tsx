@@ -327,7 +327,11 @@ export const RemBlock = memo(function RemBlock({
           {marker}
           <div className="rem-content">
             {rem.slide && rem.parentId && (
-              <div className="slide-thumb-inline" onMouseDown={(e) => e.stopPropagation()} onClick={() => navigate(`/lecture/${rem.parentId}?slide=${rem.slide!.index + 1}`)}>
+              <div
+                className="slide-thumb-inline"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={() => navigate(`/lecture/${rem.parentId}?slide=${rem.slide!.index + 1}`)}
+              >
                 <SlideView deckId={rem.parentId} slide={rem} width={260} />
               </div>
             )}

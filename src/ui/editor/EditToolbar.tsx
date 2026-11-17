@@ -3,7 +3,7 @@
  * todo, image, table, all commands and undo. Especially useful on touch
  * devices without a keyboard.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import type { ReactNode } from 'react';
 import {
@@ -34,8 +34,26 @@ export function EditToolbar(): ReactNode {
   const cardRef = useRef<HTMLButtonElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
   const { pathname } = useLocation();
+  // Re-checks whether the focused editor is still on screen when the page changes.
+  const [, recheck] = useState(0);
+  useEffect(() => {
+    if (!focus) return;
+    let frame = 0;
+    const mo = new MutationObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => recheck((n) => n + 1));
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      mo.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [focus]);
   // Never while practising: the bar would cover the answer buttons.
   if (!focus || pathname.startsWith('/practice')) return null;
+  // Only while the focused editor is still on screen: a closed dialog or a
+  // left page must not leave the bar behind (e.g. if no blur event arrived).
+  if (!document.querySelector(`[data-instance="${CSS.escape(focus.instance)}"]`)) return null;
   const rem = app.store.get(focus.remId);
   if (!rem) return null;
 

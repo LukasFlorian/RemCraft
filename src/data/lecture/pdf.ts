@@ -100,7 +100,11 @@ export const pdfJsEngine: PdfEngine = {
         const bw = (box[2]! - box[0]!) * base.width;
         const bh = (box[3]! - box[1]!) * base.height;
         const scale = Math.max(0.1, width / bw);
-        const viewport = p.getViewport({ scale, offsetX: -box[0]! * base.width * scale, offsetY: -box[1]! * base.height * scale });
+        const viewport = p.getViewport({
+          scale,
+          offsetX: -box[0]! * base.width * scale,
+          offsetY: -box[1]! * base.height * scale,
+        });
         const canvas = document.createElement('canvas');
         canvas.width = Math.max(1, Math.round(bw * scale));
         canvas.height = Math.max(1, Math.round(bh * scale));
@@ -128,7 +132,11 @@ export const pdfJsEngine: PdfEngine = {
         const stack: number[][] = [];
         let ctm = vp.transform as number[];
         const rects: number[][] = [];
-        const imageOps = new Set([lib.OPS.paintImageXObject, lib.OPS.paintInlineImageXObject, lib.OPS.paintImageMaskXObject]);
+        const imageOps = new Set([
+          lib.OPS.paintImageXObject,
+          lib.OPS.paintInlineImageXObject,
+          lib.OPS.paintImageMaskXObject,
+        ]);
         ops.fnArray.forEach((fn, k) => {
           if (fn === lib.OPS.save) stack.push(ctm);
           else if (fn === lib.OPS.restore) ctm = stack.pop() ?? ctm;
@@ -140,10 +148,18 @@ export const pdfJsEngine: PdfEngine = {
               [1, 0],
               [0, 1],
               [1, 1],
-            ].map(([x, y]) => [ctm[0]! * x! + ctm[2]! * y! + ctm[4]!, ctm[1]! * x! + ctm[3]! * y! + ctm[5]!]);
+            ].map(([x, y]) => [
+              ctm[0]! * x! + ctm[2]! * y! + ctm[4]!,
+              ctm[1]! * x! + ctm[3]! * y! + ctm[5]!,
+            ]);
             const xs = pts.map((q) => q[0]!);
             const ys = pts.map((q) => q[1]!);
-            rects.push([Math.min(...xs) / vp.width, Math.min(...ys) / vp.height, Math.max(...xs) / vp.width, Math.max(...ys) / vp.height]);
+            rects.push([
+              Math.min(...xs) / vp.width,
+              Math.min(...ys) / vp.height,
+              Math.max(...xs) / vp.width,
+              Math.max(...ys) / vp.height,
+            ]);
           }
         });
         return rects;
@@ -155,9 +171,21 @@ export const pdfJsEngine: PdfEngine = {
         const out: TextItem[] = [];
         for (const item of content.items) {
           if (!('str' in item) || !item.str.trim()) continue;
-          const [x, y] = vp.convertToViewportPoint(item.transform[4] as number, item.transform[5] as number) as [number, number];
-          const h = Math.hypot(item.transform[2] as number, item.transform[3] as number) || item.height || 10;
-          out.push({ str: item.str, x0: x / vp.width, y0: (y - h) / vp.height, x1: (x + item.width) / vp.width, y1: y / vp.height });
+          const [x, y] = vp.convertToViewportPoint(
+            item.transform[4] as number,
+            item.transform[5] as number,
+          ) as [number, number];
+          const h =
+            Math.hypot(item.transform[2] as number, item.transform[3] as number) ||
+            item.height ||
+            10;
+          out.push({
+            str: item.str,
+            x0: x / vp.width,
+            y0: (y - h) / vp.height,
+            x1: (x + item.width) / vp.width,
+            y1: y / vp.height,
+          });
         }
         return out;
       },
@@ -184,5 +212,8 @@ export function textInBox(items: readonly TextItem[], box: readonly number[]): s
     else lines.push(t.str);
     lastY = t.y0;
   }
-  return lines.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+  return lines
+    .map((l) => l.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n');
 }

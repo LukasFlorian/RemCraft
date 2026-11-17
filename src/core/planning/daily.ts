@@ -139,6 +139,11 @@ export interface DailyTaskOptions {
   groupOf: (remId: RemId) => TaskGroup | undefined;
   examName: (examId: string) => string | undefined;
   estimate: TimeEstimate;
+  /**
+   * Expected seconds per answer of a card (e.g. its own measured time, or its
+   * course's); defaults to `estimate.secondsPerAnswer`.
+   */
+  secondsOf?: (cardId: CardId) => number | undefined;
   /** Builds a practice link for a group (optional). */
   practiceUrl?: (groupId: RemId) => string;
   /** Title template; `{course}` and `{minutes}` are replaced. */
@@ -158,7 +163,16 @@ export const DEFAULT_TITLE_TEMPLATE = '{course} lernen (~{minutes} min)';
 export function buildDailyTasks(queue: readonly QueuedCard[], opts: DailyTaskOptions): DailyTask[] {
   const groups = new Map<
     string,
-    { group: TaskGroup; reviews: number; newCards: number; examCards: number; exams: Set<string> }
+    {
+      group: TaskGroup;
+      reviews: number;
+      newCards: number;
+      examCards: number;
+      exams: Set<string>;
+      /** Expected answers and seconds of the group's cards. */
+      answers: number;
+      seconds: number;
+    }
   >();
   for (const q of queue) {
     const remId = opts.remOf(q.cardId);
@@ -170,10 +184,17 @@ export function buildDailyTasks(queue: readonly QueuedCard[], opts: DailyTaskOpt
       newCards: 0,
       examCards: 0,
       exams: new Set<string>(),
+      answers: 0,
+      seconds: 0,
     };
-    if (q.bucket === 'exam-new' || q.bucket === 'active-new' || q.bucket === 'none-new')
-      g.newCards++;
+    const isNew = q.bucket === 'exam-new' || q.bucket === 'active-new' || q.bucket === 'none-new';
+    if (isNew) g.newCards++;
     else g.reviews++;
+    // A card's own pace (measured while practising) when known.
+    const answers = isNew ? opts.estimate.answersPerNewCard : opts.estimate.answersPerReview;
+    const perAnswer = opts.secondsOf?.(q.cardId) ?? opts.estimate.secondsPerAnswer;
+    g.answers += answers;
+    g.seconds += answers * perAnswer;
     if (q.examId) {
       g.examCards++;
       const name = opts.examName(q.examId);
@@ -184,12 +205,13 @@ export function buildDailyTasks(queue: readonly QueuedCard[], opts: DailyTaskOpt
   const template = opts.titleTemplate ?? DEFAULT_TITLE_TEMPLATE;
   return [...groups.values()]
     .map((g): DailyTask => {
-      const minutes = estimateMinutes(g.reviews, g.newCards, opts.estimate);
+      const minutes = Math.max(5, Math.ceil(g.seconds / 60 / 5) * 5);
+      const perAnswer = g.answers ? g.seconds / g.answers : opts.estimate.secondsPerAnswer;
       const exams = [...g.exams];
       const lines = [
         `${g.reviews} Wiederholungen, ${g.newCards} neue Karten`,
         ...(exams.length ? [`Prüfung: ${exams.join(', ')} (${g.examCards} Karten)`] : []),
-        `Schätzung: ~${minutes} min (${Math.round(opts.estimate.secondsPerAnswer)} s pro Antwort)`,
+        `Schätzung: ~${minutes} min (Ø ${Math.round(perAnswer)} s pro Antwort bei diesen Karten)`,
         ...(opts.practiceUrl ? [`[In RemCraft üben](${opts.practiceUrl(g.group.id)})`] : []),
       ];
       return {

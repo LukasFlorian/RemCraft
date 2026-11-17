@@ -170,7 +170,17 @@ describe('OPML', () => {
 describe('backup', () => {
   it('round-trips and validates', () => {
     const b = createBackup(
-      { settings: [], schedulers: [], rems: [], cards: [], logs: [], exams: [], annotations: [], lectures: [], lectureEvents: [] },
+      {
+        settings: [],
+        schedulers: [],
+        rems: [],
+        cards: [],
+        logs: [],
+        exams: [],
+        annotations: [],
+        lectures: [],
+        lectureEvents: [],
+      },
       5,
     );
     expect(parseBackup(JSON.stringify(b))).toEqual(b);

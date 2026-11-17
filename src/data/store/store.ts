@@ -138,7 +138,13 @@ export class Transaction {
     const prev = this.pending.get(key);
     const before = prev ? prev.before : this.store.getRecord(collection, id);
     if (!before && !prev) return;
-    this.pending.set(key, { collection, id, before, after: undefined, at: this.store.clock.now() } as Change);
+    this.pending.set(key, {
+      collection,
+      id,
+      before,
+      after: undefined,
+      at: this.store.clock.now(),
+    } as Change);
   }
 }
 
@@ -248,7 +254,8 @@ export class Store implements RemGraph {
       const own = this.sortedChildren(null);
       const orphans: Rem[] = [];
       for (const parentId of this.childIndex.keys())
-        if (parentId !== null && !this.data.rems.has(parentId)) orphans.push(...this.sortedChildren(parentId));
+        if (parentId !== null && !this.data.rems.has(parentId))
+          orphans.push(...this.sortedChildren(parentId));
       return orphans.length === 0 ? own : [...own, ...orphans];
     });
   }

@@ -24,6 +24,7 @@
  */
 import type { CardId, CardState, EffectivePriority, RemId, Timestamp } from '../model/types';
 import { addStudyDays, MINUTE, startOfStudyDay } from '../util/time';
+import type { RemGraph } from '../model/graph';
 import type { Rng } from './common';
 
 /** A card together with everything needed to queue it. */
@@ -106,6 +107,24 @@ export function shuffle<T>(items: readonly T[], rng: Rng = Math.random): T[] {
     [out[i], out[j]] = [out[j]!, out[i]!];
   }
   return out;
+}
+
+/**
+ * The group a card is mixed by: the nearest document, slide deck or folder
+ * above its Rem (its lecture).
+ *
+ * @param graph Rem graph.
+ * @param remId Rem of the card.
+ */
+export function lectureGroupOf(graph: RemGraph, remId: RemId): string {
+  let id: RemId | null = graph.get(remId)?.parentId ?? null;
+  while (id) {
+    const rem = graph.get(id);
+    if (!rem) return id;
+    if (rem.isDocument || rem.deck || rem.isFolder || !rem.parentId) return rem.id;
+    id = rem.parentId;
+  }
+  return remId;
 }
 
 /** Deterministic 32-bit hash of a string (FNV-1a), for stable daily mixing. */

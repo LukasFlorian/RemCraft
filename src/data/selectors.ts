@@ -30,7 +30,13 @@ import { planExam } from '@core/scheduling/exam';
 import type { InheritedInfo } from '@core/scheduling/inheritance';
 import { isExamActive, resolveInheritance } from '@core/scheduling/inheritance';
 import type { ExamQuota, QueuedCard, QueueEntry } from '@core/scheduling/queue';
-import { buildGlobalQueue, countDue, isLearningDue, isReviewDue } from '@core/scheduling/queue';
+import {
+  buildGlobalQueue,
+  countDue,
+  isLearningDue,
+  isReviewDue,
+  lectureGroupOf,
+} from '@core/scheduling/queue';
 import type { Scheduler } from '@core/scheduling/scheduler';
 import { createScheduler } from '@core/scheduling/scheduler';
 import { addStudyDays, MINUTE, startOfStudyDay } from '@core/util/time';
@@ -159,20 +165,13 @@ export function selectQueueEntries(store: Store, now: Timestamp): QueueEntry[] {
     () => {
       const index = selectCardIndex(store);
       const inherited = selectInheritance(store, now);
-      // Group = the nearest document/slide deck above a card's Rem (its
-      // lecture), so the queue can mix lectures instead of finishing one first.
+      // Lecture of each card, so the queue can mix lectures (cached per parent).
       const groups = new Map<RemId, string>();
       const groupOf = (remId: RemId): string => {
-        const known = groups.get(remId);
-        if (known !== undefined) return known;
-        const rem = store.get(remId);
-        const group = !rem
-          ? remId
-          : rem.isDocument || rem.deck || rem.isFolder || !rem.parentId
-            ? rem.id
-            : groupOf(rem.parentId);
-        groups.set(remId, group);
-        return group;
+        const parent = store.get(remId)?.parentId ?? remId;
+        let g = groups.get(parent);
+        if (g === undefined) groups.set(parent, (g = lectureGroupOf(store, remId)));
+        return g;
       };
       return index.specs.map((spec) => {
         const info = inherited.get(spec.remId);
@@ -183,7 +182,7 @@ export function selectQueueEntries(store: Store, now: Timestamp): QueueEntry[] {
           priority: info?.priority ?? 'none',
           examIds: info?.examIds ?? [],
           docOrder: index.docOrder.get(spec.remId) ?? 0,
-          groupId: groupOf(store.get(spec.remId)?.parentId ?? spec.remId),
+          groupId: groupOf(spec.remId),
         };
       });
     },

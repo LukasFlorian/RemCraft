@@ -75,7 +75,8 @@ export function App(): ReactNode {
       .then((a) => {
         created = a;
         // Daily tasks (Todoist) link back to the practice screen of their course.
-        a.integrations.practiceUrl = (id) => `${window.location.origin}${window.location.pathname}#/practice?scope=${id}&mode=srs`;
+        a.integrations.practiceUrl = (id) =>
+          `${window.location.origin}${window.location.pathname}#/practice?scope=${id}&mode=srs`;
         // Expose the app for debugging and end-to-end tests in development builds.
         if (import.meta.env.DEV) (window as unknown as { remcraft: RemCraftApp }).remcraft = a;
         setApp(a);

@@ -88,3 +88,30 @@ test('practice on a phone has no sidebar button over its exit button', async ({ 
   await expect(page.getByRole('button', { name: 'Exit practice' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Show sidebar' })).toBeHidden();
 });
+
+test('a card can be disabled while practising and the toolbar does not stay behind', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+  await page.keyboard.type('Disable Deck');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('One >> 1');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Two >> 2');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /2 Due/ }).click();
+  await expect(page.locator('.card-question')).toBeVisible();
+
+  // Editing the card and closing the dialog leaves no editing toolbar.
+  await page.getByRole('button', { name: 'Edit card' }).click();
+  await page.locator('.modal .rem-text').first().click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(page.locator('.edit-toolbar')).toHaveCount(0);
+
+  // Disable the first card: only one card is left in the session.
+  await page.getByRole('button', { name: 'Disable card' }).click();
+  await expect(page.getByText('/ 1')).toBeVisible();
+  await page.keyboard.press('Space');
+  await page.keyboard.press('4');
+  await expect(page.getByText('Session complete')).toBeVisible();
+});

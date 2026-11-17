@@ -99,7 +99,15 @@ export class RemCraftApp {
     this.files = new FileService(persistence);
     this.lectures = new LectureService(this.store, this.rems, this.files);
     this.sharing = new SharingService(this.store, this.files, persistence);
-    this.fokusImport = new FokusImportService(this.store, this.rems, this.files, this.lectures, this.io, this.practice, this.settings);
+    this.fokusImport = new FokusImportService(
+      this.store,
+      this.rems,
+      this.files,
+      this.lectures,
+      this.io,
+      this.practice,
+      this.settings,
+    );
     const client = backend ? createSupabase(backend) : null;
     this.auth = client ? new AuthService(client) : null;
     this.remoteFactory =

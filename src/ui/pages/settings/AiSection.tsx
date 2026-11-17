@@ -21,9 +21,10 @@ export function AiSection(): ReactNode {
     <div className="card col" style={{ gap: 14 }}>
       <h2 className="card-title">AI provider (experimental)</h2>
       <p className="muted" style={{ margin: 0 }}>
-        The lecture assistant (slides, notes, card generation) uses this provider: Claude via the Anthropic API or any OpenAI-compatible API (OpenAI, OpenRouter, Groq,
-        Mistral, a local Ollama/LM Studio server, …) can be configured here for future features. The
-        key is stored only on this device and never synchronised.
+        The lecture assistant (slides, notes, card generation) uses this provider: Claude via the
+        Anthropic API or any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Mistral, a local
+        Ollama/LM Studio server, …) can be configured here for future features. The key is stored
+        only on this device and never synchronised.
       </p>
       <Field label="Anbieter">
         <select
@@ -86,9 +87,12 @@ export function AiSection(): ReactNode {
           onClick={async () => {
             setTesting(true);
             try {
-              const answer = await createAiProvider({ provider, baseUrl, apiKey, model }).complete([{ role: 'user', content: 'Reply with the single word: pong' }], {
-                maxTokens: 5,
-              });
+              const answer = await createAiProvider({ provider, baseUrl, apiKey, model }).complete(
+                [{ role: 'user', content: 'Reply with the single word: pong' }],
+                {
+                  maxTokens: 5,
+                },
+              );
               toast(`Provider answered: ${answer.trim() || '(empty)'}`);
             } catch (e) {
               toast(e instanceof Error ? e.message : String(e), 'error');
