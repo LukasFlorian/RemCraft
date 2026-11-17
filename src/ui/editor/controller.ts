@@ -110,7 +110,12 @@ export class EditorController {
   /** Registers an outliner instance with its root Rem. */
   register(instance: string, rootId: RemId): () => void {
     this.roots.set(instance, rootId);
-    return () => this.roots.delete(instance);
+    return () => {
+      this.roots.delete(instance);
+      // An outliner that goes away (e.g. leaving the page) takes its editing
+      // focus with it - otherwise the editing toolbar would linger.
+      if (this.state.focus?.instance === instance) this.blur();
+    };
   }
 
   /** Root of an outliner instance. */
