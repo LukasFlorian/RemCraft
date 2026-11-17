@@ -23,15 +23,11 @@
 }
 
 .sidebar-logo {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 24px;
   height: 24px;
   border-radius: 7px;
-  background: linear-gradient(135deg, #5b6cff, #a368ff);
-  color: #fff;
-  font-weight: 800;
-  font-size: 13px;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08);
 }
 
 .sidebar-title {

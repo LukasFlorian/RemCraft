@@ -137,6 +137,7 @@ test('a share link shows the slides as images with their notes', async ({ page }
       });
     return route.fulfill({ json: {} });
   });
+  await page.evaluate(() => localStorage.setItem('remcraft.whatsNewSeen', '9999'));
   await page.evaluate(() =>
     localStorage.setItem(
       'remcraft.backend',

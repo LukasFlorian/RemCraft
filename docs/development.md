@@ -79,3 +79,10 @@ new file in `supabase/migrations/` (never edit applied migrations) and a new Dex
 ## Releasing
 
 Merging to `main` runs CI and deploys to GitHub Pages ([deployment.md](deployment.md)).
+
+## Release notes ("Was ist neu")
+
+After an update, users see a short popup with what changed since their last visit. The notes
+live in `src/ui/whatsnew/releases.ts`: add an entry at the top for every deployment with
+user-visible changes (`id` increases, e.g. `2026-11-18a`; items are short German sentences from
+the user's point of view). The last seen id is stored per device; first-time users see nothing.

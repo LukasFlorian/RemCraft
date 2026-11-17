@@ -80,6 +80,11 @@ test('search finds Rems', async ({ page }) => {
   await page.keyboard.press('Control+k');
   await page.getByPlaceholder(/Search Rems/).fill('mitochondria');
   await expect(page.locator('.search-result').first()).toContainText('powerhouse');
+  // Opening a hit scrolls to it inside its document and highlights it.
+  await page.locator('.search-result').first().click();
+  const hit = page.locator('.rem.is-search-hit');
+  await expect(hit).toContainText('powerhouse');
+  await expect(hit).toBeInViewport();
 });
 
 test('practice on a phone has no sidebar button over its exit button', async ({ page }) => {

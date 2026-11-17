@@ -3,9 +3,9 @@
  * practice options, editable title, the outliner (or folder contents) and
  * the references panel.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   ChevronDown,
   ChevronLeft,
@@ -67,7 +67,54 @@ export function DocumentPage(): ReactNode {
       </div>
     );
   }
-  return <DocumentView key={id} remId={id} />;
+  return (
+    <>
+      <DocumentView key={id} remId={id} />
+      <RevealTarget docId={id} />
+    </>
+  );
+}
+
+/**
+ * Scrolls to the Rem named in `?focus=<id>` (search results): expands its
+ * collapsed ancestors, scrolls it into the middle of the page and highlights
+ * it briefly.
+ */
+function RevealTarget({ docId }: { docId: RemId }): ReactNode {
+  const app = useApp();
+  const [params, setParams] = useSearchParams();
+  const target = params.get('focus');
+  useEffect(() => {
+    if (!target || target === docId) return;
+    // Expand collapsed ancestors inside the document so the Rem is rendered.
+    for (const r of app.rems.path(target)) {
+      if (r.id === target) break;
+      if (r.collapsed)
+        app.store.transact((tx) => tx.update('rems', r.id, { collapsed: undefined }), {
+          undoable: false,
+        });
+    }
+    let tries = 0;
+    let frame = 0;
+    const find = (): void => {
+      const el = document.querySelector<HTMLElement>(`.rem[data-rem-id="${CSS.escape(target)}"]`);
+      if (el) {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        el.classList.add('is-search-hit');
+        window.setTimeout(() => el.classList.remove('is-search-hit'), 2000);
+        setParams(
+          (p) => {
+            p.delete('focus');
+            return p;
+          },
+          { replace: true },
+        );
+      } else if (tries++ < 60) frame = requestAnimationFrame(find);
+    };
+    frame = requestAnimationFrame(find);
+    return () => cancelAnimationFrame(frame);
+  }, [app, docId, target, setParams]);
+  return null;
 }
 
 /** Breadcrumb trail. */

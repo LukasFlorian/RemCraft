@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import type { ReactNode } from 'react';
 import {
+  ArrowDown,
+  ArrowUp,
   CheckSquare,
   Heading,
   Image,
@@ -117,6 +119,15 @@ export function EditToolbar(): ReactNode {
       {button('Table', <Table size={17} />, () => run('table'))}
       {button('Indent', <IndentIncrease size={17} />, () => run('indent'))}
       {button('Outdent', <IndentDecrease size={17} />, () => run('outdent'))}
+      {/* Moving lines (and images) without drag and drop, e.g. on touch screens. */}
+      {button('Up', <ArrowUp size={17} />, () => {
+        run('move-up');
+        controller.focus(focus.instance, focus.remId, 'end');
+      })}
+      {button('Down', <ArrowDown size={17} />, () => {
+        run('move-down');
+        controller.focus(focus.instance, focus.remId, 'end');
+      })}
       {button(
         'More',
         <MoreHorizontal size={17} />,
