@@ -57,7 +57,12 @@ export function readText(file: Blob): Promise<string> {
 
 /** Triggers a download of text content. */
 export function downloadText(filename: string, content: string, mime = 'text/plain'): void {
-  const url = URL.createObjectURL(new Blob([content], { type: `${mime};charset=utf-8` }));
+  downloadBlob(filename, new Blob([content], { type: `${mime};charset=utf-8` }));
+}
+
+/** Triggers a download of a blob. */
+export function downloadBlob(filename: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;

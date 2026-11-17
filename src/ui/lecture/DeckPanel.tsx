@@ -23,6 +23,7 @@ import type { RemId } from '@core/model/types';
 import { toPlainText } from '@core/richtext/ops';
 import { exportForAi } from '@data/lecture/context';
 import { useApp, useSelector } from '../app/context';
+import { SkillDownloadLink } from './SkillDownloadLink';
 import { useToast } from '../components/Toast';
 import { downloadText, pickFiles } from '../hooks/useFilePicker';
 import { useDeckSlides, useUpToDateTitles } from './useSlides';
@@ -58,9 +59,6 @@ export async function importCardFile(
     return undefined;
   }
 }
-
-/** Download URL of the `remcraft-flashcards` Claude skill (built by `scripts/build-skill.mjs`). */
-export const SKILL_URL = `${import.meta.env.BASE_URL}remcraft-flashcards.zip`;
 
 /** The deck header. */
 export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
@@ -105,14 +103,12 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
         >
           <FileJson size={14} /> Karten exportieren
         </button>
-        <a
+        <SkillDownloadLink
           className="btn btn-sm"
-          href={SKILL_URL}
-          download
           title="Claude-Skill, der aus Folien Karten mit Folienzuordnung erstellt (Datei in Claude unter Einstellungen → Skills hochladen)"
         >
           <Sparkles size={14} /> Claude-Skill
-        </a>
+        </SkillDownloadLink>
         <button
           className="btn btn-sm"
           onClick={() =>
