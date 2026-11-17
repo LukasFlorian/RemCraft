@@ -678,16 +678,63 @@
 }
 
 .handout-slide {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
   padding: 14px 0;
   border-top: 1px solid var(--border);
   break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .handout-left {
+  flex: 0 0 56%;
   min-width: 0;
+}
+
+.handout-right {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.handout-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.handout-img.placeholder {
+  aspect-ratio: 16 / 10;
+  display: grid;
+  place-items: center;
+}
+
+.handout-notes {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.handout-notes .handout-notes {
+  margin-top: 2px;
+}
+
+.handout-notes li {
+  margin: 2px 0;
+  line-height: 1.45;
+}
+
+.handout-notes li.mc-right::marker {
+  content: '✓ ';
+  color: var(--success);
+}
+
+.handout-notes li.mc-wrong::marker {
+  content: '✗ ';
+  color: var(--text-faint);
 }
 
 /* Fluid slides (handout): width from the column, height from the aspect ratio,
@@ -750,10 +797,17 @@
     max-width: none;
     padding: 0;
   }
+  @page {
+    margin: 12mm;
+  }
   .handout-slide {
-    grid-template-columns: 58% 1fr;
     gap: 12px;
-    page-break-inside: avoid;
+  }
+  .handout-right {
+    font-size: 11pt;
+  }
+  .handout-img {
+    border-color: #ccc;
   }
   .slide-stage {
     box-shadow: none;

@@ -501,6 +501,11 @@ export interface Settings {
   typeInAnswerGrading: 'exact' | 'lenient';
   /** Shuffle the global queue instead of ordering by due date. */
   shuffleQueue: boolean;
+  /**
+   * Multiple choice: show whether one or several answers are correct (radio
+   * buttons vs. checkboxes). Off: always checkboxes, no hint (default).
+   */
+  mcShowAnswerKind?: boolean;
   /** Learning cards may be shown this many minutes early at the end of the queue (RemNote: 15). */
   learnAheadMinutes?: number;
   /** Lecture mode (Fokus) options; defaults apply when absent. */

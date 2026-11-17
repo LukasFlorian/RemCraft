@@ -292,6 +292,7 @@ function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
   const toast = useToast();
   const navigate = useNavigate();
   const children = useChildren(folderId);
+  const [dragging, setDragging] = useState<RemId | null>(null);
   return (
     <div className="folder-contents">
       <div className="row" style={{ marginBottom: 12 }}>
@@ -334,21 +335,84 @@ function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
       {children.length === 0 && <div className="empty">This folder is empty.</div>}
       <div className="folder-grid">
         {children.map((c) => (
-          <FolderItem key={c.id} remId={c.id} />
+          <FolderItem
+            key={c.id}
+            remId={c.id}
+            dragging={dragging}
+            onDragState={setDragging}
+            onDrop={(target, zone) => {
+              if (!dragging || dragging === target) return;
+              if (zone === 'inside') app.rems.move([dragging], { parentId: target });
+              else {
+                const rest = children.filter((r) => r.id !== dragging);
+                const i = rest.findIndex((r) => r.id === target);
+                const afterId = zone === 'after' ? target : (rest[i - 1]?.id ?? null);
+                app.rems.move([dragging], { parentId: folderId, afterId });
+              }
+            }}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function FolderItem({ remId }: { remId: RemId }): ReactNode {
+/** Where a dragged tile lands relative to another tile. */
+type TileZone = 'before' | 'after' | 'inside';
+
+/**
+ * A tile of the folder view. Tiles can be dragged to reorder them (left/right
+ * half of another tile) or into a sub-folder (its middle).
+ */
+function FolderItem({
+  remId,
+  dragging,
+  onDragState,
+  onDrop,
+}: {
+  remId: RemId;
+  dragging: RemId | null;
+  onDragState: (id: RemId | null) => void;
+  onDrop: (target: RemId, zone: TileZone) => void;
+}): ReactNode {
   const navigate = useNavigate();
   const rem = useRem(remId);
   const title = useRemTitle(remId);
   const count = useChildren(remId).length;
+  const [zone, setZone] = useState<TileZone | null>(null);
   if (!rem) return null;
+  const zoneAt = (e: React.DragEvent<HTMLElement>): TileZone => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    if (rem.isFolder && x > 0.3 && x < 0.7) return 'inside';
+    return x < 0.5 ? 'before' : 'after';
+  };
   return (
-    <button className="folder-item" onClick={() => navigate(`/rem/${remId}`)}>
+    <button
+      className={`folder-item${zone ? ` tile-drop-${zone}` : ''}${dragging === remId ? ' dragging' : ''}`}
+      onClick={() => navigate(`/rem/${remId}`)}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', remId);
+        onDragState(remId);
+      }}
+      onDragEnd={() => onDragState(null)}
+      onDragOver={(e) => {
+        if (!dragging || dragging === remId) return;
+        e.preventDefault();
+        const z = zoneAt(e);
+        if (z !== zone) setZone(z);
+      }}
+      onDragLeave={() => setZone(null)}
+      onDrop={(e) => {
+        e.preventDefault();
+        const z = zoneAt(e);
+        setZone(null);
+        onDrop(remId, z);
+        onDragState(null);
+      }}
+    >
       <RemIcon rem={rem} size={20} />
       <span className="ellipsis">{title}</span>
       <span className="faint" style={{ fontSize: 12 }}>

@@ -830,3 +830,59 @@
 .streak-card > .row > div:last-child {
   min-width: 220px;
 }
+
+/* Multiple choice: checkbox (several answers possible) or radio (one answer) */
+.mc-mark {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-strong);
+  display: grid;
+  place-items: center;
+}
+.mc-mark.check {
+  border-radius: 4px;
+}
+.mc-mark.radio {
+  border-radius: 50%;
+}
+.mc-mark.on {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.mc-mark.check.on::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+.mc-mark.radio.on {
+  background: transparent;
+}
+.mc-mark.radio.on::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Reordering folder tiles by drag & drop */
+.folder-item {
+  user-select: none;
+}
+.folder-item.dragging {
+  opacity: 0.45;
+}
+.folder-item.tile-drop-before {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.folder-item.tile-drop-after {
+  box-shadow: inset -3px 0 0 var(--accent);
+}
+.folder-item.tile-drop-inside {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}

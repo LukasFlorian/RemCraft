@@ -91,6 +91,11 @@ export function FlashcardSection(): ReactNode {
         onChange={(v) => app.settings.update({ shuffleQueue: v })}
         label="Shuffle the daily queue (otherwise most-at-risk cards first)"
       />
+      <Switch
+        checked={Boolean(s.mcShowAnswerKind)}
+        onChange={(v) => app.settings.update({ mcShowAnswerKind: v })}
+        label="Multiple choice: show whether one or several answers are correct (radio buttons vs. checkboxes; the number of correct answers is never shown)"
+      />
     </div>
   );
 }

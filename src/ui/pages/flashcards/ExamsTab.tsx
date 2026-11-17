@@ -58,11 +58,8 @@ export function ExamsTab({ examId }: { examId?: string | undefined }): ReactNode
               </span>
             </div>
             <div className="muted" style={{ fontSize: 13 }}>
-              {new Date(p.exam.date).toLocaleString(undefined, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}{' '}
-              · {p.daysLeft} days left
+              {new Date(p.exam.date).toLocaleDateString(undefined, { dateStyle: 'medium' })} ·{' '}
+              {p.daysLeft} days left
             </div>
             <ProgressBar value={p.totalCards ? 1 - p.newRemaining / p.totalCards : 1} />
             <div className="faint" style={{ fontSize: 12 }}>
@@ -150,7 +147,7 @@ function ExamDetail({ plan }: { plan: ExamPlan }): ReactNode {
       <div className="row muted" style={{ flexWrap: 'wrap', gap: 14 }}>
         <span>
           <CalendarDays size={14} />{' '}
-          {new Date(exam.date).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' })}
+          {new Date(exam.date).toLocaleDateString(undefined, { dateStyle: 'full' })}
         </span>
         <span className={`badge ${plan.onTrack ? 'badge-success' : 'badge-warning'}`}>
           {plan.onTrack ? 'On track' : `Behind: ${plan.overdueBacklog} overdue`}

@@ -5,7 +5,9 @@
  * "Drucken / als PDF speichern" uses the browser's print dialog, so every
  * character and formula renders exactly as on screen.
  */
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { Rem, RemId } from '@core/model/types';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { Printer } from 'lucide-react';
 import { lectureKpis, mergeStats, slideStats } from '@core/lecture/analytics';
@@ -14,8 +16,9 @@ import { fmtDuration } from '@core/lecture/review';
 import { toPlainText } from '@core/richtext/ops';
 import { slideNotesText } from '@data/lecture/context';
 import { useNow, useSelector } from '../app/context';
-import { Outliner } from '../editor/Outliner';
-import { SlideView } from './SlideView';
+import { RemContent } from '../editor/RemBlock';
+import { annotatedSlideImage } from './handoutImage';
+import { useSlideImage } from './useSlides';
 import { clock, selectLectureState, useLectureSettings } from './useLecture';
 import { useDeckSlides } from './useSlides';
 
@@ -47,6 +50,10 @@ export function HandoutPage(): ReactNode {
       },
     ),
   );
+  // Slides render asynchronously; printing waits until every image is ready.
+  const [ready, setReady] = useState<ReadonlySet<RemId>>(new Set());
+  const markReady = (id: RemId): void => setReady((r) => (r.has(id) ? r : new Set(r).add(id)));
+  const allReady = slides.every((s) => ready.has(s.id));
   const questions = useSelector((s) =>
     s.memo(
       `handoutQ:${deckId}`,
@@ -67,7 +74,12 @@ export function HandoutPage(): ReactNode {
             ← Zurück
           </button>
           <span className="spacer" />
-          <button className="btn btn-primary" onClick={() => window.print()}>
+          <span className="muted" style={{ fontSize: 13 }}>
+            {allReady
+              ? 'Tipp: im Druckdialog „Kopf- und Fußzeilen“ ausschalten.'
+              : `Folien werden vorbereitet … ${ready.size}/${slides.length}`}
+          </span>
+          <button className="btn btn-primary" disabled={!allReady} onClick={() => window.print()}>
             <Printer size={15} /> Drucken / als PDF speichern
           </button>
         </div>
@@ -112,7 +124,7 @@ export function HandoutPage(): ReactNode {
           return (
             <section key={s.id} className="handout-slide">
               <div className="handout-left">
-                <SlideView deckId={deckId} slide={s} width={900} fluid />
+                <HandoutSlideImage deckId={deckId} slide={s} onReady={markReady} />
               </div>
               <div className="handout-right">
                 <div className="handout-meta">
@@ -127,7 +139,7 @@ export function HandoutPage(): ReactNode {
                     </span>
                   )}
                 </div>
-                <Outliner rootId={s.id} embedded />
+                <StaticNotes parentId={s.id} />
                 {st?.checkins.map((c, k) => (
                   <div key={k} className="checkin-row">
                     <em>{c.prompt}</em> {c.text}
@@ -139,5 +151,63 @@ export function HandoutPage(): ReactNode {
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * One slide as a plain image with its drawings, highlights and text boxes
+ * baked in - prints identically in every browser.
+ */
+function HandoutSlideImage({
+  deckId,
+  slide,
+  onReady,
+}: {
+  deckId: RemId;
+  slide: Rem;
+  onReady: (id: RemId) => void;
+}): ReactNode {
+  const url = useSlideImage(deckId, slide, 1000);
+  const ann = useSelector((s) => s.getRecord('annotations', slide.id));
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    if (!url) return;
+    let alive = true;
+    annotatedSlideImage(url, ann)
+      .catch(() => url)
+      .then((out) => {
+        if (!alive) return;
+        setSrc(out);
+        onReady(slide.id);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [url, ann]); // eslint-disable-line react-hooks/exhaustive-deps
+  return src ? (
+    <img className="handout-img" src={src} alt={`Folie ${(slide.slide?.index ?? 0) + 1}`} />
+  ) : (
+    <div className="handout-img placeholder faint">Folie wird geladen…</div>
+  );
+}
+
+/** Notes below a slide as static text (no editor chrome, prints cleanly). */
+function StaticNotes({ parentId }: { parentId: RemId }): ReactNode {
+  const kids = useSelector((s) => s.children(parentId));
+  if (kids.length === 0) return null;
+  return (
+    <ul className="handout-notes">
+      {kids.map((k) => (
+        <li
+          key={k.id}
+          className={
+            k.mcCorrect === true ? 'mc-right' : k.mcCorrect === false ? 'mc-wrong' : undefined
+          }
+        >
+          <RemContent rem={k} />
+          <StaticNotes parentId={k.id} />
+        </li>
+      ))}
+    </ul>
   );
 }
