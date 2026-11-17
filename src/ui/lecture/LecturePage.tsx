@@ -28,7 +28,13 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 import { lectureKpis } from '@core/lecture/analytics';
-import { activeDuration, currentSlide, isRunning, openCheckin, summarize } from '@core/lecture/session';
+import {
+  activeDuration,
+  currentSlide,
+  isRunning,
+  openCheckin,
+  summarize,
+} from '@core/lecture/session';
 import { FLAG_ICONS, FLAG_LABELS } from '@core/lecture/notes';
 import type { RemId, SlideFlag } from '@core/model/types';
 import { rt, toPlainText } from '@core/richtext/ops';
@@ -40,11 +46,26 @@ import { Outliner } from '../editor/Outliner';
 import { useHotkeys } from '../hooks/useHotkeys';
 import { useLocalState } from '../hooks/useLocalState';
 import { AssistantPanel } from './AssistantPanel';
-import { CheckinDialog, LectureHelp, SlideOverview, StartLectureDialog, SummaryDialog } from './LectureDialogs';
+import {
+  CheckinDialog,
+  LectureHelp,
+  SlideOverview,
+  StartLectureDialog,
+  SummaryDialog,
+} from './LectureDialogs';
 import { SlideCards } from './SlideCards';
+import { ReviewContent } from './ReviewPage';
+import { DeckLecturesPanel } from './LecturesPage';
 import type { SlideTool } from './SlideView';
 import { PEN_COLORS, SlideView } from './SlideView';
-import { clock, useActiveLecture, useAwayTracking, useCheckinTimer, useLectureSettings, useLectureState } from './useLecture';
+import {
+  clock,
+  useActiveLecture,
+  useAwayTracking,
+  useCheckinTimer,
+  useLectureSettings,
+  useLectureState,
+} from './useLecture';
 import { useDeckPdf, useDeckSlides } from './useSlides';
 import type { WidgetRect } from './WidgetBoard';
 import { WidgetBoard } from './WidgetBoard';
@@ -64,7 +85,14 @@ const DEFAULT_LAYOUT: Record<string, WidgetRect> = {
 export function LecturePage(): ReactNode {
   const { deckId = '' } = useParams();
   const deck = useRem(deckId);
-  if (!deck?.deck) return <div className="main-scroll"><div className="page"><div className="empty">Kein Foliensatz.</div></div></div>;
+  if (!deck?.deck)
+    return (
+      <div className="main-scroll">
+        <div className="page">
+          <div className="empty">Kein Foliensatz.</div>
+        </div>
+      </div>
+    );
   return <LectureView key={deckId} deckId={deckId} />;
 }
 
@@ -74,6 +102,19 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const toast = useToast();
   const controller = useController();
   const [params, setParams] = useSearchParams();
+  // Review / statistics shown inside lecture mode (`?view=review|stats`).
+  const view = (['review', 'stats'] as const).find((v) => v === params.get('view')) ?? null;
+  const setView = (v: 'review' | 'stats' | null): void => {
+    const p = new URLSearchParams(params);
+    if (v) p.set('view', v);
+    else p.delete('view');
+    setParams(p);
+  };
+  // Re-attach notes/cards that an earlier layout change detached from their slide.
+  useEffect(() => {
+    const n = app.lectures.repairDeck(deckId);
+    if (n) toast(`${n} Notizblöcke wieder ihren Folien zugeordnet`);
+  }, [app, deckId]); // eslint-disable-line react-hooks/exhaustive-deps
   const now = useNow(1000);
   const deck = useRem(deckId)!;
   const slides = useDeckSlides(deckId);
@@ -87,7 +128,10 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const paused = state?.pausedSince != null;
   const [lastSlide, setLastSlide] = useLocalState<number>(`deck.${deckId}.slide`, 0);
   const urlSlide = params.get('slide') ? Number(params.get('slide')) - 1 : null;
-  const index = Math.min(Math.max(0, urlSlide ?? (state ? (currentSlide(state) ?? lastSlide) : lastSlide)), Math.max(0, slides.length - 1));
+  const index = Math.min(
+    Math.max(0, urlSlide ?? (state ? (currentSlide(state) ?? lastSlide) : lastSlide)),
+    Math.max(0, slides.length - 1),
+  );
   const slide = slides[index];
   const [tool, setTool] = useState<SlideTool>('select');
   const [color, setColor] = useState(PEN_COLORS[0]!);
@@ -102,17 +146,26 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const checkin = state ? openCheckin(state) : null;
 
   /** Navigates to a slide (and records it in the running lecture). */
-  const go = (i: number): void => {
+  const go = (i: number, dropParams: string[] = []): void => {
     const next = Math.min(Math.max(0, i), slides.length - 1);
-    if (next === index) return;
+    if (next === index) {
+      if (dropParams.length) {
+        const p = new URLSearchParams(params);
+        for (const k of dropParams) p.delete(k);
+        setParams(p);
+      }
+      return;
+    }
     setLastSlide(next);
     const p = new URLSearchParams(params);
     p.delete('slide');
+    for (const k of dropParams) p.delete(k);
     setParams(p, { replace: true });
     if (lectureId && (running || paused)) app.lectures.record(lectureId, 'slide', { slide: next });
   };
   useEffect(() => {
-    if (urlSlide !== null && lectureId && running && state && currentSlide(state) !== urlSlide) app.lectures.record(lectureId, 'slide', { slide: urlSlide });
+    if (urlSlide !== null && lectureId && running && state && currentSlide(state) !== urlSlide)
+      app.lectures.record(lectureId, 'slide', { slide: urlSlide });
   }, [urlSlide]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleFlag = (flag: SlideFlag): void => {
@@ -134,7 +187,14 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
     addNote('');
   };
   const startLecture = (name: string, goal: string): void => {
-    app.lectures.start({ name, deckId, courseId: deck.parentId, goal, trackAway: cfg.trackAway, slide: index });
+    app.lectures.start({
+      name,
+      deckId,
+      courseId: deck.parentId,
+      goal,
+      trackAway: cfg.trackAway,
+      slide: index,
+    });
     setDialog(null);
   };
   const stopLecture = (): void => {
@@ -178,7 +238,12 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const slideIds = useMemo(() => slides.map((s) => s.id), [slides]);
 
   const toolButton = (t: SlideTool, icon: ReactNode, label: string): ReactNode => (
-    <button className={`icon-btn${tool === t ? ' active' : ''}`} title={label} aria-label={label} onClick={() => setTool(t)}>
+    <button
+      className={`icon-btn${tool === t ? ' active' : ''}`}
+      title={label}
+      aria-label={label}
+      onClick={() => setTool(t)}
+    >
       {icon}
     </button>
   );
@@ -191,7 +256,9 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         interactive
         tool={tool}
         color={color}
-        onTextAction={(action, text) => (action === 'note' ? addNote(`> ${text}`) : setAssistant({ open: true, quote: text }))}
+        onTextAction={(action, text) =>
+          action === 'note' ? addNote(`> ${text}`) : setAssistant({ open: true, quote: text })
+        }
       />
       <div className="slide-toolbar">
         <button className="icon-btn" aria-label="Vorherige Folie" onClick={() => go(index - 1)}>
@@ -203,7 +270,11 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         <button className="icon-btn" aria-label="Nächste Folie" onClick={() => go(index + 1)}>
           <ChevronRight size={18} />
         </button>
-        <button className="icon-btn" title="Folienübersicht (G)" onClick={() => setDialog('overview')}>
+        <button
+          className="icon-btn"
+          title="Folienübersicht (G)"
+          onClick={() => setDialog('overview')}
+        >
           <Grid3x3 size={16} />
         </button>
         <span className="toolbar-sep" />
@@ -213,9 +284,26 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         {toolButton('eraser', <Eraser size={16} />, 'Radierer (E)')}
         {toolButton('text', <Type size={16} />, 'Textfeld (T)')}
         {(tool === 'pen' || tool === 'marker') &&
-          PEN_COLORS.map((c) => <button key={c} className={`mark-swatch${color === c ? ' active' : ''}`} style={{ background: c }} aria-label="Farbe" onClick={() => setColor(c)} />)}
+          PEN_COLORS.map((c) => (
+            <button
+              key={c}
+              className={`mark-swatch${color === c ? ' active' : ''}`}
+              style={{ background: c }}
+              aria-label="Farbe"
+              onClick={() => setColor(c)}
+            />
+          ))}
         <span className="spacer" />
-        <select className="select layout-select" value={deck.deck!.layout} title="Folien pro Seite" onChange={(e) => void app.lectures.relayout(deckId, e.target.value).then(() => toast('Layout aktualisiert'))}>
+        <select
+          className="select layout-select"
+          value={deck.deck!.layout}
+          title="Folien pro Seite"
+          onChange={(e) =>
+            void app.lectures
+              .relayout(deckId, e.target.value)
+              .then(() => toast('Layout aktualisiert'))
+          }
+        >
           {Object.entries(LAYOUT_MODES).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
@@ -241,7 +329,9 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         </div>
       ) : (
         <div className="faint" style={{ fontSize: 13 }}>
-          {lectureId ? 'Kein Ziel gesetzt.' : 'Starte eine Vorlesung, um Zeit, Abwesenheit und Check-ins aufzuzeichnen.'}
+          {lectureId
+            ? 'Kein Ziel gesetzt.'
+            : 'Starte eine Vorlesung, um Zeit, Abwesenheit und Check-ins aufzuzeichnen.'}
         </div>
       )}
       <div className="col" style={{ gap: 6 }}>
@@ -250,7 +340,12 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         </button>
         <div className="row">
           {(['important', 'unclear'] as SlideFlag[]).map((f) => (
-            <button key={f} className={`btn btn-sm${slide?.slideFlags?.includes(f) ? ' btn-primary' : ''}`} onClick={() => toggleFlag(f)} title={f === 'important' ? 'Taste W' : 'Taste U'}>
+            <button
+              key={f}
+              className={`btn btn-sm${slide?.slideFlags?.includes(f) ? ' btn-primary' : ''}`}
+              onClick={() => toggleFlag(f)}
+              title={f === 'important' ? 'Taste W' : 'Taste U'}
+            >
               {FLAG_ICONS[f]} {FLAG_LABELS[f]}
             </button>
           ))}
@@ -265,11 +360,22 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const kpiWidget = kpis ? (
     <div className="kpi-grid">
       <Kpi label="Dauer" value={clock(kpis.durationMs)} />
-      <Kpi label="In der App" value={kpis.focusRatio === null ? '—' : `${Math.round(kpis.focusRatio * 100)} %`} />
+      <Kpi
+        label="In der App"
+        value={kpis.focusRatio === null ? '—' : `${Math.round(kpis.focusRatio * 100)} %`}
+      />
       <Kpi label="Außerhalb" value={clock(kpis.awayMs)} hint={`${kpis.awayCount}×`} />
       <Kpi label="Abschweifen bemerkt" value={String(kpis.drifts)} />
-      <Kpi label="Check-ins" value={`${kpis.checkinsAnswered}/${kpis.checkins}`} hint={kpis.focusAvg ? `Ø Fokus ${kpis.focusAvg}` : undefined} />
-      <Kpi label="Folien besprochen" value={String(kpis.slidesSeen)} hint={kpis.paceMs ? `Ø ${clock(kpis.paceMs)}` : undefined} />
+      <Kpi
+        label="Check-ins"
+        value={`${kpis.checkinsAnswered}/${kpis.checkins}`}
+        hint={kpis.focusAvg ? `Ø Fokus ${kpis.focusAvg}` : undefined}
+      />
+      <Kpi
+        label="Folien besprochen"
+        value={String(kpis.slidesSeen)}
+        hint={kpis.paceMs ? `Ø ${clock(kpis.paceMs)}` : undefined}
+      />
     </div>
   ) : (
     <div className="faint" style={{ fontSize: 13 }}>
@@ -286,7 +392,8 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         <span className="spacer" />
         {lecture && (
           <span className={`lecture-status ${running ? 'running' : 'paused'}`}>
-            <span className="dot" /> {lecture.name} · {clock(state ? activeDuration(state, now) : 0)}
+            <span className="dot" /> {lecture.name} ·{' '}
+            {clock(state ? activeDuration(state, now) : 0)}
           </span>
         )}
         {!lecture && (
@@ -295,7 +402,11 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
           </button>
         )}
         {lecture && (
-          <button className="btn btn-sm" onClick={() => app.lectures.setPaused(lecture.id, running)} title="Taste B">
+          <button
+            className="btn btn-sm"
+            onClick={() => app.lectures.setPaused(lecture.id, running)}
+            title="Taste B"
+          >
             {running ? <Pause size={14} /> : <Play size={14} />} {running ? 'Pause' : 'Weiter'}
           </button>
         )}
@@ -304,36 +415,90 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
             <Square size={14} /> Abschließen
           </button>
         )}
-        <button className="icon-btn" title="Nacharbeiten" aria-label="Nacharbeiten" onClick={() => navigate(`/review/${deckId}`)}>
+        <button
+          title="Nacharbeiten"
+          aria-label="Nacharbeiten"
+          className={`icon-btn${view === 'review' ? ' active' : ''}`}
+          onClick={() => setView(view === 'review' ? null : 'review')}
+        >
           <ListChecks size={17} />
         </button>
-        <button className="icon-btn" title="Auswertung" aria-label="Auswertung" onClick={() => navigate(`/lectures?deck=${deckId}`)}>
+        <button
+          title="Auswertung"
+          aria-label="Auswertung"
+          className={`icon-btn${view === 'stats' ? ' active' : ''}`}
+          onClick={() => setView(view === 'stats' ? null : 'stats')}
+        >
           <BarChart3 size={17} />
         </button>
-        <button className="icon-btn" title="Handout drucken" aria-label="Handout" onClick={() => navigate(`/handout/${deckId}`)}>
+        <button
+          className="icon-btn"
+          title="Handout drucken"
+          aria-label="Handout"
+          onClick={() => navigate(`/handout/${deckId}`)}
+        >
           <Printer size={17} />
         </button>
-        <button className={`icon-btn${editingLayout ? ' active' : ''}`} title="Layout" aria-label="Layout" onClick={() => setEditingLayout(!editingLayout)}>
+        <button
+          className={`icon-btn${editingLayout ? ' active' : ''}`}
+          title="Layout"
+          aria-label="Layout"
+          onClick={() => setEditingLayout(!editingLayout)}
+        >
           <LayoutDashboard size={17} />
         </button>
-        <button className="icon-btn" title="Fokusmodus (V)" aria-label="Fokusmodus" onClick={() => setFocusMode(!focusMode)}>
+        <button
+          className="icon-btn"
+          title="Fokusmodus (V)"
+          aria-label="Fokusmodus"
+          onClick={() => setFocusMode(!focusMode)}
+        >
           <Maximize2 size={17} />
         </button>
-        <button className={`icon-btn${assistant.open ? ' active' : ''}`} title="Assistent (K)" aria-label="Assistent" onClick={() => setAssistant((a) => ({ open: !a.open }))}>
+        <button
+          className={`icon-btn${assistant.open ? ' active' : ''}`}
+          title="Assistent (K)"
+          aria-label="Assistent"
+          onClick={() => setAssistant((a) => ({ open: !a.open }))}
+        >
           <Sparkles size={17} />
         </button>
       </div>
       {error && <div className="banner banner-error">PDF nicht verfügbar: {error}</div>}
       {welcome && welcomeDismissed !== welcome.since && (
         <div className="banner">
-          Willkommen zurück - du warst {clock(welcome.ms)} weg. Folie {welcome.slide !== null ? welcome.slide + 1 : '?'} landet in „Nacharbeiten“.
+          Willkommen zurück - du warst {clock(welcome.ms)} weg. Folie{' '}
+          {welcome.slide !== null ? welcome.slide + 1 : '?'} landet in „Nacharbeiten“.
           <button className="btn btn-sm" onClick={() => setWelcomeDismissed(welcome.since)}>
             OK
           </button>
         </div>
       )}
       <div className="lecture-body">
-        {focusMode ? (
+        {view ? (
+          <div className="lecture-panel">
+            <div className="lecture-panel-bar">
+              <button className="btn btn-sm" onClick={() => setView(null)}>
+                ← Zurück zu den Folien
+              </button>
+            </div>
+            <div className="lecture-panel-body">
+              {view === 'review' ? (
+                <ReviewContent
+                  deckId={deckId}
+                  lectureFilter={null}
+                  onOpenSlide={(i) => go(i, ['view'])}
+                />
+              ) : (
+                <DeckLecturesPanel
+                  deckId={deckId}
+                  onSlides={() => setView(null)}
+                  onReview={() => setView('review')}
+                />
+              )}
+            </div>
+          </div>
+        ) : focusMode ? (
           <div className="focus-layout">
             <div className="focus-slide">{currentWidget}</div>
             <div className="focus-notes">{notesWidget}</div>
@@ -345,21 +510,54 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
             editing={editingLayout}
             onEditingChange={setEditingLayout}
             widgets={[
-              { id: 'prev', title: 'Vorherige', render: () => <div className="clickable-slide" onClick={() => go(index - 1)}><SlideView deckId={deckId} slide={slides[index - 1]} width={300} /></div> },
+              {
+                id: 'prev',
+                title: 'Vorherige',
+                render: () => (
+                  <div className="clickable-slide" onClick={() => go(index - 1)}>
+                    <SlideView deckId={deckId} slide={slides[index - 1]} width={300} />
+                  </div>
+                ),
+              },
               { id: 'current', title: `Folie ${index + 1}`, render: () => currentWidget },
-              { id: 'next', title: 'Nächste', render: () => <div className="clickable-slide" onClick={() => go(index + 1)}><SlideView deckId={deckId} slide={slides[index + 1]} width={300} /></div> },
+              {
+                id: 'next',
+                title: 'Nächste',
+                render: () => (
+                  <div className="clickable-slide" onClick={() => go(index + 1)}>
+                    <SlideView deckId={deckId} slide={slides[index + 1]} width={300} />
+                  </div>
+                ),
+              },
               { id: 'notes', title: 'Notizen', render: () => notesWidget },
               { id: 'focus', title: 'Fokus', render: () => focusWidget },
-              { id: 'cards', title: 'Karten', render: () => <SlideCards slideId={slide?.id} deckSlideIds={slideIds} /> },
+              {
+                id: 'cards',
+                title: 'Karten',
+                render: () => <SlideCards slideId={slide?.id} deckSlideIds={slideIds} />,
+              },
               { id: 'kpis', title: 'Kennzahlen', render: () => kpiWidget },
             ]}
           />
         )}
         {assistant.open && (
-          <AssistantPanel deckId={deckId} slideIndex={index} lectureId={lectureId} quote={assistant.quote} onClose={() => setAssistant({ open: false })} onToNotes={(text) => addNote(text)} />
+          <AssistantPanel
+            deckId={deckId}
+            slideIndex={index}
+            lectureId={lectureId}
+            quote={assistant.quote}
+            onClose={() => setAssistant({ open: false })}
+            onToNotes={(text) => addNote(text)}
+          />
         )}
       </div>
-      {dialog === 'start' && <StartLectureDialog defaultName={`${toPlainText(deck.text)} - ${new Date().toLocaleDateString()}`} onStart={startLecture} onClose={() => setDialog(null)} />}
+      {dialog === 'start' && (
+        <StartLectureDialog
+          defaultName={`${toPlainText(deck.text)} - ${new Date().toLocaleDateString()}`}
+          onStart={startLecture}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'summary' && summaryTarget.current && (
         <SummaryDialog
           initial=""
@@ -371,12 +569,27 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
           }}
         />
       )}
-      {dialog === 'overview' && <SlideOverview deckId={deckId} current={index} onPick={(i) => (go(i), setDialog(null))} onClose={() => setDialog(null)} />}
+      {dialog === 'overview' && (
+        <SlideOverview
+          deckId={deckId}
+          current={index}
+          onPick={(i) => (go(i), setDialog(null))}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'help' && <LectureHelp onClose={() => setDialog(null)} />}
       {checkin && lectureId && (
         <CheckinDialog
           checkin={checkin}
-          onAnswer={(text, focus, skipped) => app.lectures.record(lectureId, 'checkin', { ref: checkin.id, text, skipped, slide: index, ...(focus ? { focus } : {}) })}
+          onAnswer={(text, focus, skipped) =>
+            app.lectures.record(lectureId, 'checkin', {
+              ref: checkin.id,
+              text,
+              skipped,
+              slide: index,
+              ...(focus ? { focus } : {}),
+            })
+          }
         />
       )}
     </div>
@@ -384,7 +597,15 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
 }
 
 /** A KPI tile. */
-function Kpi({ label, value, hint }: { label: string; value: string; hint?: string | undefined }): ReactNode {
+function Kpi({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string | undefined;
+}): ReactNode {
   return (
     <div className="kpi">
       <div className="kpi-label">{label}</div>

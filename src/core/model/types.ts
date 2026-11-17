@@ -262,6 +262,12 @@ export interface Rem {
 
   // --- organisation -----------------------------------------------------
   pinned?: boolean;
+  /** Sort key among pinned Rems (fractional index; absent = by creation). */
+  pinOrder?: string;
+  /** Custom icon of a folder/document: an icon name (see `ui/components/RemIcon`) or an emoji. */
+  icon?: string;
+  /** Custom icon colour: a palette key (`blue`, `purple`, …). */
+  color?: string;
   editLater?: boolean;
   isTemplate?: boolean;
   /** ISO date (YYYY-MM-DD) for daily documents. */
@@ -499,6 +505,11 @@ export interface Settings {
   learnAheadMinutes?: number;
   /** Lecture mode (Fokus) options; defaults apply when absent. */
   lecture?: Partial<LectureSettings>;
+  /**
+   * Ids of imported objects from other apps (`<source>:<kind>:<id>` -> Rem id),
+   * so re-importing (e.g. Fokus data, later Anki) updates instead of duplicating.
+   */
+  externalIds?: Record<string, string>;
   updatedAt: Timestamp;
 }
 

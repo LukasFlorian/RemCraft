@@ -50,7 +50,15 @@ export class FileService {
     if (!this.remote) return null;
     try {
       const blob = await this.remote.downloadFile(id);
-      await this.persistence.putFile({ id, name: id, mimeType: blob.type, size: blob.size, blob, uploaded: true, createdAt: Date.now() });
+      await this.persistence.putFile({
+        id,
+        name: id,
+        mimeType: blob.type,
+        size: blob.size,
+        blob,
+        uploaded: true,
+        createdAt: Date.now(),
+      });
       return blob;
     } catch {
       return null;

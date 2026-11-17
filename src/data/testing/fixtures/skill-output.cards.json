@@ -1,0 +1,105 @@
+{
+ "format": "remcraft-cards",
+ "version": 1,
+ "created": "2026-11-16",
+ "source": {
+  "pdf": "VL01.pdf",
+  "pdf_pages": 2
+ },
+ "remnote_file": "",
+ "cards": [
+  {
+   "id": "c001",
+   "section": "Big Data",
+   "type": "mc",
+   "front": "Welche Vs gehören zu Big Data?",
+   "back": "Richtig: Velocity; Volume",
+   "options": [
+    {
+     "text": "Velocity",
+     "correct": true
+    },
+    {
+     "text": "Volume",
+     "correct": true
+    },
+    {
+     "text": "Vacancy",
+     "correct": false
+    },
+    {
+     "text": "Vanity",
+     "correct": false
+    }
+   ],
+   "pages": [
+    1
+   ],
+   "anchor": "Die 5 Vs",
+   "remnote": "Welche Vs gehören zu Big Data? {CORRECT: A, B} >>A)\n    - Velocity\n    - Volume\n    - Vacancy\n    - Vanity"
+  },
+  {
+   "id": "c002",
+   "section": "Big Data",
+   "type": "basic",
+   "front": "Was ist HDFS?",
+   "back": "Verteiltes Dateisystem von Hadoop",
+   "pages": [
+    2
+   ],
+   "anchor": "Hadoop Architektur",
+   "remnote": "Was ist HDFS? >> Verteiltes Dateisystem von Hadoop"
+  },
+  {
+   "id": "c003",
+   "section": "Big Data",
+   "type": "cloze",
+   "front": "HDFS speichert Daten in [… fester Größe]",
+   "back": "HDFS speichert Daten in Blöcken",
+   "pages": [
+    2
+   ],
+   "anchor": "Hadoop Architektur",
+   "remnote": "HDFS speichert Daten in {{Blöcken}}{({fester Größe})}"
+  },
+  {
+   "id": "c004",
+   "section": "Big Data",
+   "type": "numeric",
+   "front": "Wie viele Blöcke braucht eine 300 MB Datei bei 128 MB Blockgröße?",
+   "back": "3 · Rechenweg: ceil(300/128)=3",
+   "pages": [
+    2
+   ],
+   "anchor": "Hadoop Architektur",
+   "remnote": "Wie viele Blöcke braucht eine 300 MB Datei bei 128 MB Blockgröße? (Numeric answer) >> Korrekte Antwort: 3 Rechenweg: ceil(300/128)=3"
+  },
+  {
+   "id": "c005",
+   "section": "Big Data",
+   "type": "set",
+   "front": "Komponenten von Hadoop",
+   "back": "HDFS; YARN; MapReduce",
+   "items": [
+    "HDFS",
+    "YARN",
+    "MapReduce"
+   ],
+   "pages": [
+    2
+   ],
+   "anchor": "Hadoop Architektur",
+   "remnote": "Komponenten von Hadoop >>>\n    - HDFS\n    - YARN\n    - MapReduce"
+  }
+ ],
+ "notes": [
+  {
+   "pages": [
+    1
+   ],
+   "anchor": "Einführung Big Data",
+   "title": "Überblick",
+   "text": "**Kern:** Daten zu groß für eine Maschine"
+  }
+ ]
+}

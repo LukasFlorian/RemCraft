@@ -825,3 +825,16 @@ mark.hl-purple {
   background: var(--surface-hover);
   color: var(--text);
 }
+
+.title-icon {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.title-icon:hover {
+  background: var(--surface-hover);
+}

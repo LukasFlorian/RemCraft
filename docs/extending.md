@@ -1,6 +1,6 @@
 # Extending RemCraft (Anki & co.)
 
-RemCraft is built so features from Anki, RemNote, Fokus and others can be added without touching
+RemCraft is built so features from Anki, RemNote and others can be added without touching
 unrelated code. The main mechanism is a small generic **registry**
 (`src/core/util/registry.ts`: `register`, `get`, `require`, `list`).
 

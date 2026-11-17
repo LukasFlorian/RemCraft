@@ -30,6 +30,13 @@ export function DataSection(): ReactNode {
         <div>
           <button className="btn btn-primary" onClick={() => modals.open({ kind: 'import' })}>
             <Upload size={15} /> Import…
+          </button>{' '}
+          <button
+            className="btn"
+            onClick={() => modals.open({ kind: 'import', source: 'fokus-data' })}
+            title="Kurse, Foliensätze, Notizen und Vorlesungen aus dem Datenordner der Vorgänger-App Fokus übernehmen"
+          >
+            Fokus-Datenordner übernehmen…
           </button>
         </div>
       </div>

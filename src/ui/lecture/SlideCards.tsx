@@ -18,21 +18,26 @@ import { CardFace } from '../pages/practice/CardFace';
 /** Card ids and explanation Rems below some roots. */
 function useSlideCards(rootIds: RemId[]): { cards: string[]; explanations: RemId[] } {
   return useSelector((s) =>
-    s.memo(`slideCards:${rootIds.join(',')}`, [s.collectionVersion('rems'), s.collectionVersion('cards')], () => {
-      const index = selectCardIndex(s);
-      const cards: string[] = [];
-      const explanations: RemId[] = [];
-      for (const root of rootIds) {
-        walkSubtree(s, root, (r) => {
-          if (r.fokus?.explanation) {
-            explanations.push(r.id);
-            return false;
-          }
-          for (const c of index.byRem.get(r.id) ?? []) if (!s.getRecord('cards', c.id)?.disabled) cards.push(c.id);
-        });
-      }
-      return { cards, explanations };
-    }),
+    s.memo(
+      `slideCards:${rootIds.join(',')}`,
+      [s.collectionVersion('rems'), s.collectionVersion('cards')],
+      () => {
+        const index = selectCardIndex(s);
+        const cards: string[] = [];
+        const explanations: RemId[] = [];
+        for (const root of rootIds) {
+          walkSubtree(s, root, (r) => {
+            if (r.fokus?.explanation) {
+              explanations.push(r.id);
+              return false;
+            }
+            for (const c of index.byRem.get(r.id) ?? [])
+              if (!s.getRecord('cards', c.id)?.disabled) cards.push(c.id);
+          });
+        }
+        return { cards, explanations };
+      },
+    ),
   );
 }
 
@@ -56,17 +61,30 @@ function Explanation({ remId }: { remId: RemId }): ReactNode {
 }
 
 /** The cards widget. */
-export function SlideCards({ slideId, deckSlideIds }: { slideId: RemId | undefined; deckSlideIds: RemId[] }): ReactNode {
+export function SlideCards({
+  slideId,
+  deckSlideIds,
+}: {
+  slideId: RemId | undefined;
+  deckSlideIds: RemId[];
+}): ReactNode {
   const app = useApp();
   const [all, setAll] = useState(false);
   const roots = all ? deckSlideIds : slideId ? [slideId] : [];
   const { cards, explanations } = useSlideCards(roots);
   const order = useMemo(() => shuffle(cards), [cards.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
   const [pos, setPos] = useState(0);
-  const [revealed, setRevealed] = useState(false);
   const grading = useSelector((s) => selectSettings(s).typeInAnswerGrading);
   const cardId = order[pos % Math.max(1, order.length)];
-  const view = useSelector((s) => (cardId ? s.memo(`view:${cardId}`, [s.collectionVersion('rems')], () => selectCardView(s, cardId)) : undefined));
+  // Revealed state belongs to one card: another card (other slide, next card) starts hidden.
+  const [revealedId, setRevealedId] = useState<string | null>(null);
+  const revealed = cardId !== undefined && revealedId === cardId;
+  const setRevealed = (on: boolean): void => setRevealedId(on && cardId ? cardId : null);
+  const view = useSelector((s) =>
+    cardId
+      ? s.memo(`view:${cardId}`, [s.collectionVersion('rems')], () => selectCardView(s, cardId))
+      : undefined,
+  );
 
   const answer = (rating: Rating): void => {
     if (!cardId) return;
@@ -90,14 +108,22 @@ export function SlideCards({ slideId, deckSlideIds }: { slideId: RemId | undefin
       {!all && explanations.map((id) => <Explanation key={id} remId={id} />)}
       {order.length === 0 ? (
         <div className="faint" style={{ fontSize: 13 }}>
-          Keine Karten {all ? 'in diesem Foliensatz' : 'zu dieser Folie'}. Schreib in den Notizen z. B. „Begriff &gt;&gt; Erklärung“ oder importiere eine *.fokus.json.
+          Keine Karten {all ? 'in diesem Foliensatz' : 'zu dieser Folie'}. Schreib in den Notizen z.
+          B. „Begriff &gt;&gt; Erklärung“ oder importiere eine Kartendatei (*.cards.json).
         </div>
       ) : view ? (
         <div className="mini-card">
           <div className="faint" style={{ fontSize: 12 }}>
             Karte {(pos % order.length) + 1} / {order.length}
           </div>
-          <CardFace view={view} revealed={revealed} onReveal={() => setRevealed(true)} onSuggest={() => undefined} grading={grading} />
+          <CardFace
+            key={cardId}
+            view={view}
+            revealed={revealed}
+            onReveal={() => setRevealed(true)}
+            onSuggest={() => undefined}
+            grading={grading}
+          />
           <div className="row" style={{ marginTop: 8 }}>
             {!revealed ? (
               <button className="btn btn-primary" onClick={() => setRevealed(true)}>
@@ -114,10 +140,20 @@ export function SlideCards({ slideId, deckSlideIds }: { slideId: RemId | undefin
               </>
             )}
             <span className="spacer" />
-            <button className="icon-btn" title="Überspringen" onClick={() => (setRevealed(false), setPos((p) => p + 1))}>
+            <button
+              className="icon-btn"
+              title="Überspringen"
+              onClick={() => (setRevealed(false), setPos((p) => p + 1))}
+            >
               <RotateCcw size={14} />
             </button>
-            <button className="icon-btn" title="Karte deaktivieren" onClick={() => cardId && (app.practice.setDisabled([cardId], true), setRevealed(false))}>
+            <button
+              className="icon-btn"
+              title="Karte deaktivieren"
+              onClick={() =>
+                cardId && (app.practice.setDisabled([cardId], true), setRevealed(false))
+              }
+            >
               <Ban size={14} />
             </button>
           </div>

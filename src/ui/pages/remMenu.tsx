@@ -5,6 +5,7 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import {
+  Palette,
   ArrowRightLeft,
   Clock3,
   Copy,
@@ -110,6 +111,15 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
         icon: <Clock3 size={15} />,
         onSelect: () => app.rems.update(remId, { editLater: rem.editLater ? undefined : true }),
       },
+      ...(rem.isFolder || rem.isDocument
+        ? [
+            {
+              label: 'Icon und Farbe…',
+              icon: <Palette size={15} />,
+              onSelect: () => modals.open({ kind: 'icon', remId }),
+            },
+          ]
+        : []),
       {
         label: 'Move to…',
         icon: <ArrowRightLeft size={15} />,

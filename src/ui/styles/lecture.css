@@ -687,7 +687,22 @@
 }
 
 .handout-left {
-  aspect-ratio: 16 / 10;
+  min-width: 0;
+}
+
+/* Fluid slides (handout): width from the column, height from the aspect ratio,
+   so the print layout can rescale them. */
+.slide-view.fluid {
+  height: auto;
+}
+.slide-view.fluid .slide-stage {
+  position: relative;
+  width: 100%;
+}
+.slide-view.fluid .slide-stage img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 @media print {
@@ -708,6 +723,41 @@
   body {
     background: #fff;
     color: #000;
+  }
+  /* Print in light colours whatever the screen theme, with highlights. */
+  :root,
+  :root[data-theme] {
+    --bg: #fff;
+    --bg-elevated: #fff;
+    --bg-sunken: #fff;
+    --surface: #f3f4f8;
+    --border: #d5d7e0;
+    --text: #111;
+    --text-muted: #444;
+    --text-faint: #666;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .handout .page {
+    max-width: none;
+    padding: 0;
+  }
+  .handout-slide {
+    grid-template-columns: 58% 1fr;
+    gap: 12px;
+    page-break-inside: avoid;
+  }
+  .slide-stage {
+    box-shadow: none;
+    border: 1px solid #ccc;
   }
 }
 
@@ -762,4 +812,24 @@
 .snap-slidetext {
   font-size: 12px;
   margin-left: 4px;
+}
+
+/* Review / statistics inside lecture mode */
+.lecture-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.lecture-panel-bar {
+  padding: 8px 16px 0;
+}
+.lecture-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 24px 32px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
 }

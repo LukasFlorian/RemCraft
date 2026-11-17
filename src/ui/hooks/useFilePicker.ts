@@ -29,6 +29,31 @@ export function pickFiles(accept: string, multiple = false): Promise<File[]> {
   });
 }
 
+/**
+ * Lets the user choose a whole folder (all files inside, with their relative
+ * paths in `webkitRelativePath`). Supported by all current desktop browsers.
+ */
+export function pickFolder(): Promise<File[]> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.setAttribute('webkitdirectory', '');
+    input.multiple = true;
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      resolve([...(input.files ?? [])]);
+      input.remove();
+    });
+    window.addEventListener(
+      'focus',
+      () => setTimeout(() => !input.files?.length && resolve([]), 500),
+      { once: true },
+    );
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
 /** Reads a file as text. */
 export function readText(file: Blob): Promise<string> {
   return file.text();

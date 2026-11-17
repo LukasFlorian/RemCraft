@@ -11,3 +11,5 @@ playwright-report
 .vite
 .DS_Store
 *.tsbuildinfo
+public/remcraft-flashcards.zip
+__pycache__/

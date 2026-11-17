@@ -11,8 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   FilePlus,
-  FileText,
-  Folder,
   FolderPlus,
   Layers,
   MoreHorizontal,
@@ -34,6 +32,8 @@ import { RemContent } from '../editor/RemBlock';
 import { TitleEditor } from '../editor/TitleEditor';
 import { FileView } from '../editor/blocks';
 import { DeckPanel } from '../lecture/DeckPanel';
+import { RemIcon } from '../components/RemIcon';
+import { useModals } from '../app/modals';
 import { ShareDialog, useSpaces } from '../sharing/ShareDialog';
 import { ROLE_LABELS } from '@core/sharing/spaces';
 import { pickFiles } from '../hooks/useFilePicker';
@@ -102,6 +102,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   const navigate = useNavigate();
   const controller = useController();
   const remMenu = useRemMenu();
+  const modals = useModals();
   const now = useNow();
   const rem = useRem(remId)!;
   const due = useSelector((s) => selectDueCounts(s, now).get(remId) ?? 0);
@@ -213,11 +214,22 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
       >
         <div className="page doc-page">
           {space?.role === 'reader' && (
-            <div className="readonly-banner">Nur lesen: geteilt von einer anderen Person. Deine Änderungen werden nicht synchronisiert - klone den Bereich, um ihn zu bearbeiten.</div>
+            <div className="readonly-banner">
+              Nur lesen: geteilt von einer anderen Person. Deine Änderungen werden nicht
+              synchronisiert - klone den Bereich, um ihn zu bearbeiten.
+            </div>
           )}
           {rem.dailyDate && <DailyNav date={rem.dailyDate} />}
           <div className={`doc-title-row${rem.isFolder ? ' is-folder' : ''}`}>
-            {rem.isFolder && <Folder size={26} className="icon-folder" />}
+            {(rem.isFolder || rem.icon) && (
+              <button
+                className="title-icon"
+                title="Icon und Farbe ändern"
+                onClick={() => modals.open({ kind: 'icon', remId })}
+              >
+                <RemIcon rem={rem} size={26} />
+              </button>
+            )}
             <TitleEditor
               remId={remId}
               onExit={enterBody}
@@ -335,10 +347,9 @@ function FolderItem({ remId }: { remId: RemId }): ReactNode {
   const title = useRemTitle(remId);
   const count = useChildren(remId).length;
   if (!rem) return null;
-  const Icon = rem.isFolder ? Folder : FileText;
   return (
     <button className="folder-item" onClick={() => navigate(`/rem/${remId}`)}>
-      <Icon size={20} className={rem.isFolder ? 'icon-folder' : 'icon-doc'} />
+      <RemIcon rem={rem} size={20} />
       <span className="ellipsis">{title}</span>
       <span className="faint" style={{ fontSize: 12 }}>
         {count} {rem.isFolder ? 'items' : 'Rems'}

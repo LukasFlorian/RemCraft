@@ -9,10 +9,11 @@ import type { RemId } from '@core/model/types';
 /** Modals that can be opened globally. */
 export type GlobalModal =
   | { kind: 'search' }
-  | { kind: 'import'; parentId?: RemId | null }
+  | { kind: 'import'; parentId?: RemId | null; source?: string }
   | { kind: 'occlusion'; remId: RemId }
   | { kind: 'recorder'; remId: RemId }
   | { kind: 'move'; remIds: RemId[] }
+  | { kind: 'icon'; remId: RemId }
   | { kind: 'exam'; examId?: string; scope?: RemId[] };
 
 interface ModalApi {

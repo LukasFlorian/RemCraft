@@ -20,6 +20,7 @@ import { PracticeService } from './services/practice';
 import { RemService } from './services/rems';
 import { SettingsService } from './services/settings';
 import { SharingService } from './services/sharing';
+import { FokusImportService } from './services/fokusImport';
 import { IntegrationService } from './services/integrations';
 import type { IntegrationBackend } from './services/integrations';
 import { SupabaseIntegrationBackend } from './sync/supabaseIntegrations';
@@ -73,6 +74,7 @@ export class RemCraftApp {
   readonly files: FileService;
   readonly lectures: LectureService;
   readonly sharing: SharingService;
+  readonly fokusImport: FokusImportService;
   readonly integrations = new IntegrationService(this.store);
   private readonly integrationFactory: ((user: AuthUser) => IntegrationBackend) | null;
   readonly auth: AuthService | null;
@@ -97,6 +99,7 @@ export class RemCraftApp {
     this.files = new FileService(persistence);
     this.lectures = new LectureService(this.store, this.rems, this.files);
     this.sharing = new SharingService(this.store, this.files, persistence);
+    this.fokusImport = new FokusImportService(this.store, this.rems, this.files, this.lectures, this.io, this.practice, this.settings);
     const client = backend ? createSupabase(backend) : null;
     this.auth = client ? new AuthService(client) : null;
     this.remoteFactory =

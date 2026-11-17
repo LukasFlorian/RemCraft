@@ -33,9 +33,9 @@ stored in the browser (IndexedDB) and synchronised in the background when you ar
   Markdown export in RemNote syntax.
 - **Sync**: Supabase Auth (email/password, magic link, GitHub OAuth) + Postgres with row-level
   security, realtime updates, last-writer-wins conflict resolution, offline outbox.
-- **Lectures** (Fokus port): import slide decks (handouts are split automatically), take notes
+- **Lectures**: import slide decks (handouts are split automatically), take notes
   per slide in lecture mode with ink, flags, check-ins and drift tracking, quiz the cards of the
-  current slide, analyse the lecture and get a review list; `*.fokus.json` cards land on their slides.
+  current slide, analyse the lecture and get a review list; card files written by the bundled Claude skill land on their slides.
 - **Sharing**: whole course folders, only notes, only cards, … as read-only cloneable links/files,
   or live collaboration with read/write roles.
 - **Todoist**: every night at 00:01 one task per course with the day's estimated study time.
@@ -92,7 +92,7 @@ Details, alternatives (Netlify, Cloudflare Pages) and auth redirect settings:
 | [docs/deployment.md](docs/deployment.md)               | Supabase + GitHub Pages setup, alternatives, costs             |
 | [docs/development.md](docs/development.md)             | Conventions, testing, how to extend                            |
 | [docs/ai-integration.md](docs/ai-integration.md)       | Plugging in any OpenAI-compatible model                        |
-| [docs/lectures.md](docs/lectures.md)                   | Slide decks, lecture mode, fokus cards                         |
+| [docs/lectures.md](docs/lectures.md)                   | Slide decks, lecture mode, card files, Claude skill            |
 | [docs/sharing.md](docs/sharing.md)                     | Read-only snapshots and live collaboration                     |
 | [docs/integrations.md](docs/integrations.md)           | Todoist daily study tasks                                      |
 | [docs/extending.md](docs/extending.md)                 | Extension points (Anki & co.)                                  |

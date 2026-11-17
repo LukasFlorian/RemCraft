@@ -11,7 +11,15 @@ import { SlideView } from './SlideView';
 import { useDeckSlides } from './useSlides';
 
 /** Start a lecture: name, goal and a short distraction checklist. */
-export function StartLectureDialog({ defaultName, onStart, onClose }: { defaultName: string; onStart: (name: string, goal: string) => void; onClose: () => void }): ReactNode {
+export function StartLectureDialog({
+  defaultName,
+  onStart,
+  onClose,
+}: {
+  defaultName: string;
+  onStart: (name: string, goal: string) => void;
+  onClose: () => void;
+}): ReactNode {
   const [name, setName] = useState(defaultName);
   const [goal, setGoal] = useState('');
   return (
@@ -23,7 +31,10 @@ export function StartLectureDialog({ defaultName, onStart, onClose }: { defaultN
           <button className="btn" onClick={onClose}>
             Abbrechen
           </button>
-          <button className="btn btn-primary" onClick={() => onStart(name.trim() || defaultName, goal)}>
+          <button
+            className="btn btn-primary"
+            onClick={() => onStart(name.trim() || defaultName, goal)}
+          >
             ▶ Starten
           </button>
         </>
@@ -32,8 +43,16 @@ export function StartLectureDialog({ defaultName, onStart, onClose }: { defaultN
       <Field label="Name">
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
-      <Field label="Ziel (optional)" hint="Was willst du aus dieser Vorlesung mitnehmen? Ein Ziel richtet die Aufmerksamkeit aus.">
-        <input className="input" value={goal} placeholder="z. B. Backpropagation so verstehen, dass ich sie erklären kann" onChange={(e) => setGoal(e.target.value)} />
+      <Field
+        label="Ziel (optional)"
+        hint="Was willst du aus dieser Vorlesung mitnehmen? Ein Ziel richtet die Aufmerksamkeit aus."
+      >
+        <input
+          className="input"
+          value={goal}
+          placeholder="z. B. Backpropagation so verstehen, dass ich sie erklären kann"
+          onChange={(e) => setGoal(e.target.value)}
+        />
       </Field>
       <div className="checklist">
         <strong>Checkliste</strong>
@@ -52,7 +71,15 @@ export function StartLectureDialog({ defaultName, onStart, onClose }: { defaultN
 }
 
 /** End of a lecture: the three most important points from memory. */
-export function SummaryDialog({ initial, onSave, onClose }: { initial: string; onSave: (text: string) => void; onClose: () => void }): ReactNode {
+export function SummaryDialog({
+  initial,
+  onSave,
+  onClose,
+}: {
+  initial: string;
+  onSave: (text: string) => void;
+  onClose: () => void;
+}): ReactNode {
   const [text, setText] = useState(initial || '1. \n2. \n3. ');
   return (
     <Modal
@@ -70,15 +97,28 @@ export function SummaryDialog({ initial, onSave, onClose }: { initial: string; o
       }
     >
       <p className="muted" style={{ margin: 0 }}>
-        Schreib aus dem Gedächtnis auf, was hängen geblieben ist - ohne nachzusehen. Das ist selbst schon Abruf-Übung.
+        Schreib aus dem Gedächtnis auf, was hängen geblieben ist - ohne nachzusehen. Das ist selbst
+        schon Abruf-Übung.
       </p>
-      <textarea className="textarea" rows={6} autoFocus value={text} onChange={(e) => setText(e.target.value)} />
+      <textarea
+        className="textarea"
+        rows={6}
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
     </Modal>
   );
 }
 
 /** A recall check-in. */
-export function CheckinDialog({ checkin, onAnswer }: { checkin: Checkin; onAnswer: (text: string, focus: number | null, skipped: boolean) => void }): ReactNode {
+export function CheckinDialog({
+  checkin,
+  onAnswer,
+}: {
+  checkin: Checkin;
+  onAnswer: (text: string, focus: number | null, skipped: boolean) => void;
+}): ReactNode {
   const [text, setText] = useState('');
   const [focus, setFocus] = useState<number | null>(null);
   return (
@@ -100,7 +140,11 @@ export function CheckinDialog({ checkin, onAnswer }: { checkin: Checkin; onAnswe
       <div className="row">
         <span className="muted">Wie fokussiert warst du?</span>
         {[1, 2, 3, 4, 5].map((f) => (
-          <button key={f} className={`btn btn-sm${focus === f ? ' btn-primary' : ''}`} onClick={() => setFocus(f)}>
+          <button
+            key={f}
+            className={`btn btn-sm${focus === f ? ' btn-primary' : ''}`}
+            onClick={() => setFocus(f)}
+          >
             {f}
           </button>
         ))}
@@ -118,13 +162,27 @@ export function CheckinDialog({ checkin, onAnswer }: { checkin: Checkin; onAnswe
 }
 
 /** Grid of all slides to jump to one. */
-export function SlideOverview({ deckId, current, onPick, onClose }: { deckId: RemId; current: number; onPick: (i: number) => void; onClose: () => void }): ReactNode {
+export function SlideOverview({
+  deckId,
+  current,
+  onPick,
+  onClose,
+}: {
+  deckId: RemId;
+  current: number;
+  onPick: (i: number) => void;
+  onClose: () => void;
+}): ReactNode {
   const slides = useDeckSlides(deckId);
   return (
     <Modal title="Folienübersicht" onClose={onClose} wide>
       <div className="slide-grid">
         {slides.map((s, i) => (
-          <button key={s.id} className={`slide-thumb-btn${i === current ? ' active' : ''}${s.slideFlags?.length ? ' flagged' : ''}`} onClick={() => onPick(i)}>
+          <button
+            key={s.id}
+            className={`slide-thumb-btn${i === current ? ' active' : ''}${s.slideFlags?.length ? ' flagged' : ''}`}
+            onClick={() => onPick(i)}
+          >
             <SlideView deckId={deckId} slide={s} width={240} />
             <span>
               {i + 1}

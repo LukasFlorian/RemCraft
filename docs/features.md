@@ -107,22 +107,22 @@ menu, Flashcards home/Cards/Stats/Exams, import dialog).
 
 ## Platform
 
-| Feature                                             | Status                                                                                                            |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Offline-first, installable PWA                      | ✅                                                                                                                |
-| Accounts (email/password, magic link, GitHub OAuth) | ✅                                                                                                                |
-| Cross-device sync with realtime updates             | ✅                                                                                                                |
-| Multiple open tabs stay consistent                  | ✅                                                                                                                |
-| Dark / light / system theme                         | ✅                                                                                                                |
-| Keyboard shortcuts                                  | ✅                                                                                                                |
-| AI features (tutor, card generation)                | 🟡 lecture assistant: explain, quiz, card generation in the fokus format ([ai-integration.md](ai-integration.md)) |
-| Plugins API                                         | ❌                                                                                                                |
+| Feature                                             | Status                                                                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Offline-first, installable PWA                      | ✅                                                                                                         |
+| Accounts (email/password, magic link, GitHub OAuth) | ✅                                                                                                         |
+| Cross-device sync with realtime updates             | ✅                                                                                                         |
+| Multiple open tabs stay consistent                  | ✅                                                                                                         |
+| Dark / light / system theme                         | ✅                                                                                                         |
+| Keyboard shortcuts                                  | ✅                                                                                                         |
+| AI features (tutor, card generation)                | 🟡 lecture assistant: explain, quiz, card generation as card file ([ai-integration.md](ai-integration.md)) |
+| Plugins API                                         | ❌                                                                                                         |
 
 ## Beyond RemNote
 
-| Feature                                                                                           | Status | Notes                              |
-| ------------------------------------------------------------------------------------------------- | ------ | ---------------------------------- |
-| Lecture mode (Fokus port): slides, notes, ink, flags, check-ins, drift, analysis, review, handout | ✅     | [lectures.md](lectures.md)         |
-| `*.fokus.json` cards mapped to slides (page + anchor), progress kept on re-import                 | ✅     |                                    |
-| Todoist: one task per course per day at 00:01 with duration estimate                              | ✅     | [integrations.md](integrations.md) |
-| Pluggable schedulers / AI providers (Anki-style extensions)                                       | ✅     | [extending.md](extending.md)       |
+| Feature                                                                                                               | Status | Notes                                                      |
+| --------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------- |
+| Lecture mode: slides, notes, ink, flags, check-ins, drift, analysis, review, handout                                  | ✅     | [lectures.md](lectures.md)                                 |
+| Card files (`*.cards.json`) mapped to slides (page + anchor), progress kept on re-import; Claude skill to create them | ✅     | [lectures.md](lectures.md#card-files-and-the-claude-skill) |
+| Todoist: one task per course per day at 00:01 with duration estimate                                                  | ✅     | [integrations.md](integrations.md)                         |
+| Pluggable schedulers / AI providers (Anki-style extensions)                                                           | ✅     | [extending.md](extending.md)                               |

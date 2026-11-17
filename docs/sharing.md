@@ -34,7 +34,7 @@ Ways to share a snapshot:
   via _Import → Freigabe_.
 
 Cloning (`core/sharing/snapshot.ts → cloneSnapshot`) assigns fresh ids, rewrites references
-between the copied Rems and keeps Fokus origins, so the copy is fully independent.
+between the copied Rems and keeps card-file origins, so the copy is fully independent.
 
 ## 2. Live collaboration (shared space)
 

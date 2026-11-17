@@ -47,9 +47,24 @@ const ORDER: Partial<Record<LectureEvent['type'], number>> = { start: 0, stop: 2
  * @param events Events of one lecture in any order.
  */
 export function buildLectureState(events: readonly LectureEvent[]): LectureState {
-  const st: LectureState = { intervals: [], slides: [], goal: '', summary: '', away: [], drifts: [], checkins: [], trackAway: false, noteEdits: 0, lastT: 0, pausedSince: null };
-  const sorted = [...events].sort((a, b) => a.t - b.t || (ORDER[a.type] ?? 1) - (ORDER[b.type] ?? 1) || a.id.localeCompare(b.id));
-  const running = (): boolean => st.intervals.length > 0 && st.intervals[st.intervals.length - 1]![1] === null;
+  const st: LectureState = {
+    intervals: [],
+    slides: [],
+    goal: '',
+    summary: '',
+    away: [],
+    drifts: [],
+    checkins: [],
+    trackAway: false,
+    noteEdits: 0,
+    lastT: 0,
+    pausedSince: null,
+  };
+  const sorted = [...events].sort(
+    (a, b) => a.t - b.t || (ORDER[a.type] ?? 1) - (ORDER[b.type] ?? 1) || a.id.localeCompare(b.id),
+  );
+  const running = (): boolean =>
+    st.intervals.length > 0 && st.intervals[st.intervals.length - 1]![1] === null;
   const byId = new Map<string, Checkin>();
   for (const ev of sorted) {
     st.lastT = Math.max(st.lastT, ev.t);
@@ -75,20 +90,37 @@ export function buildLectureState(events: readonly LectureEvent[]): LectureState
         st.summary = ev.text ?? '';
         break;
       case 'away':
-        if (ev.start !== undefined && ev.end !== undefined) st.away.push({ start: ev.start, end: ev.end, slide: ev.slide ?? null });
+        if (ev.start !== undefined && ev.end !== undefined)
+          st.away.push({ start: ev.start, end: ev.end, slide: ev.slide ?? null });
         break;
       case 'drift':
         st.drifts.push({ t: ev.t, slide: ev.slide ?? null });
         break;
       case 'checkin_prompt': {
-        const c: Checkin = { id: ev.id, t: ev.t, prompt: ev.text ?? '', answeredT: null, text: '', focus: null, skipped: false, slide: null };
+        const c: Checkin = {
+          id: ev.id,
+          t: ev.t,
+          prompt: ev.text ?? '',
+          answeredT: null,
+          text: '',
+          focus: null,
+          skipped: false,
+          slide: null,
+        };
         byId.set(ev.id, c);
         st.checkins.push(c);
         break;
       }
       case 'checkin': {
         const c = byId.get(ev.ref ?? '');
-        if (c) Object.assign(c, { answeredT: ev.t, text: ev.text ?? '', skipped: Boolean(ev.skipped), focus: ev.focus ?? null, slide: ev.slide ?? null });
+        if (c)
+          Object.assign(c, {
+            answeredT: ev.t,
+            text: ev.text ?? '',
+            skipped: Boolean(ev.skipped),
+            focus: ev.focus ?? null,
+            slide: ev.slide ?? null,
+          });
         break;
       }
       case 'note':
@@ -118,7 +150,10 @@ export function activeDuration(st: LectureState, now: Timestamp): number {
 
 /** Milliseconds of `[a, b]` inside recording intervals. */
 export function overlap(st: LectureState, a: Timestamp, b: Timestamp, now: Timestamp): number {
-  return closedIntervals(st, now).reduce((sum, [s, e]) => sum + Math.max(0, Math.min(b, e) - Math.max(a, s)), 0);
+  return closedIntervals(st, now).reduce(
+    (sum, [s, e]) => sum + Math.max(0, Math.min(b, e) - Math.max(a, s)),
+    0,
+  );
 }
 
 /**
@@ -188,7 +223,8 @@ export function summarize(st: LectureState, now: Timestamp): LectureSummary {
     durationMs,
     awayMs,
     awayCount: st.away.length,
-    focusRatio: st.trackAway && durationMs > 0 ? Math.round((1 - awayMs / durationMs) * 1000) / 1000 : null,
+    focusRatio:
+      st.trackAway && durationMs > 0 ? Math.round((1 - awayMs / durationMs) * 1000) / 1000 : null,
     drifts: st.drifts.length,
     checkins: st.checkins.length,
     checkinsAnswered: st.checkins.filter((c) => c.answeredT !== null && !c.skipped).length,
@@ -215,7 +251,11 @@ export const CHECKIN_PROMPTS: readonly string[] = [
  * later of the last prompt and the start of the current recording interval,
  * so no check-in follows directly after a break.
  */
-export function nextCheckinIn(st: LectureState, now: Timestamp, checkinMinutes: number): number | null {
+export function nextCheckinIn(
+  st: LectureState,
+  now: Timestamp,
+  checkinMinutes: number,
+): number | null {
   if (checkinMinutes <= 0 || !isRunning(st) || openCheckin(st)) return null;
   const lastPrompt = st.checkins.length ? st.checkins[st.checkins.length - 1]!.t : 0;
   const since = Math.max(lastPrompt, st.intervals[st.intervals.length - 1]![0]);

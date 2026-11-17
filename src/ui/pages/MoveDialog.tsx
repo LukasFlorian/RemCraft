@@ -3,7 +3,8 @@
  */
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { FileText, Folder } from 'lucide-react';
+import { Folder } from 'lucide-react';
+import { RemIcon } from '../components/RemIcon';
 import type { RemId } from '@core/model/types';
 import { toPlainText } from '@core/richtext/ops';
 import { fold } from '@core/search/search';
@@ -52,11 +53,7 @@ export function MoveDialog({
         </button>
         {list.map((t) => (
           <button key={t.id} className="menu-item" onClick={() => move(t.id)}>
-            {t.isFolder ? (
-              <Folder size={16} className="icon-folder" />
-            ) : (
-              <FileText size={16} className="icon-doc" />
-            )}
+            <RemIcon rem={t} size={16} />
             <span className="ellipsis">{app.rems.title(t.id) || 'Untitled'}</span>
           </button>
         ))}

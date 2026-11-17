@@ -28,12 +28,37 @@ export function HandoutPage(): ReactNode {
   const cfg = useLectureSettings();
   const slides = useDeckSlides(deckId);
   const title = useSelector((s) => toPlainText(s.get(deckId)?.text ?? []));
-  const data = useSelector((s) => s.memo(`handout:${deckId}:${params.get('lecture')}`, [s.collectionVersion('lectures'), s.collectionVersion('lectureEvents'), slides.length], () => {
-    const lectures = s.all('lectures').filter((l) => l.deckId === deckId && (!params.get('lecture') || l.id === params.get('lecture')));
-    const states = lectures.map((l) => ({ l, st: selectLectureState(s, l.id) }));
-    return { states, stats: mergeStats(states.map(({ st }) => slideStats(st, slides.length, now))) };
-  }));
-  const questions = useSelector((s) => s.memo(`handoutQ:${deckId}`, [s.collectionVersion('rems'), s.collectionVersion('annotations')], () => slides.flatMap((sl) => openQuestions(slideNotesText(s, sl.id)).map((q) => `Folie ${(sl.slide?.index ?? 0) + 1}: ${q}`))));
+  const data = useSelector((s) =>
+    s.memo(
+      `handout:${deckId}:${params.get('lecture')}`,
+      [s.collectionVersion('lectures'), s.collectionVersion('lectureEvents'), slides.length],
+      () => {
+        const lectures = s
+          .all('lectures')
+          .filter(
+            (l) =>
+              l.deckId === deckId && (!params.get('lecture') || l.id === params.get('lecture')),
+          );
+        const states = lectures.map((l) => ({ l, st: selectLectureState(s, l.id) }));
+        return {
+          states,
+          stats: mergeStats(states.map(({ st }) => slideStats(st, slides.length, now))),
+        };
+      },
+    ),
+  );
+  const questions = useSelector((s) =>
+    s.memo(
+      `handoutQ:${deckId}`,
+      [s.collectionVersion('rems'), s.collectionVersion('annotations')],
+      () =>
+        slides.flatMap((sl) =>
+          openQuestions(slideNotesText(s, sl.id)).map(
+            (q) => `Folie ${(sl.slide?.index ?? 0) + 1}: ${q}`,
+          ),
+        ),
+    ),
+  );
   return (
     <div className="main-scroll handout">
       <div className="page page-wide">
@@ -53,10 +78,19 @@ export function HandoutPage(): ReactNode {
             return (
               <div key={l.id} className="handout-lecture">
                 <h3>{l.name}</h3>
-                {st.goal && <p><strong>Ziel:</strong> {st.goal}</p>}
-                {st.summary && <p style={{ whiteSpace: 'pre-wrap' }}><strong>Zusammenfassung:</strong> {st.summary}</p>}
+                {st.goal && (
+                  <p>
+                    <strong>Ziel:</strong> {st.goal}
+                  </p>
+                )}
+                {st.summary && (
+                  <p style={{ whiteSpace: 'pre-wrap' }}>
+                    <strong>Zusammenfassung:</strong> {st.summary}
+                  </p>
+                )}
                 <p className="muted">
-                  Dauer {clock(k.durationMs)} · {k.focusRatio === null ? '' : `${Math.round(k.focusRatio * 100)} % in der App · `}
+                  Dauer {clock(k.durationMs)} ·{' '}
+                  {k.focusRatio === null ? '' : `${Math.round(k.focusRatio * 100)} % in der App · `}
                   {k.drifts}× abgeschweift · {k.checkinsAnswered} Check-ins
                 </p>
               </div>
@@ -65,7 +99,11 @@ export function HandoutPage(): ReactNode {
           {questions.length > 0 && (
             <>
               <h3>Offene Fragen</h3>
-              <ul>{questions.map((q) => <li key={q}>{q}</li>)}</ul>
+              <ul>
+                {questions.map((q) => (
+                  <li key={q}>{q}</li>
+                ))}
+              </ul>
             </>
           )}
         </section>
@@ -74,14 +112,20 @@ export function HandoutPage(): ReactNode {
           return (
             <section key={s.id} className="handout-slide">
               <div className="handout-left">
-                <SlideView deckId={deckId} slide={s} width={700} />
+                <SlideView deckId={deckId} slide={s} width={900} fluid />
               </div>
               <div className="handout-right">
                 <div className="handout-meta">
                   <strong>Folie {i + 1}</strong>
                   {s.slideFlags?.includes('important') && ' ★ wichtig'}
                   {s.slideFlags?.includes('unclear') && ' ? unklar'}
-                  {st && st.dwellMs > 0 && <span className="muted"> · {fmtDuration(st.dwellMs)}{st.awayMs ? `, ${fmtDuration(st.awayMs)} außerhalb` : ''}</span>}
+                  {st && st.dwellMs > 0 && (
+                    <span className="muted">
+                      {' '}
+                      · {fmtDuration(st.dwellMs)}
+                      {st.awayMs ? `, ${fmtDuration(st.awayMs)} außerhalb` : ''}
+                    </span>
+                  )}
                 </div>
                 <Outliner rootId={s.id} embedded />
                 {st?.checkins.map((c, k) => (

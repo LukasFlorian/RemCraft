@@ -5,7 +5,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_LECTURE_SETTINGS } from '@core/lecture/analytics';
 import type { LectureState } from '@core/lecture/session';
-import { buildLectureState, currentSlide, isRunning, nextCheckinIn, nextCheckinPrompt } from '@core/lecture/session';
+import {
+  buildLectureState,
+  currentSlide,
+  isRunning,
+  nextCheckinIn,
+  nextCheckinPrompt,
+} from '@core/lecture/session';
 import type { Lecture, LectureEvent, LectureSettings } from '@core/model/types';
 import { selectSettings } from '@data/selectors';
 import type { Store } from '@data/store/store';
@@ -15,7 +21,8 @@ import { useApp, useSelector } from '../app/context';
 function eventsByLecture(s: Store): Map<string, LectureEvent[]> {
   return s.memo('eventsByLecture', [s.collectionVersion('lectureEvents')], () => {
     const map = new Map<string, LectureEvent[]>();
-    for (const e of s.all('lectureEvents')) map.set(e.lectureId, [...(map.get(e.lectureId) ?? []), e]);
+    for (const e of s.all('lectureEvents'))
+      map.set(e.lectureId, [...(map.get(e.lectureId) ?? []), e]);
     return map;
   });
 }
@@ -34,25 +41,38 @@ export function useLectureState(lectureId: string | null): LectureState | null {
 
 /** All lectures, newest first. */
 export function useLectures(): Lecture[] {
-  return useSelector((s) => s.memo('lecturesSorted', [s.collectionVersion('lectures')], () => [...s.all('lectures')].sort((a, b) => b.createdAt - a.createdAt)));
+  return useSelector((s) =>
+    s.memo('lecturesSorted', [s.collectionVersion('lectures')], () =>
+      [...s.all('lectures')].sort((a, b) => b.createdAt - a.createdAt),
+    ),
+  );
 }
 
 /** The lecture currently recording or paused (if any). */
 export function useActiveLecture(): Lecture | null {
   return useSelector((s) =>
-    s.memo('activeLecture', [s.collectionVersion('lectures'), s.collectionVersion('lectureEvents')], () => {
-      for (const l of [...s.all('lectures')].sort((a, b) => b.createdAt - a.createdAt)) {
-        const st = selectLectureState(s, l.id);
-        if (isRunning(st) || st.pausedSince !== null) return l;
-      }
-      return null;
-    }),
+    s.memo(
+      'activeLecture',
+      [s.collectionVersion('lectures'), s.collectionVersion('lectureEvents')],
+      () => {
+        for (const l of [...s.all('lectures')].sort((a, b) => b.createdAt - a.createdAt)) {
+          const st = selectLectureState(s, l.id);
+          if (isRunning(st) || st.pausedSince !== null) return l;
+        }
+        return null;
+      },
+    ),
   );
 }
 
 /** Lecture-mode settings with defaults. */
 export function useLectureSettings(): LectureSettings {
-  return useSelector((s) => s.memo('lectureSettings', [s.collectionVersion('settings')], () => ({ ...DEFAULT_LECTURE_SETTINGS, ...selectSettings(s).lecture })));
+  return useSelector((s) =>
+    s.memo('lectureSettings', [s.collectionVersion('settings')], () => ({
+      ...DEFAULT_LECTURE_SETTINGS,
+      ...selectSettings(s).lecture,
+    })),
+  );
 }
 
 /**
@@ -61,12 +81,21 @@ export function useLectureSettings(): LectureSettings {
  * `awayMinSeconds` are ignored. Returns the last long absence for the
  * "welcome back" banner.
  */
-export function useAwayTracking(lectureId: string | null, running: boolean, slide: number | null, cfg: LectureSettings): { since: number; ms: number; slide: number | null } | null {
+export function useAwayTracking(
+  lectureId: string | null,
+  running: boolean,
+  slide: number | null,
+  cfg: LectureSettings,
+): { since: number; ms: number; slide: number | null } | null {
   const app = useApp();
   const awayStart = useRef<number | null>(null);
   const slideRef = useRef(slide);
   slideRef.current = slide;
-  const [welcome, setWelcome] = useState<{ since: number; ms: number; slide: number | null } | null>(null);
+  const [welcome, setWelcome] = useState<{
+    since: number;
+    ms: number;
+    slide: number | null;
+  } | null>(null);
   useEffect(() => {
     if (!lectureId || !running || !cfg.trackAway) return;
     const leave = (): void => {
@@ -79,8 +108,13 @@ export function useAwayTracking(lectureId: string | null, running: boolean, slid
       if (start === null) return;
       const end = Date.now();
       if (end - start < cfg.awayMinSeconds * 1000) return;
-      app.lectures.record(lectureId, 'away', { start, end, ...(slideRef.current !== null ? { slide: slideRef.current } : {}) });
-      if (end - start >= cfg.welcomeBackSeconds * 1000) setWelcome({ since: start, ms: end - start, slide: slideRef.current });
+      app.lectures.record(lectureId, 'away', {
+        start,
+        end,
+        ...(slideRef.current !== null ? { slide: slideRef.current } : {}),
+      });
+      if (end - start >= cfg.welcomeBackSeconds * 1000)
+        setWelcome({ since: start, ms: end - start, slide: slideRef.current });
     };
     const onVisibility = (): void => (document.visibilityState === 'hidden' ? leave() : back());
     document.addEventListener('visibilitychange', onVisibility);
@@ -100,14 +134,21 @@ export function useAwayTracking(lectureId: string | null, running: boolean, slid
  * Prompts a recall check-in every `checkinMinutes` of lecture time while the
  * app is visible.
  */
-export function useCheckinTimer(lectureId: string | null, state: LectureState | null, cfg: LectureSettings): void {
+export function useCheckinTimer(
+  lectureId: string | null,
+  state: LectureState | null,
+  cfg: LectureSettings,
+): void {
   const app = useApp();
   useEffect(() => {
     if (!lectureId || !state) return;
     const tick = (): void => {
       const due = nextCheckinIn(state, Date.now(), cfg.checkinMinutes);
       if (due === 0 && document.visibilityState === 'visible') {
-        app.lectures.record(lectureId, 'checkin_prompt', { text: nextCheckinPrompt(state), ...(currentSlide(state) !== null ? { slide: currentSlide(state)! } : {}) });
+        app.lectures.record(lectureId, 'checkin_prompt', {
+          text: nextCheckinPrompt(state),
+          ...(currentSlide(state) !== null ? { slide: currentSlide(state)! } : {}),
+        });
       }
     };
     const t = setInterval(tick, 5000);

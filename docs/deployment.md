@@ -48,11 +48,11 @@ Deploy the Edge Function `todoist-daily` and schedule it hourly - see
 ## Optional: own (sub)domain
 
 1. DNS (where your domain's zone is managed): `CNAME` record `remcraft` → `<user>.github.io.`
-2. GitHub: *Settings → Pages → Custom domain* `remcraft.example.com`, save, wait for the DNS
+2. GitHub: _Settings → Pages → Custom domain_ `remcraft.example.com`, save, wait for the DNS
    check, then tick **Enforce HTTPS**. (Recommended: verify the domain under your account's
-   *Settings → Pages* to prevent takeovers.)
+   _Settings → Pages_ to prevent takeovers.)
 3. Repository variable `BASE_PATH` = `/`, then re-run the deploy workflow.
-4. Supabase *Authentication → URL Configuration*: Site URL and Redirect URLs =
+4. Supabase _Authentication → URL Configuration_: Site URL and Redirect URLs =
    `https://remcraft.example.com/`; GitHub OAuth app homepage URL likewise
    (the callback URL stays the Supabase one).
 

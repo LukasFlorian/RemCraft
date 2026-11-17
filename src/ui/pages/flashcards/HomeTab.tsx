@@ -5,11 +5,10 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
+import { RemIcon } from '../../components/RemIcon';
 import {
   AlertTriangle,
   ChevronRight,
-  FileText,
-  Folder,
   GraduationCap,
   MoreHorizontal,
   Target,
@@ -275,7 +274,6 @@ function PriorityItem({
     }),
   );
   if (!rem) return null;
-  const Icon = rem.isFolder ? Folder : FileText;
   return (
     <>
       <div className="priority-row" style={{ paddingLeft: 8 + depth * 22 }}>
@@ -290,7 +288,7 @@ function PriorityItem({
         ) : (
           <span style={{ width: 18 }} />
         )}
-        <Icon size={16} className={rem.isFolder ? 'icon-folder' : 'icon-doc'} />
+        <RemIcon rem={rem} size={16} />
         <button className="link-plain ellipsis" onClick={() => navigate(`/rem/${remId}`)}>
           {title}
         </button>

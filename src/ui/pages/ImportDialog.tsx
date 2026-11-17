@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   FileText,
   FileUp,
+  FolderInput,
   Layers,
   ListTree,
   NotebookPen,
@@ -27,8 +28,9 @@ import { useApp, useSelector } from '../app/context';
 import { Field, Switch } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { pickFiles } from '../hooks/useFilePicker';
-import { importCardFile } from '../lecture/DeckPanel';
+import { pickFiles, pickFolder } from '../hooks/useFilePicker';
+import { archiveFromFiles } from '@data/services/fokusImport';
+import { importCardFile, SKILL_URL } from '../lecture/DeckPanel';
 
 /** An import source. */
 interface Source {
@@ -36,12 +38,23 @@ interface Source {
   label: string;
   icon: ReactNode;
   accept: string;
-  format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus' | 'share';
-  help: string;
+  format: TextFormat | 'backup' | 'file' | 'paste' | 'deck' | 'fokus' | 'fokus-data' | 'share';
+  help: ReactNode;
   csvDefaults?: { delimiterHint: string };
+  /** Not shown in the source grid (opened directly, e.g. from Settings). */
+  hidden?: boolean;
 }
 
 const SOURCES: Source[] = [
+  {
+    id: 'fokus-data',
+    label: 'Fokus: alles übernehmen',
+    icon: <FolderInput size={22} color="#2ec4a6" />,
+    accept: '',
+    format: 'fokus-data',
+    hidden: true,
+    help: 'Wähle den Ordner „data“ deiner Fokus-Installation (darin liegen decks, sessions und courses). Übernommen werden Kurse, Foliensätze mit Layout, Notizen, Markierungen, Zeichnungen, Textfelder, Hervorhebungen, importierte Karten und alle Vorlesungen mit Auswertung. Mehrfaches Importieren erzeugt keine Duplikate.',
+  },
   {
     id: 'deck',
     label: 'Foliensatz (PDF)',
@@ -52,11 +65,21 @@ const SOURCES: Source[] = [
   },
   {
     id: 'fokus',
-    label: 'Fokus-Karten (.fokus.json)',
+    label: 'Karten mit Folien (.cards.json)',
     icon: <FileJson size={22} color="#f2a33a" />,
     accept: '.json',
     format: 'fokus',
-    help: 'Karten aus dem Skill fokus-flashcards: jede Karte wird über PDF-Seite und Zitat ihrer Folie zugeordnet. Der passende Foliensatz wird anhand des PDF-Namens gefunden.',
+    help: (
+      <>
+        Karteikarten mit Folienzuordnung: jede Karte landet über PDF-Seite und ein wörtliches Zitat
+        auf ihrer Folie; der passende Foliensatz wird am PDF-Namen erkannt. Solche Dateien erstellt
+        Claude mit dem{' '}
+        <a href={SKILL_URL} download>
+          RemCraft-Skill (herunterladen)
+        </a>{' '}
+        aus deinen Folien.
+      </>
+    ),
   },
   {
     id: 'share',
@@ -181,15 +204,20 @@ function useFolders(): { id: RemId; title: string }[] {
 export function ImportDialog({
   onClose,
   parentId = null,
+  initialSource,
 }: {
   onClose: () => void;
   parentId?: RemId | null;
+  /** Id of a source to open directly. */
+  initialSource?: string;
 }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
   const toast = useToast();
   const folders = useFolders();
-  const [source, setSource] = useState<Source | null>(null);
+  const [source, setSource] = useState<Source | null>(
+    SOURCES.find((s) => s.id === initialSource) ?? null,
+  );
   const [target, setTarget] = useState<RemId | ''>(parentId ?? '');
   const [files, setFiles] = useState<File[]>([]);
   const [paste, setPaste] = useState('');
@@ -201,6 +229,7 @@ export function ImportDialog({
     bothDirections: false,
   });
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState('');
 
   /** Runs the import. */
   const run = async (): Promise<void> => {
@@ -214,6 +243,26 @@ export function ImportDialog({
         onClose();
         return;
       }
+      if (source.format === 'fokus-data') {
+        const s = await app.fokusImport.run(archiveFromFiles(files), (msg, done, total) =>
+          setProgress(`${msg} (${done}/${total})`),
+        );
+        const parts = [
+          `${s.courses} Kurse`,
+          `${s.decks} Foliensätze`,
+          `${s.lectures} Vorlesungen`,
+          `${s.slidesWithNotes} Folien mit Notizen`,
+          `${s.cards} Karten`,
+          `${s.files} Dateien`,
+        ];
+        toast(
+          `Fokus übernommen: ${parts.join(', ')}${s.skipped ? ` (${s.skipped} schon vorhanden)` : ''}`,
+        );
+        for (const w of s.warnings.slice(0, 3)) toast(w, 'error');
+        navigate('/lectures');
+        onClose();
+        return;
+      }
       if (source.format === 'deck') {
         let last: RemId | null = null;
         for (const f of files) last = await app.lectures.importPdf(f, parent);
@@ -223,7 +272,8 @@ export function ImportDialog({
       }
       if (source.format === 'share') {
         let root: RemId | undefined;
-        for (const f of files) root = await app.sharing.clone(await app.sharing.readFile(f), parent);
+        for (const f of files)
+          root = await app.sharing.clone(await app.sharing.readFile(f), parent);
         if (root) navigate(`/rem/${root}`);
         onClose();
         return;
@@ -293,7 +343,7 @@ export function ImportDialog({
     return (
       <Modal title="Import to RemCraft" onClose={onClose} wide>
         <div className="import-grid">
-          {SOURCES.map((s) => (
+          {SOURCES.filter((s) => !s.hidden).map((s) => (
             <button key={s.id} className="import-source" onClick={() => setSource(s)}>
               {s.icon}
               <span>{s.label}</span>
@@ -365,18 +415,33 @@ export function ImportDialog({
       ) : (
         <Field group label="Files">
           <div className="row">
-            <button
-              className="btn"
-              onClick={() =>
-                void pickFiles(source.accept, source.format !== 'backup').then(
-                  (f) => f.length && setFiles(f),
-                )
-              }
-            >
-              <FileUp size={15} /> Choose file{source.format !== 'backup' ? 's' : ''}
-            </button>
+            {source.format === 'fokus-data' ? (
+              <button
+                className="btn"
+                onClick={() => void pickFolder().then((f) => f.length && setFiles(f))}
+              >
+                <FolderInput size={15} /> Ordner „data“ wählen
+              </button>
+            ) : (
+              <button
+                className="btn"
+                onClick={() =>
+                  void pickFiles(source.accept, source.format !== 'backup').then(
+                    (f) => f.length && setFiles(f),
+                  )
+                }
+              >
+                <FileUp size={15} /> Choose file{source.format !== 'backup' ? 's' : ''}
+              </button>
+            )}
             <span className="muted ellipsis">
-              {files.length ? files.map((f) => f.name).join(', ') : 'No file selected'}
+              {busy && progress
+                ? progress
+                : files.length
+                  ? source.format === 'fokus-data'
+                    ? `${files.length} Dateien`
+                    : files.map((f) => f.name).join(', ')
+                  : 'No file selected'}
             </span>
           </div>
         </Field>
@@ -417,7 +482,7 @@ export function ImportDialog({
           />
         </div>
       )}
-      {source.format !== 'backup' && (
+      {source.format !== 'backup' && source.format !== 'fokus-data' && (
         <Field label="Import into">
           <select className="select" value={target} onChange={(e) => setTarget(e.target.value)}>
             <option value="">Top level</option>

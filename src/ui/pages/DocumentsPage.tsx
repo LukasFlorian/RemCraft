@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
+import { RemIcon } from '../components/RemIcon';
 import {
   CalendarDays,
   FileText,
@@ -262,7 +263,11 @@ function DocRow({
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
     >
       <span className="doc-icon">
-        <Icon size={16} className={rem.isFolder ? 'icon-folder' : 'icon-doc'} />
+        {rem.icon || rem.color ? (
+          <RemIcon rem={rem} size={16} />
+        ) : (
+          <Icon size={16} className={rem.isFolder ? 'icon-folder' : 'icon-doc'} />
+        )}
       </span>
       <span className="col" style={{ gap: 0, minWidth: 0, flex: 1 }}>
         <span className="doc-title ellipsis">{title}</span>
