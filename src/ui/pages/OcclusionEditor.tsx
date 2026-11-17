@@ -22,7 +22,7 @@ export function OcclusionEditor({
 }): ReactNode {
   const app = useApp();
   const rem = useRem(remId);
-  const url = useFileUrl(rem?.image?.src);
+  const url = useFileUrl(rem?.image?.src, rem?.image?.origin);
   const [masks, setMasks] = useState<Occlusion[]>(rem?.image?.occlusions ?? []);
   const [hideAll, setHideAll] = useState(rem?.image?.hideAllOcclusions ?? false);
   const [draft, setDraft] = useState<Occlusion | null>(null);

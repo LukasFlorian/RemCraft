@@ -1,1 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b6cff"/><stop offset="1" stop-color="#a368ff"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><path d="M20 46V18h13c6 0 10 4 10 9 0 4-2 7-6 8l7 11h-7l-6-10h-5v10zm6-15h7c3 0 4-2 4-4s-1-4-4-4h-7z" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#3a3f5c"/>
+      <stop offset="0.55" stop-color="#1d2033"/>
+      <stop offset="1" stop-color="#11131f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.3" cy="0.12" r="0.75">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dfe3f5"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c8cff"/>
+      <stop offset="1" stop-color="#b47cff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <!-- stacked cards -->
+  <g filter="url(#shadow)">
+    <rect x="136" y="118" width="250" height="168" rx="30" fill="#ffffff" fill-opacity="0.18" transform="rotate(-8 261 202)"/>
+    <rect x="128" y="160" width="256" height="172" rx="30" fill="#ffffff" fill-opacity="0.38" transform="rotate(-3 256 246)"/>
+    <rect x="118" y="206" width="276" height="188" rx="32" fill="url(#card)"/>
+  </g>
+  <!-- question line and revealed answer line on the front card -->
+  <rect x="152" y="246" width="152" height="22" rx="11" fill="#1d2033"/>
+  <rect x="152" y="290" width="208" height="16" rx="8" fill="#1d2033" fill-opacity="0.28"/>
+  <rect x="152" y="324" width="122" height="16" rx="8" fill="url(#accent)"/>
+  <!-- spark -->
+  <path d="M378 132 l10 26 26 10 -26 10 -10 26 -10 -26 -26 -10 26 -10z" fill="url(#accent)"/>
+</svg>

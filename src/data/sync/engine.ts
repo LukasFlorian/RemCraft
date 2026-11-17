@@ -217,9 +217,17 @@ export class SyncEngine {
 
   /** Uploads files that only exist locally. */
   private async pushFiles(): Promise<void> {
+    let failed: unknown = null;
     for (const file of await this.persistence.pendingFiles()) {
-      await this.remote.uploadFile(file.id, file.blob, file.mimeType);
-      await this.persistence.putFile({ ...file, uploaded: true });
+      try {
+        await this.remote.uploadFile(file.id, file.blob, file.mimeType);
+        await this.persistence.putFile({ ...file, uploaded: true });
+      } catch (e) {
+        // One failing file (e.g. above the storage size limit) must not block
+        // the others; it is retried on the next sync.
+        failed ??= e;
+      }
     }
+    if (failed) throw failed;
   }
 }

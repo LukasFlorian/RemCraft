@@ -15,24 +15,25 @@ import { RichTextView } from '../richtext/RichTextView';
 import { Outliner } from './Outliner';
 
 /** Resolves a `file:` / data / http source to a displayable URL. */
-export function useFileUrl(src: string | undefined): string | null {
+export function useFileUrl(src: string | undefined, origin?: string): string | null {
   const app = useApp();
   const [url, setUrl] = useState<string | null>(src && !src.startsWith('file:') ? src : null);
   useEffect(() => {
     let alive = true;
     if (!src) setUrl(null);
     else if (!src.startsWith('file:')) setUrl(src);
-    else void app.files.resolve(src).then((u) => alive && setUrl(u));
+    else void app.files.resolve(src, origin).then((u) => alive && setUrl(u));
     return () => {
       alive = false;
     };
-  }, [app, src]);
+  }, [app, src, origin]);
   return url;
 }
 
 /** Image with optional occlusion masks. */
 export function ImageView({
   src,
+  origin,
   width,
   occlusions,
   hidden,
@@ -40,6 +41,8 @@ export function ImageView({
   onResize,
 }: {
   src: string;
+  /** Public fallback URL (images of cloned shares). */
+  origin?: string | undefined;
   width?: number | undefined;
   occlusions?: Occlusion[] | undefined;
   /** Occlusions drawn as opaque masks (all when undefined). */
@@ -48,7 +51,7 @@ export function ImageView({
   revealed?: string | undefined;
   onResize?: (width: number) => void;
 }): ReactNode {
-  const url = useFileUrl(src);
+  const url = useFileUrl(src, origin);
   if (!url) return <div className="image-placeholder">Loading image…</div>;
   return (
     <div className="image-block" style={width ? { width } : undefined}>
@@ -92,7 +95,7 @@ export function ImageView({
 
 /** Attached file (PDFs are shown inline). */
 export function FileView({ rem }: { rem: Rem }): ReactNode {
-  const url = useFileUrl(rem.file?.src);
+  const url = useFileUrl(rem.file?.src, rem.file?.origin);
   const [open, setOpen] = useState(false);
   if (!rem.file) return null;
   const isPdf =

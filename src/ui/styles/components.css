@@ -568,3 +568,23 @@
 .priority-badge-btn:empty {
   display: none;
 }
+
+/* "Was ist neu" popup */
+.whats-new h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.whats-new h3 svg {
+  color: var(--accent);
+}
+.whats-new ul {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.45;
+}

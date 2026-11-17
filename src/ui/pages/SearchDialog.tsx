@@ -37,7 +37,8 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
     const rem = app.store.get(id);
     if (!rem) return;
     const doc = rem.isDocument ? rem : [...app.rems.path(id)].reverse().find((r) => r.isDocument);
-    navigate(`/rem/${doc?.id ?? id}`);
+    // Inside a document: open it and scroll to the Rem.
+    navigate(doc && doc.id !== id ? `/rem/${doc.id}?focus=${id}` : `/rem/${doc?.id ?? id}`);
     onClose();
   };
   const create = (): void => {

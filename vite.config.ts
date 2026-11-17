@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => ({
     mode !== 'test' &&
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg'],
+        includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
         manifest: {
           name: 'RemCraft',
           short_name: 'RemCraft',
@@ -37,7 +37,13 @@ export default defineConfig(({ mode }) => ({
           theme_color: '#1f2030',
           background_color: '#1f2030',
           display: 'standalone',
-          icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+          icons: [
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            // Full-bleed artwork: also usable as a maskable (Android) icon.
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          ],
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,woff2}'],

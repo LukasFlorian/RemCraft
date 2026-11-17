@@ -11,6 +11,7 @@ import { useHotkeys } from '../hooks/useHotkeys';
 import { useLocalState } from '../hooks/useLocalState';
 import { CaretPopup } from '../editor/CaretPopup';
 import { EditToolbar } from '../editor/EditToolbar';
+import { WhatsNew } from '../whatsnew/WhatsNew';
 import { GlobalModals } from '../pages/GlobalModals';
 import { Sidebar } from './Sidebar';
 
@@ -87,6 +88,7 @@ export function Layout(): ReactNode {
       <CaretPopup />
       <EditToolbar />
       <GlobalModals />
+      <WhatsNew />
     </div>
   );
 }

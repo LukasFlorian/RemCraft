@@ -261,7 +261,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
   return (
     <aside className="sidebar" aria-label="Sidebar">
       <div className="sidebar-header">
-        <span className="sidebar-logo">R</span>
+        <img className="sidebar-logo" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
         <span className="sidebar-title ellipsis" title={account.user?.email ?? 'Local only'}>
           {account.user?.email ?? 'RemCraft'}
         </span>

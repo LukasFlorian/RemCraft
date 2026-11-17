@@ -79,7 +79,7 @@ export class LectureService {
     if (!deck) return Promise.reject(new Error('Not a slide deck'));
     let doc = this.openDocs.get(deck.src);
     if (!doc) {
-      doc = this.files.blob(deck.src).then((blob) => {
+      doc = this.files.blob(deck.src, deck.origin).then((blob) => {
         if (!blob) throw new Error('PDF file is not available on this device yet');
         return this.engine.open(blob);
       });

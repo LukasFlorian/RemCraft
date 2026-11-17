@@ -80,6 +80,11 @@ test('search finds Rems', async ({ page }) => {
   await page.keyboard.press('Control+k');
   await page.getByPlaceholder(/Search Rems/).fill('mitochondria');
   await expect(page.locator('.search-result').first()).toContainText('powerhouse');
+  // Opening a hit scrolls to it inside its document and highlights it.
+  await page.locator('.search-result').first().click();
+  const hit = page.locator('.rem.is-search-hit');
+  await expect(hit).toContainText('powerhouse');
+  await expect(hit).toBeInViewport();
 });
 
 test('practice on a phone has no sidebar button over its exit button', async ({ page }) => {
@@ -114,4 +119,47 @@ test('a card can be disabled while practising and the toolbar does not stay behi
   await page.keyboard.press('Space');
   await page.keyboard.press('4');
   await expect(page.getByText('Session complete')).toBeVisible();
+});
+
+test('multi-line answers are graded item by item with one reveal button', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+  await page.keyboard.type('Set Deck');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Drei Probleme >>>');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('Speicher');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Datenrate');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Kosten');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /1 Due/ }).click();
+  await expect(page.getByRole('button', { name: 'Check answer' })).toHaveCount(0);
+  await page.getByRole('button', { name: /Show answer/ }).click();
+  // Mark one of three items as not known: "Partially recalled" is suggested.
+  await page.getByRole('button', { name: /Datenrate/ }).click();
+  await expect(page.getByText('2/3 gewusst', { exact: false })).toBeVisible();
+  await expect(page.locator('.rating-2')).toHaveClass(/is-suggested/);
+});
+
+test('editing a card while practising shows only that card and keeps the focus', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+  await page.keyboard.type('Edit Deck');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Eins >> 1');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Zwei >> 2');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /2 Due/ }).click();
+  await page.getByRole('button', { name: 'Edit card' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator('.rem')).toHaveCount(1);
+  await dialog.locator('.rem-text').first().click();
+  await page.keyboard.press('End');
+  await page.keyboard.type('abc');
+  // All three characters arrived: the editor kept the focus while typing.
+  await expect(dialog.locator('.rem').first()).toContainText('abc');
 });

@@ -111,6 +111,7 @@ export class FakeServer {
       return { id, name: s.name, rootId: s.rootId, ownerId: s.ownerId, role: s.members.get(uid)! };
     };
     return {
+      snapshotFileUrl: (token, fileId) => `https://shares.test/${token}/${fileId}`,
       publish: async (snapshot, files, scopeLabel, token) => {
         const owner = me();
         const existing = token ? this.shares.get(token) : undefined;

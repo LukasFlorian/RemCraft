@@ -22,6 +22,8 @@ export interface OutlinerProps {
   rootId: RemId;
   /** Rendered inside another Rem (portal): compact, no "click to add" area. */
   embedded?: boolean;
+  /** Show only this child of the root (with its subtree), e.g. one card to edit. */
+  only?: RemId;
 }
 
 /** Answer mode the root imposes on its children. */
@@ -33,7 +35,7 @@ function childModeOf(
 }
 
 /** An editable tree of Rems. */
-export function Outliner({ rootId, embedded }: OutlinerProps): ReactNode {
+export function Outliner({ rootId, embedded, only }: OutlinerProps): ReactNode {
   const app = useApp();
   const controller = useController();
   const instance = useId();
@@ -117,16 +119,18 @@ export function Outliner({ rootId, embedded }: OutlinerProps): ReactNode {
 
   return (
     <div className={`outliner${embedded ? ' is-embedded' : ''}`} data-instance={instance}>
-      {children.map((child, i) => (
-        <RemBlock
-          key={child.id}
-          remId={child.id}
-          instance={instance}
-          parentMode={mode}
-          index={i}
-          depth={0}
-        />
-      ))}
+      {children.map((child, i) =>
+        only && child.id !== only ? null : (
+          <RemBlock
+            key={child.id}
+            remId={child.id}
+            instance={instance}
+            parentMode={mode}
+            index={i}
+            depth={0}
+          />
+        ),
+      )}
       {!embedded && (
         <div
           className="outliner-tail"
@@ -140,7 +144,7 @@ export function Outliner({ rootId, embedded }: OutlinerProps): ReactNode {
           )}
         </div>
       )}
-      {embedded && children.length === 0 && (
+      {embedded && !only && children.length === 0 && (
         <div
           className="outliner-tail is-small"
           onMouseDown={(e) => (e.preventDefault(), appendRem({ app, controller, instance }))}

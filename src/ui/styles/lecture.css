@@ -192,8 +192,13 @@
 }
 
 @media (max-width: 860px) {
+  /* Phones: one column - the current slide first at full width, then notes
+     and cards; previous/next slides are not needed (swipe/arrows). */
   .widget-board {
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
   .widget {
     position: relative !important;
@@ -202,12 +207,48 @@
     width: 100% !important;
     height: auto !important;
     min-height: 220px;
+    flex-shrink: 0;
+    order: 5;
   }
   .widget[data-w='current'] {
-    min-height: 60vh;
+    order: 0;
+    min-height: 0;
+  }
+  .widget[data-w='current'] > *,
+  .widget[data-w='current'] .widget-body,
+  .widget[data-w='current'] .current-slide {
+    flex: none;
+    height: auto;
+    overflow: visible;
+  }
+  .widget[data-w='current'] .current-slide .slide-view {
+    flex: none;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+  .widget[data-w='notes'] {
+    order: 1;
+  }
+  .widget[data-w='cards'] {
+    order: 2;
+  }
+  .widget[data-w='prev'],
+  .widget[data-w='next'] {
+    display: none;
   }
   .widget-edge {
     display: none;
+  }
+  /* The header scrolls sideways instead of cutting off its buttons. */
+  .lecture-top {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .lecture-top > * {
+    flex-shrink: 0;
+  }
+  .lecture-top .spacer {
+    flex: 1 0 0;
   }
 }
 

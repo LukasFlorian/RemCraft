@@ -338,6 +338,7 @@ export const RemBlock = memo(function RemBlock({
             {rem.image && (
               <ImageView
                 src={rem.image.src}
+                origin={rem.image.origin}
                 width={rem.image.width}
                 occlusions={rem.image.occlusions}
                 onResize={(w) =>

@@ -838,3 +838,10 @@ mark.hl-purple {
 .title-icon:hover {
   background: var(--surface-hover);
 }
+
+/* Search hit: briefly highlighted after jumping to it. */
+.rem.is-search-hit > .rem-row {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  transition: background 0.6s;
+}

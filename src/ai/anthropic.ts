@@ -15,13 +15,25 @@ export const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-5-5';
  * @param config `baseUrl` (default `https://api.anthropic.com/v1`), `apiKey`, `model`.
  * @param fetchImpl Fetch implementation (injectable for tests).
  */
-export function createAnthropicProvider(config: AiConfig, fetchImpl: typeof fetch = (...a) => fetch(...a)): AiProvider {
+export function createAnthropicProvider(
+  config: AiConfig,
+  fetchImpl: typeof fetch = (...a) => fetch(...a),
+): AiProvider {
   const url = `${(config.baseUrl || 'https://api.anthropic.com/v1').replace(/\/+$/, '')}/messages`;
 
   /** Splits system prompts from the conversation (Anthropic takes them separately). */
-  const body = (messages: readonly ChatMessage[], options: CompletionOptions, stream: boolean): string => {
-    const system = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n');
-    const rest = messages.filter((m) => m.role !== 'system').map((m) => ({ role: m.role, content: m.content }));
+  const body = (
+    messages: readonly ChatMessage[],
+    options: CompletionOptions,
+    stream: boolean,
+  ): string => {
+    const system = messages
+      .filter((m) => m.role === 'system')
+      .map((m) => m.content)
+      .join('\n\n');
+    const rest = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({ role: m.role, content: m.content }));
     return JSON.stringify({
       model: config.model || DEFAULT_CLAUDE_MODEL,
       max_tokens: options.maxTokens ?? 4096,
@@ -32,7 +44,11 @@ export function createAnthropicProvider(config: AiConfig, fetchImpl: typeof fetc
     });
   };
 
-  const request = async (messages: readonly ChatMessage[], options: CompletionOptions, stream: boolean): Promise<Response> => {
+  const request = async (
+    messages: readonly ChatMessage[],
+    options: CompletionOptions,
+    stream: boolean,
+  ): Promise<Response> => {
     const res = await fetchImpl(url, {
       method: 'POST',
       headers: {
@@ -44,14 +60,23 @@ export function createAnthropicProvider(config: AiConfig, fetchImpl: typeof fetc
       body: body(messages, options, stream),
       ...(options.signal ? { signal: options.signal } : {}),
     });
-    if (!res.ok) throw new AiError(`Claude request failed (${res.status}): ${(await res.text().catch(() => '')).slice(0, 300)}`, res.status);
+    if (!res.ok)
+      throw new AiError(
+        `Claude request failed (${res.status}): ${(await res.text().catch(() => '')).slice(0, 300)}`,
+        res.status,
+      );
     return res;
   };
 
   return {
     async complete(messages, options = {}) {
-      const data = (await (await request(messages, options, false)).json()) as { content?: { type: string; text?: string }[] };
-      return (data.content ?? []).filter((c) => c.type === 'text').map((c) => c.text ?? '').join('');
+      const data = (await (await request(messages, options, false)).json()) as {
+        content?: { type: string; text?: string }[];
+      };
+      return (data.content ?? [])
+        .filter((c) => c.type === 'text')
+        .map((c) => c.text ?? '')
+        .join('');
     },
     async *stream(messages, options = {}) {
       const res = await request(messages, options, true);
@@ -67,7 +92,10 @@ export function createAnthropicProvider(config: AiConfig, fetchImpl: typeof fetc
         buffer = lines.pop() ?? '';
         for (const line of lines) {
           if (!line.startsWith('data:')) continue;
-          const event = JSON.parse(line.slice(5).trim() || '{}') as { type?: string; delta?: { type?: string; text?: string } };
+          const event = JSON.parse(line.slice(5).trim() || '{}') as {
+            type?: string;
+            delta?: { type?: string; text?: string };
+          };
           if (event.type === 'content_block_delta' && event.delta?.text) yield event.delta.text;
         }
       }
