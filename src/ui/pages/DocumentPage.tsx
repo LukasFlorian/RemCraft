@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FilePlus,
+  GraduationCap,
   FolderPlus,
   Layers,
   MoreHorizontal,
@@ -33,6 +34,10 @@ import { TitleEditor } from '../editor/TitleEditor';
 import { FileView } from '../editor/blocks';
 import { DeckPanel } from '../lecture/DeckPanel';
 import { RemIcon } from '../components/RemIcon';
+import { PRIORITY_META, PriorityIcon } from '../components/PriorityIcon';
+
+/** Stable empty list (selector result). */
+const EMPTY_IDS: readonly string[] = [];
 import { useModals } from '../app/modals';
 import { ShareDialog, useSpaces } from '../sharing/ShareDialog';
 import { ROLE_LABELS } from '@core/sharing/spaces';
@@ -107,6 +112,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   const rem = useRem(remId)!;
   const due = useSelector((s) => selectDueCounts(s, now).get(remId) ?? 0);
   const priority = useSelector((s) => selectInheritance(s, now).get(remId)?.priority ?? 'none');
+  const examIds = useSelector((s) => selectInheritance(s, now).get(remId)?.examIds ?? EMPTY_IDS);
   const [menu, setMenu] = useState<{ anchor: HTMLElement; entries: MenuEntry[] } | null>(null);
   const [sharing, setSharing] = useState(false);
   const spaces = useSpaces();
@@ -127,6 +133,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   };
 
   const practiceEntries = (): MenuEntry[] => [
+    { heading: 'Practice' },
     {
       label: 'Practice with spaced repetition',
       onSelect: () => navigate(`/practice?scope=${remId}&mode=srs`),
@@ -143,21 +150,53 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
       label: 'Cram (no scheduling)',
       onSelect: () => navigate(`/practice?scope=${remId}&mode=cram`),
     },
+    { heading: 'Exam' },
+    ...examIds.map((id): MenuEntry => {
+      const exam = app.store.getRecord('exams', id);
+      return {
+        label: exam?.name ?? 'Exam',
+        icon: <PriorityIcon priority="exam" />,
+        hint: exam ? new Date(exam.date).toLocaleDateString() : undefined,
+        onSelect: () => navigate(`/flashcards/exams/${id}`),
+      };
+    }),
+    {
+      label: 'Create exam for this…',
+      icon: <GraduationCap size={15} />,
+      onSelect: () => modals.open({ kind: 'exam', scope: [remId] }),
+    },
+    { heading: 'Status' },
+    ...(['active', 'maintaining', 'none', 'paused'] as const).map((p): MenuEntry => {
+      const own = rem.priority ?? 'none';
+      const inherited = !rem.priority && priority === p && p !== 'none';
+      return {
+        label: `${own === p && rem.priority ? '✓ ' : ''}${PRIORITY_META[p].label}`,
+        icon: <PriorityIcon priority={p} />,
+        hint: inherited ? 'inherited' : PRIORITY_META[p].hint,
+        onSelect: () => app.rems.update(remId, { priority: p === 'none' ? undefined : p }),
+      };
+    }),
   ];
 
   return (
     <>
       <div className="topbar">
         <Breadcrumbs remId={remId} />
-        <PriorityBadge priority={priority} />
-        {due > 0 && (
+        <button
+          className="priority-badge-btn"
+          title="Exam & status"
+          onClick={(e) => setMenu({ anchor: e.currentTarget, entries: practiceEntries() })}
+        >
+          <PriorityBadge priority={priority} />
+        </button>
+        {
           <div className="split-btn">
             <button
               className="btn btn-sm"
               onClick={() => navigate(`/practice?scope=${remId}&mode=srs`)}
               title="Practice due cards"
             >
-              <Layers size={14} /> {due} Due
+              <Layers size={14} /> {due > 0 ? `${due} Due` : 'Practice'}
             </button>
             <button
               className="btn btn-sm"
@@ -167,7 +206,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
               <ChevronDown size={14} />
             </button>
           </div>
-        )}
+        }
         <button
           className="icon-btn"
           title="Undo (⌘Z)"

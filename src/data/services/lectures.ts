@@ -14,6 +14,8 @@ import {
   validateCardFile,
 } from '@core/lecture/cardFile';
 import { detectBoxes, nonEmptyBoxes, planRelayout } from '@core/lecture/layout';
+import { detectTitles, slideLines } from '@core/lecture/titles';
+import type { SlideLine } from '@core/lecture/titles';
 import { outlineToRems } from '@core/io/markdown';
 import { createRem } from '@core/model/factories';
 import { ordersBetween } from '@core/model/ordering';
@@ -26,7 +28,7 @@ import type {
   SlideAnnotations,
   SlideFlag,
 } from '@core/model/types';
-import { rt } from '@core/richtext/ops';
+import { rt, toPlainText } from '@core/richtext/ops';
 import { newId } from '@core/util/ids';
 import type { PdfDoc, PdfEngine } from '../lecture/pdf';
 import { pdfJsEngine, textInBox } from '../lecture/pdf';
@@ -41,6 +43,9 @@ export interface CardImportResult {
   mapped: Partial<Record<MappedBy, number>>;
   unmapped: number;
 }
+
+/** Version of the slide title detection (see `@core/lecture/titles`). */
+export const TITLE_VERSION = 2;
 
 /** Slide title from its text (first line, shortened). */
 export function slideTitle(index: number, text: string): string {
@@ -93,7 +98,10 @@ export class LectureService {
   async analyse(
     pdf: PdfDoc,
     mode = 'auto',
-  ): Promise<{ boxes: number[][]; slides: { page: number; box: number; text: string }[] }> {
+  ): Promise<{
+    boxes: number[][];
+    slides: { page: number; box: number; text: string; title: string }[];
+  }> {
     const n = pdf.pageCount;
     const sample = [
       ...new Set(
@@ -109,12 +117,20 @@ export class LectureService {
       { sampleMasks: masks, sampleImages: images, portrait: size.height > 1.2 * size.width },
       mode,
     );
-    const slides: { page: number; box: number; text: string }[] = [];
+    const found: { page: number; box: number; text: string; lines: SlideLine[] }[] = [];
     for (let p = 0; p < n; p++) {
       const items = await pdf.text(p).catch(() => []);
       const used = boxes.length === 1 ? [0] : nonEmptyBoxes(await pdf.inkMask(p), boxes);
-      for (const b of used) slides.push({ page: p, box: b, text: textInBox(items, boxes[b]!) });
+      for (const b of used)
+        found.push({
+          page: p,
+          box: b,
+          text: textInBox(items, boxes[b]!),
+          lines: slideLines(items, boxes[b]!),
+        });
     }
+    const titles = detectTitles(found.map((f) => f.lines));
+    const slides = found.map(({ lines: _l, ...f }, i) => ({ ...f, title: titles[i] ?? '' }));
     return { boxes, slides };
   }
 
@@ -139,7 +155,14 @@ export class LectureService {
         {
           text: rt(file.name.replace(/\.pdf$/i, '')),
           isDocument: true,
-          deck: { src, pdfName: file.name, pdfPages: pdf.pageCount, layout: mode, boxes },
+          deck: {
+            src,
+            pdfName: file.name,
+            pdfPages: pdf.pageCount,
+            layout: mode,
+            boxes,
+            titles: TITLE_VERSION,
+          },
         },
       );
       const orders = ordersBetween(null, null, slides.length);
@@ -150,7 +173,7 @@ export class LectureService {
             {
               parentId: deck.id,
               order: orders[index]!,
-              text: rt(slideTitle(index, s.text)),
+              text: rt(slideTitle(index, s.title || s.text)),
               slide: { index, page: s.page, box: s.box },
               slideText: s.text,
             },
@@ -190,7 +213,9 @@ export class LectureService {
       hasContent,
     );
     this.store.transact((tx) => {
-      tx.update('rems', deckId, { deck: { ...deck.deck!, layout: mode, boxes } });
+      tx.update('rems', deckId, {
+        deck: { ...deck.deck!, layout: mode, boxes, titles: TITLE_VERSION },
+      });
       // Slide Rems in the new order: reused ones are re-sorted, new ones created.
       const orders = ordersBetween(null, null, slides.length);
       const target: RemId[] = slides.map((s, index) => {
@@ -198,7 +223,7 @@ export class LectureService {
           order: orders[index]!,
           slide: { index, page: s.page, box: s.box },
           slideText: s.text,
-          text: rt(slideTitle(index, s.text)),
+          text: rt(slideTitle(index, s.title || s.text)),
         };
         const oi = plan.reuse[index];
         if (oi !== null && oi !== undefined) return tx.update('rems', existing[oi]!.id, patch)!.id;
@@ -236,6 +261,45 @@ export class LectureService {
         tx.delete('rems', rem.id);
       });
     });
+  }
+
+  /**
+   * Re-detects the slide titles of a deck (decks imported before the layout-
+   * based title detection). Only titles that still look generated
+   * ("Folie N" / "Folie N · …") are replaced; renamed slides stay as they are.
+   *
+   * @returns Number of updated slides.
+   */
+  async retitle(deckId: RemId): Promise<number> {
+    const deck = this.store.get(deckId);
+    if (!deck?.deck) return 0;
+    const pdf = await this.openDeck(deckId);
+    const slides = this.slides(deckId);
+    const lines: SlideLine[][] = [];
+    const pages = new Map<number, Awaited<ReturnType<PdfDoc['text']>>>();
+    for (const s of slides) {
+      const page = s.slide!.page;
+      if (!pages.has(page)) pages.set(page, await pdf.text(page).catch(() => []));
+      lines.push(slideLines(pages.get(page)!, deck.deck.boxes[s.slide!.box] ?? [0, 0, 1, 1]));
+    }
+    const titles = detectTitles(lines);
+    let changed = 0;
+    this.store.transact(
+      (tx) => {
+        slides.forEach((s, i) => {
+          const current = toPlainText(s.text);
+          if (!/^Folie \d+( · .*)?$/.test(current)) return; // renamed by the user
+          const next = slideTitle(i, titles[i] || s.slideText || '');
+          if (next !== current) {
+            tx.update('rems', s.id, { text: rt(next) });
+            changed++;
+          }
+        });
+        tx.update('rems', deckId, { deck: { ...deck.deck!, titles: TITLE_VERSION } });
+      },
+      { undoable: false },
+    );
+    return changed;
   }
 
   /**

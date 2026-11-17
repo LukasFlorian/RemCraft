@@ -6,17 +6,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { RemIcon } from '../../components/RemIcon';
-import {
-  AlertTriangle,
-  ChevronRight,
-  GraduationCap,
-  MoreHorizontal,
-  Target,
-  Triangle,
-  Minus,
-  Pause,
-  Repeat,
-} from 'lucide-react';
+import { AlertTriangle, ChevronRight, GraduationCap, MoreHorizontal, Target } from 'lucide-react';
 import type { Priority, RemId } from '@core/model/types';
 import {
   averageAnswerTime,
@@ -44,6 +34,7 @@ import { Menu } from '../../components/Menu';
 import type { MenuEntry } from '../../components/Menu';
 import { useRemTitle } from '../../hooks/useRemTitle';
 import { PRIORITY_LABELS, useRemMenu } from '../remMenu';
+import { PriorityIcon } from '../../components/PriorityIcon';
 
 /** Number of cards in every subtree. */
 function selectCardCounts(store: Store): Map<RemId, number> {
@@ -189,13 +180,6 @@ export function HomeTab(): ReactNode {
   );
 }
 
-const SECTION_ICONS: Record<Priority, ReactNode> = {
-  active: <Triangle size={18} fill="var(--success)" color="var(--success)" />,
-  maintaining: <Repeat size={18} color="var(--accent)" />,
-  none: <Minus size={18} />,
-  paused: <Pause size={18} />,
-};
-
 /** Documents/folders of one priority (top-most items of that priority). */
 function PrioritySection({ priority, now }: { priority: Priority; now: number }): ReactNode {
   const roots = useSelector((s) =>
@@ -229,7 +213,7 @@ function PrioritySection({ priority, now }: { priority: Priority; now: number })
   return (
     <section>
       <h2 className="section-title">
-        {SECTION_ICONS[priority]} {PRIORITY_LABELS[priority]}
+        <PriorityIcon priority={priority} size={18} /> {PRIORITY_LABELS[priority]}
       </h2>
       <div className="card priority-card">
         {roots.map((id) => (

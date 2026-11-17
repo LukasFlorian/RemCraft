@@ -2,6 +2,7 @@ import { createMemoryGraph } from '../model/graph';
 import { createRem } from '../model/factories';
 import type { LectureEvent } from '../model/types';
 import { rt } from '../richtext/ops';
+import { detectTitles, slideLines } from './titles';
 import {
   DEFAULT_LECTURE_SETTINGS,
   lectureKpis,
@@ -294,5 +295,51 @@ describe('card files from RemNote-style generators', () => {
       remnote: 'Wie viel? (Numeric answer)→Korrekte Antwort: 3 Rechenweg: 1+2',
     });
     expect(node!.text).toContain('>>');
+  });
+});
+
+describe('detectTitles', () => {
+  const footer = (n: number) => [
+    { text: 'Document Stores', y: 0.95, size: 0.02 },
+    { text: String(n), y: 0.95, size: 0.02 },
+    { text: 'NoSQL', y: 0.95, size: 0.02 },
+  ];
+  it('ignores recurring footers and picks the largest line at the top', () => {
+    const slides = [
+      [
+        ...footer(12),
+        { text: '… Fields speichern Werte als Key-Value-Paare', y: 0.08, size: 0.045 },
+        { text: 'BSON-Beispiel', y: 0.2, size: 0.025 },
+      ],
+      [
+        ...footer(13),
+        {
+          text: 'Einbetten: Datenlokalität und Atomarität für zusammengehörige',
+          y: 0.08,
+          size: 0.045,
+        },
+        { text: 'Daten', y: 0.13, size: 0.045 },
+        { text: 'Einbettung von Dokumenten ineinander.', y: 0.18, size: 0.025 },
+      ],
+      [...footer(14), { text: 'Referenzen', y: 0.08, size: 0.045 }],
+      [...footer(15), { text: 'Schema-Design', y: 0.08, size: 0.045 }],
+    ];
+    expect(detectTitles(slides)).toEqual([
+      '… Fields speichern Werte als Key-Value-Paare',
+      'Einbetten: Datenlokalität und Atomarität für zusammengehörige Daten',
+      'Referenzen',
+      'Schema-Design',
+    ]);
+  });
+
+  it('groups positioned runs into lines inside a slide box', () => {
+    const runs = [
+      { str: 'Inhalt', x0: 0.1, y0: 0.55, x1: 0.3, y1: 0.6 },
+      { str: 'der Vorlesung', x0: 0.31, y0: 0.552, x1: 0.6, y1: 0.6 },
+      { str: 'oben', x0: 0.1, y0: 0.1, x1: 0.2, y1: 0.12 },
+    ];
+    const lines = slideLines(runs, [0, 0.5, 1, 1]);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.text).toBe('Inhalt der Vorlesung');
   });
 });

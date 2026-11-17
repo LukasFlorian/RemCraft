@@ -66,7 +66,7 @@ import {
   useLectureSettings,
   useLectureState,
 } from './useLecture';
-import { useDeckPdf, useDeckSlides } from './useSlides';
+import { useDeckPdf, useDeckSlides, useUpToDateTitles } from './useSlides';
 import type { WidgetRect } from './WidgetBoard';
 import { WidgetBoard } from './WidgetBoard';
 
@@ -115,6 +115,7 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
     const n = app.lectures.repairDeck(deckId);
     if (n) toast(`${n} Notizblöcke wieder ihren Folien zugeordnet`);
   }, [app, deckId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useUpToDateTitles(deckId);
   const now = useNow(1000);
   const deck = useRem(deckId)!;
   const slides = useDeckSlides(deckId);

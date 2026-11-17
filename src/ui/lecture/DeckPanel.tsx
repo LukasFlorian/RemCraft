@@ -25,7 +25,7 @@ import { exportForAi } from '@data/lecture/context';
 import { useApp, useSelector } from '../app/context';
 import { useToast } from '../components/Toast';
 import { downloadText, pickFiles } from '../hooks/useFilePicker';
-import { useDeckSlides } from './useSlides';
+import { useDeckSlides, useUpToDateTitles } from './useSlides';
 import { SlideView } from './SlideView';
 
 /** Imports a card file into a deck and reports the result. */
@@ -68,6 +68,7 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
   const navigate = useNavigate();
   const toast = useToast();
   const slides = useDeckSlides(deckId);
+  useUpToDateTitles(deckId);
   const deck = useSelector((s) => s.get(deckId));
   const base = (deck?.deck?.pdfName ?? toPlainText(deck?.text ?? [])).replace(/\.pdf$/i, '');
   return (

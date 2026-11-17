@@ -13,8 +13,6 @@ import {
   FileText,
   Folder,
   GraduationCap,
-  Layers,
-  Pause,
   Pin,
   PinOff,
   Play,
@@ -31,6 +29,7 @@ import { useModals } from '../app/modals';
 import { useDialogs } from '../components/Confirm';
 import type { MenuEntry } from '../components/Menu';
 import { useToast } from '../components/Toast';
+import { PRIORITY_META, PriorityIcon } from '../components/PriorityIcon';
 import { downloadText } from '../hooks/useFilePicker';
 
 /** Labels of the priorities (RemNote wording). */
@@ -90,7 +89,7 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
       { heading: 'Priority' },
       ...(Object.keys(PRIORITY_LABELS) as Priority[]).map((p): MenuEntry => ({
         label: `${(rem.priority ?? 'none') === p ? '✓ ' : ''}${PRIORITY_LABELS[p]}`,
-        icon: p === 'paused' ? <Pause size={15} /> : <Layers size={15} />,
+        icon: <PriorityIcon priority={p} />,
         onSelect: () => app.rems.update(remId, { priority: p === 'none' ? undefined : p }),
       })),
       { heading: 'Scheduler' },
@@ -179,17 +178,14 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
 /** Badge for a priority. */
 export function PriorityBadge({ priority }: { priority: Priority | 'exam' }): ReactNode {
   if (priority === 'none') return null;
-  const cls =
-    priority === 'exam'
-      ? 'badge-danger'
-      : priority === 'active'
-        ? 'badge-success'
-        : priority === 'paused'
-          ? ''
-          : 'badge-accent';
+  const m = PRIORITY_META[priority];
   return (
-    <span className={`badge ${cls}`}>
-      {priority === 'exam' ? 'Exam' : PRIORITY_LABELS[priority]}
+    <span
+      className="badge priority-badge"
+      style={{ color: m.color, borderColor: m.color }}
+      title={m.hint}
+    >
+      <PriorityIcon priority={priority} size={12} /> {m.label}
     </span>
   );
 }

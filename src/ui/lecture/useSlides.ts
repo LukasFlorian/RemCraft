@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import type { Rem, RemId } from '@core/model/types';
 import type { PdfDoc, TextItem } from '@data/lecture/pdf';
 import { useApp, useSelector } from '../app/context';
+import { TITLE_VERSION } from '@data/services/lectures';
 
 /** Rendered images by `src:page:box:width`. */
 const imageCache = new Map<string, Promise<string>>();
@@ -139,4 +140,24 @@ export function useSlideText(deckId: RemId | null, slide: Rem | undefined): Text
     };
   }, [app, deckId, deck, page, boxIdx]);
   return items;
+}
+
+/** Decks whose titles were already re-detected in this session. */
+const retitled = new Set<RemId>();
+
+/**
+ * Brings old decks up to the current slide title detection (once per deck):
+ * re-reads the PDF text layout and renames generated slide titles.
+ */
+export function useUpToDateTitles(deckId: RemId): void {
+  const app = useApp();
+  const outdated = useSelector((s) => {
+    const info = s.get(deckId)?.deck;
+    return Boolean(info) && info!.titles !== TITLE_VERSION;
+  });
+  useEffect(() => {
+    if (!outdated || retitled.has(deckId)) return;
+    retitled.add(deckId);
+    void app.lectures.retitle(deckId).catch(() => undefined);
+  }, [app, deckId, outdated]);
 }

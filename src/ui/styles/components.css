@@ -553,3 +553,18 @@
 .color-choice.active {
   border-color: var(--text);
 }
+
+/* Priority badge (icon + colour) and its button in the document header */
+.priority-badge {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.priority-badge-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.priority-badge-btn:empty {
+  display: none;
+}

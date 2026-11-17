@@ -165,6 +165,8 @@ export interface DeckInfo {
   /** Layout mode: `auto` or `RxC` (rows × columns). */
   layout: string;
   boxes: number[][];
+  /** Version of the title detection the slide titles come from (absent = first-line titles). */
+  titles?: number;
 }
 
 /** Position of a slide inside its deck. */
