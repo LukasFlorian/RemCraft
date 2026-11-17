@@ -87,9 +87,12 @@ export class SupabaseShareBackend implements ShareBackend {
     return data as ShareSnapshot;
   }
 
+  snapshotFileUrl(token: string, fileId: string): string {
+    return this.client.storage.from(SHARE_BUCKET).getPublicUrl(`${token}/${fileId}`).data.publicUrl;
+  }
+
   async fetchSnapshotFile(token: string, fileId: string): Promise<Blob> {
-    const url = this.client.storage.from(SHARE_BUCKET).getPublicUrl(`${token}/${fileId}`)
-      .data.publicUrl;
+    const url = this.snapshotFileUrl(token, fileId);
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Datei nicht gefunden (${res.status})`);
     return res.blob();

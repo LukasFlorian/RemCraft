@@ -137,6 +137,8 @@ export interface RemImage {
   occlusions?: Occlusion[];
   /** Hide all masks while asking (true) or only the asked one (false). */
   hideAllOcclusions?: boolean;
+  /** Public fallback URL of the file (it came with a cloned share). */
+  origin?: string;
 }
 
 /** Uploaded file (e.g. a PDF) attached to a document Rem. */
@@ -146,6 +148,8 @@ export interface RemFile {
   name: string;
   mimeType: string;
   size: number;
+  /** Public fallback URL of the file (it came with a cloned share). */
+  origin?: string;
 }
 
 /** Markers of a slide (Fokus): important ★ and unclear ?. */
@@ -159,6 +163,8 @@ export type SlideFlag = 'important' | 'unclear';
 export interface DeckInfo {
   /** `file:<id>` of the PDF. */
   src: string;
+  /** Public fallback URL of the PDF (it came with a cloned share). */
+  origin?: string;
   /** Original file name (matched against `source.pdf` of card files). */
   pdfName: string;
   pdfPages: number;

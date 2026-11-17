@@ -60,6 +60,40 @@ describe('read-only shares', () => {
     bob.dispose();
   });
 
+  it('cloned files keep their public share copy as fallback', async () => {
+    const server = new FakeServer();
+    const owner = await user(server, 'alice');
+    const { doc } = course(owner);
+    const src = await owner.files.save(new Blob(['pdf'], { type: 'application/pdf' }), 'a.pdf');
+    owner.rems.create({ parentId: doc }, { text: rt('Bild'), image: { src } });
+    const token = await owner.sharing.publish(doc, SHARE_PRESETS.all.scope);
+
+    const bob = await user(server, 'bob');
+    const root = await bob.sharing.clonePublished(token, null);
+    const image = bob.store
+      .children(root)
+      .map((r) => r.image)
+      .find(Boolean)!;
+    expect(image.origin).toBe(`https://shares.test/${token}/${src.slice('file:'.length)}`);
+
+    // Another device of bob without the file: it is fetched from the origin.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue({ ok: true, blob: async () => new Blob(['pdf']) } as Response);
+    const other = await RemCraftApp.create({
+      persistence: new MemoryAdapter(),
+      backend: null,
+      seed: false,
+    });
+    const blob = await other.files.blob(image.src, image.origin);
+    expect(await blob?.text()).toBe('pdf');
+    expect(fetchSpy).toHaveBeenCalledWith(image.origin);
+    fetchSpy.mockRestore();
+    owner.dispose();
+    bob.dispose();
+    other.dispose();
+  });
+
   it('round-trips a snapshot file without an account', async () => {
     const a = await RemCraftApp.create({
       persistence: new MemoryAdapter(),

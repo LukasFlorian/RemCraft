@@ -146,6 +146,7 @@ export class SharingService {
     snapshot: ShareSnapshot,
     parentId: RemId | null,
     fetchFile?: (id: string) => Promise<Blob>,
+    originOf?: (id: string) => string,
   ): Promise<RemId> {
     // Files first, so the copy never points to missing data.
     for (const f of snapshot.files) {
@@ -167,6 +168,26 @@ export class SharingService {
     const siblings = this.store.children(parentId);
     const order = orderBetween(siblings[siblings.length - 1]?.order ?? null, null);
     const copy = cloneSnapshot(snapshot, parentId, order, () => newId(), this.store.clock.now());
+    // Files of a published share keep their public copy as a fallback, so the
+    // copy works on every device even before (or without) the own upload.
+    if (originOf) {
+      const withOrigin = <T extends { src: string; origin?: string }>(
+        info: T | undefined,
+      ): T | undefined =>
+        info?.src.startsWith(FILE_PREFIX)
+          ? { ...info, origin: originOf(info.src.slice(FILE_PREFIX.length)) }
+          : info;
+      copy.rems = copy.rems.map((r) =>
+        r.deck || r.image || r.file
+          ? {
+              ...r,
+              ...(r.deck ? { deck: withOrigin(r.deck)! } : {}),
+              ...(r.image ? { image: withOrigin(r.image)! } : {}),
+              ...(r.file ? { file: withOrigin(r.file)! } : {}),
+            }
+          : r,
+      );
+    }
     this.store.transact((tx) => {
       for (const r of copy.rems) tx.put('rems', r);
       for (const a of copy.annotations) tx.put('annotations', a);
@@ -211,7 +232,12 @@ export class SharingService {
   async clonePublished(token: string, parentId: RemId | null): Promise<RemId> {
     const backend = this.requireBackend();
     const snap = await this.fetch(token);
-    return this.clone(snap, parentId, (id) => backend.fetchSnapshotFile(token, id));
+    return this.clone(
+      snap,
+      parentId,
+      (id) => backend.fetchSnapshotFile(token, id),
+      (id) => backend.snapshotFileUrl(token, id),
+    );
   }
 
   /** Read-only shares published by me. */

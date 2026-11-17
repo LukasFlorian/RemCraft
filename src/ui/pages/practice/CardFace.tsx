@@ -411,6 +411,7 @@ export function CardFace({
           )}
           <ImageView
             src={view.image.src}
+            origin={view.image.origin}
             width={view.image.width}
             occlusions={view.image.occlusions}
             hidden={(o) => (revealed ? false : o.id === view.occlusionId || hideAll)}

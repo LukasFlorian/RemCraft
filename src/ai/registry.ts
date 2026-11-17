@@ -36,5 +36,8 @@ AI_PROVIDERS.register({
 
 /** Creates the provider of a configuration (`provider` defaults to OpenAI-compatible). */
 export function createAiProvider(config: AiConfig): AiProvider {
-  return (AI_PROVIDERS.get(config.provider ?? 'openai-compatible') ?? AI_PROVIDERS.require('openai-compatible')).create(config);
+  return (
+    AI_PROVIDERS.get(config.provider ?? 'openai-compatible') ??
+    AI_PROVIDERS.require('openai-compatible')
+  ).create(config);
 }

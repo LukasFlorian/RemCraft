@@ -38,8 +38,16 @@ export class FileService {
     return FILE_PREFIX + id;
   }
 
-  /** Returns the blob of a stored file (downloading it when signed in). */
-  async blob(src: string): Promise<Blob | null> {
+  /**
+   * Returns the blob of a stored file. Missing files are downloaded from the
+   * own storage (when signed in) or, failing that, from `origin` - the public
+   * copy of a file that came with a cloned share. A file fetched from its
+   * origin is kept locally and copied into the own storage by the next sync.
+   *
+   * @param src `file:<id>`, data or http(s) source.
+   * @param origin Public fallback URL of the file (cloned shares).
+   */
+  async blob(src: string, origin?: string): Promise<Blob | null> {
     if (!src.startsWith(FILE_PREFIX)) {
       const res = await fetch(src).catch(() => null);
       return res?.ok ? res.blob() : null;
@@ -47,38 +55,10 @@ export class FileService {
     const id = src.slice(FILE_PREFIX.length);
     const stored = await this.persistence.getFile(id);
     if (stored) return stored.blob;
-    if (!this.remote) return null;
-    try {
-      const blob = await this.remote.downloadFile(id);
-      await this.persistence.putFile({
-        id,
-        name: id,
-        mimeType: blob.type,
-        size: blob.size,
-        blob,
-        uploaded: true,
-        createdAt: Date.now(),
-      });
-      return blob;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Resolves a source (`file:<id>`, `data:` or `http(s):`) to a URL usable in
-   * `<img>`/`<iframe>`. Missing local files are downloaded when signed in.
-   */
-  async resolve(src: string): Promise<string | null> {
-    if (!src.startsWith(FILE_PREFIX)) return src;
-    const id = src.slice(FILE_PREFIX.length);
-    const cached = this.urls.get(id);
-    if (cached) return cached;
-    let stored = await this.persistence.getFile(id);
-    if (!stored && this.remote) {
+    if (this.remote) {
       try {
         const blob = await this.remote.downloadFile(id);
-        stored = {
+        await this.persistence.putFile({
           id,
           name: id,
           mimeType: blob.type,
@@ -86,14 +66,40 @@ export class FileService {
           blob,
           uploaded: true,
           createdAt: Date.now(),
-        };
-        await this.persistence.putFile(stored);
+        });
+        return blob;
       } catch {
-        return null;
+        // Not in the own storage (yet): try the origin below.
       }
     }
-    if (!stored) return null;
-    const url = URL.createObjectURL(stored.blob);
+    if (!origin) return null;
+    const res = await fetch(origin).catch(() => null);
+    if (!res?.ok) return null;
+    const blob = await res.blob();
+    await this.persistence.putFile({
+      id,
+      name: id,
+      mimeType: blob.type,
+      size: blob.size,
+      blob,
+      uploaded: false,
+      createdAt: Date.now(),
+    });
+    return blob;
+  }
+
+  /**
+   * Resolves a source (`file:<id>`, `data:` or `http(s):`) to a URL usable in
+   * `<img>`/`<iframe>`. Missing local files are downloaded (see {@link blob}).
+   */
+  async resolve(src: string, origin?: string): Promise<string | null> {
+    if (!src.startsWith(FILE_PREFIX)) return src;
+    const id = src.slice(FILE_PREFIX.length);
+    const cached = this.urls.get(id);
+    if (cached) return cached;
+    const blob = await this.blob(src, origin);
+    if (!blob) return null;
+    const url = URL.createObjectURL(blob);
     this.urls.set(id, url);
     return url;
   }
