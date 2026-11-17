@@ -54,13 +54,16 @@ jobs:
       - uses: supabase/setup-cli@v1
         if: steps.config.outputs.skip != 'true'
         with:
-          version: latest
+          # Pinned: CLI major versions change flags and prompts (v3 asks for
+          # confirmation and deprecates --project-ref). Bump deliberately.
+          version: 3.2.0
 
       - name: Deploy todoist-daily
         if: steps.config.outputs.skip != 'true'
         # verify_jwt = false is also set in supabase/config.toml; the flag makes
         # it explicit (the function checks the cron secret or the user's JWT itself).
-        run: supabase functions deploy todoist-daily --no-verify-jwt --project-ref "$PROJECT_REF"
+        # --yes: CI cannot answer the CLI's confirmation prompt.
+        run: supabase functions deploy todoist-daily --no-verify-jwt --remote="$PROJECT_REF" --yes
 
       - name: Store CRON_SECRET as function secret
         if: steps.config.outputs.skip != 'true'
@@ -71,5 +74,5 @@ jobs:
             echo "Secret CRON_SECRET is not set on GitHub - leaving the function's secret unchanged."
             exit 0
           fi
-          supabase secrets set "CRON_SECRET=$CRON_SECRET" --project-ref "$PROJECT_REF"
+          supabase secrets set "CRON_SECRET=$CRON_SECRET" --remote="$PROJECT_REF" --yes
           echo "CRON_SECRET updated."

@@ -21,11 +21,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: CLI major versions change flags and prompts. Bump deliberately.
+          version: 3.2.0
       - name: Link project and push migrations
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        # `db push` targets the local database unless --remote is given (CLI v3);
+        # --yes answers the confirmation prompt CI cannot answer.
         run: |
-          supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}" --password "$SUPABASE_DB_PASSWORD"
-          supabase db push --password "$SUPABASE_DB_PASSWORD"
+          supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}" --password "$SUPABASE_DB_PASSWORD" --yes
+          supabase db push --remote --password "$SUPABASE_DB_PASSWORD" --yes
