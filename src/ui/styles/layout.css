@@ -332,6 +332,11 @@
   z-index: 20;
 }
 
+/* Practice is a focus mode with its own exit button in that corner. */
+.main:has(> .practice) .floating-menu-btn {
+  display: none !important;
+}
+
 .sidebar-collapsed .topbar {
   padding-left: 52px;
 }

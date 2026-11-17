@@ -81,3 +81,10 @@ test('search finds Rems', async ({ page }) => {
   await page.getByPlaceholder(/Search Rems/).fill('mitochondria');
   await expect(page.locator('.search-result').first()).toContainText('powerhouse');
 });
+
+test('practice on a phone has no sidebar button over its exit button', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/#/practice');
+  await expect(page.getByRole('button', { name: 'Exit practice' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Show sidebar' })).toBeHidden();
+});
