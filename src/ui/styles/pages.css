@@ -633,6 +633,42 @@
   opacity: 0.6;
 }
 
+/* After revealing: tap the items you did not know. */
+.card-items.is-gradable {
+  list-style: none;
+  padding-left: 0;
+}
+.item-grade {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.item-mark {
+  flex: 0 0 auto;
+  width: 1.2em;
+  font-weight: 700;
+  color: var(--success, #16a34a);
+}
+.card-items li.is-missed .item-grade {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.card-items li.is-missed .item-mark {
+  color: var(--danger);
+}
+.item-hint {
+  font-size: 13px;
+}
+
 .mc-options {
   display: flex;
   flex-direction: column;

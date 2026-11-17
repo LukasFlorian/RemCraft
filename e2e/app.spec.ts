@@ -115,3 +115,25 @@ test('a card can be disabled while practising and the toolbar does not stay behi
   await page.keyboard.press('4');
   await expect(page.getByText('Session complete')).toBeVisible();
 });
+
+test('multi-line answers are graded item by item with one reveal button', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+  await page.keyboard.type('Set Deck');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Drei Probleme >>>');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('Speicher');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Datenrate');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Kosten');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /1 Due/ }).click();
+  await expect(page.getByRole('button', { name: 'Check answer' })).toHaveCount(0);
+  await page.getByRole('button', { name: /Show answer/ }).click();
+  // Mark one of three items as not known: "Partially recalled" is suggested.
+  await page.getByRole('button', { name: /Datenrate/ }).click();
+  await expect(page.getByText('2/3 gewusst', { exact: false })).toBeVisible();
+  await expect(page.locator('.rating-2')).toHaveClass(/is-suggested/);
+});

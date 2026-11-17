@@ -67,6 +67,9 @@ export function PracticePage(): ReactNode {
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ answered: 0, correct: 0, startedAt: Date.now() });
   const toast = useToast();
+  /** What "Show answer" does for the current card (set by the card face). */
+  const revealAction = useRef<(() => void) | null>(null);
+  const reveal = (): void => (revealAction.current ? revealAction.current() : setRevealed(true));
   const shownAt = useRef(Date.now());
   /** Paused time of the current card (background, editing) and when the pause began. */
   const paused = useRef({ ms: 0, since: null as number | null });
@@ -179,12 +182,12 @@ export function PracticePage(): ReactNode {
     {
       ' ': (e) => {
         e.preventDefault();
-        if (!revealed) setRevealed(true);
+        if (!revealed) reveal();
         else answer(suggested ?? 3);
       },
       enter: (e) => {
         e.preventDefault();
-        if (!revealed) setRevealed(true);
+        if (!revealed) reveal();
         else answer(suggested ?? 3);
       },
       '1': () => answer(1),
@@ -280,6 +283,7 @@ export function PracticePage(): ReactNode {
               revealed={revealed}
               onReveal={() => setRevealed(true)}
               onSuggest={setSuggested}
+              registerReveal={(fn) => (revealAction.current = fn)}
               grading={settings.typeInAnswerGrading}
             />
             <div className="practice-actions">
@@ -288,10 +292,7 @@ export function PracticePage(): ReactNode {
                   <button className="btn btn-ghost" onClick={skip} title="Skip (S)">
                     <SkipForward size={16} /> Skip
                   </button>
-                  <button
-                    className="btn btn-primary btn-lg show-answer"
-                    onClick={() => setRevealed(true)}
-                  >
+                  <button className="btn btn-primary btn-lg show-answer" onClick={reveal}>
                     Show answer <Kbd>Space</Kbd>
                   </button>
                 </div>

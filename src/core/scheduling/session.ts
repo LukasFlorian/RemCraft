@@ -20,13 +20,23 @@ interface Snapshot {
   waiting: Waiting[];
   done: number;
   answered: CardId[];
+  total: number;
+  pinned: CardId | undefined;
 }
 
-/** Session progress for the UI. */
+/**
+ * Session progress for the UI, counted in cards: a card that comes back for
+ * a learning step is still one card, so `total` never grows while practising.
+ */
 export interface SessionProgress {
+  /** Cards finished for this session. */
   done: number;
+  /** Cards still to show (in the queue or waiting for a learning step). */
   remaining: number;
+  /** Cards in the session (`done + remaining`). */
   total: number;
+  /** Answers given (a card answered three times counts three times). */
+  answers: number;
 }
 
 /** Cursor over the cards of one practice session. */
@@ -36,6 +46,14 @@ export class PracticeSession {
   private done = 0;
   private answered: CardId[] = [];
   private readonly history: Snapshot[] = [];
+  /** Cards in the session (shrinks only when a card is dropped). */
+  private total: number;
+  /**
+   * The card on screen: it stays the current card until it is answered,
+   * skipped or dropped, even if a waiting card becomes due meanwhile (the
+   * answer must belong to the question that was shown).
+   */
+  private pinned: CardId | undefined;
 
   /**
    * @param cardIds Ordered card ids.
@@ -47,6 +65,7 @@ export class PracticeSession {
     private readonly requeueWindowMs: number = HOUR,
   ) {
     this.queue = [...new Set(cardIds)];
+    this.total = this.queue.length;
   }
 
   /**
@@ -55,6 +74,13 @@ export class PracticeSession {
    * @param now Current time.
    */
   current(now: Timestamp): CardId | undefined {
+    if (this.pinned && this.contains(this.pinned)) return this.pinned;
+    this.pinned = this.next(now);
+    return this.pinned;
+  }
+
+  /** The card that should come next. */
+  private next(now: Timestamp): CardId | undefined {
     const ready = this.waiting.filter((w) => w.due <= now).sort((a, b) => a.due - b.due)[0];
     if (ready) return ready.cardId;
     if (this.queue.length > 0) return this.queue[0];
@@ -87,8 +113,10 @@ export class PracticeSession {
 
   /** Removes a card completely (e.g. it was deleted or disabled). */
   drop(cardId: CardId): void {
+    if (!this.contains(cardId)) return;
     this.snapshot();
     this.remove(cardId);
+    this.total--;
   }
 
   /** Reverts the last answer/skip/drop. Returns false when nothing to undo. */
@@ -99,6 +127,8 @@ export class PracticeSession {
     this.waiting = s.waiting;
     this.done = s.done;
     this.answered = s.answered;
+    this.total = s.total;
+    this.pinned = s.pinned;
     return true;
   }
 
@@ -109,8 +139,8 @@ export class PracticeSession {
 
   /** Progress counters. */
   progress(): SessionProgress {
-    const remaining = this.queue.length + this.waiting.length;
-    return { done: this.done, remaining, total: this.done + remaining };
+    const remaining = new Set([...this.queue, ...this.waiting.map((w) => w.cardId)]).size;
+    return { done: this.total - remaining, remaining, total: this.total, answers: this.done };
   }
 
   /** True when no card is left. */
@@ -118,7 +148,13 @@ export class PracticeSession {
     return this.queue.length === 0 && this.waiting.length === 0;
   }
 
+  /** True while a card is still part of the session. */
+  private contains(cardId: CardId): boolean {
+    return this.queue.includes(cardId) || this.waiting.some((w) => w.cardId === cardId);
+  }
+
   private remove(cardId: CardId): void {
+    if (this.pinned === cardId) this.pinned = undefined;
     this.queue = this.queue.filter((id) => id !== cardId);
     this.waiting = this.waiting.filter((w) => w.cardId !== cardId);
   }
@@ -129,6 +165,8 @@ export class PracticeSession {
       waiting: [...this.waiting],
       done: this.done,
       answered: [...this.answered],
+      total: this.total,
+      pinned: this.pinned,
     });
     if (this.history.length > 200) this.history.shift();
   }

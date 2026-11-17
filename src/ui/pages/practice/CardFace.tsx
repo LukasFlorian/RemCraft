@@ -22,9 +22,21 @@ export interface CardFaceProps {
   view: CardView;
   revealed: boolean;
   onReveal: () => void;
-  /** Suggests a rating (MC choice, typed answer). */
+  /** Suggests a rating (MC choice, typed answer, items marked as not known). */
   onSuggest: (rating: Rating) => void;
   grading: 'exact' | 'lenient';
+  /**
+   * Registers what the main "Show answer" button does for this card (check
+   * the MC selection, grade the typed answer); without it, it just reveals.
+   */
+  registerReveal?: (reveal: (() => void) | null) => void;
+}
+
+/** Suggested rating from the share of answer items that were known. */
+export function ratingFromItems(total: number, missed: number): Rating {
+  if (total === 0 || missed === 0) return 3;
+  const known = (total - missed) / total;
+  return known >= 0.5 ? 2 : 1;
 }
 
 /** A Rem rendered read-only (answer items, options). */
@@ -90,11 +102,14 @@ export function CardFace({
   onReveal,
   onSuggest,
   grading,
+  registerReveal,
 }: CardFaceProps): ReactNode {
   const [typed, setTyped] = useState('');
   const [result, setResult] = useState<TypeInResult | null>(null);
   const [chosen, setChosen] = useState<RemId[]>([]);
   const [listShown, setListShown] = useState(0);
+  /** Answer items (set/list cards) marked as not known after revealing. */
+  const [missed, setMissed] = useState<RemId[]>([]);
   const options = useMemo(() => (view.type === 'mc' ? shuffle(view.options) : []), [view]);
   const showAnswerKind = useSelector((s) => Boolean(selectSettings(s).mcShowAnswerKind));
 
@@ -103,7 +118,25 @@ export function CardFace({
     setResult(null);
     setChosen([]);
     setListShown(0);
+    setMissed([]);
   }, [view.cardId]);
+
+  // Set/list cards: everything counts as known until items are marked.
+  const itemCard = (view.type === 'set' || view.type === 'list') && !view.reversed;
+  useEffect(() => {
+    if (revealed && itemCard) onSuggest(ratingFromItems(view.items.length, 0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealed, itemCard, view.cardId]);
+  const toggleMissed = (id: RemId): void => {
+    const next = missed.includes(id) ? missed.filter((x) => x !== id) : [...missed, id];
+    setMissed(next);
+    onSuggest(
+      ratingFromItems(
+        view.type === 'set' || view.type === 'list' ? view.items.length : 0,
+        next.length,
+      ),
+    );
+  };
 
   const typeIn = view.typeIn && view.type !== 'mc' && view.expectedAnswer.trim() !== '';
   const submitTyped = (): void => {
@@ -112,6 +145,31 @@ export function CardFace({
     onSuggest(r.suggestedRating);
     onReveal();
   };
+
+  const correctIds = useMemo(() => options.filter((o) => o.correct).map((o) => o.remId), [options]);
+  /** Grades the MC selection (nothing selected: just reveal) and reveals. */
+  const checkChoice = (ids: RemId[]): void => {
+    if (ids.length > 0) {
+      const right = ids.length === correctIds.length && ids.every((id) => correctIds.includes(id));
+      onSuggest(right ? 3 : 1);
+    }
+    onReveal();
+  };
+  // The main button checks an MC selection or a typed answer instead of
+  // having a second "Check answer" button.
+  useEffect(() => {
+    if (!registerReveal) return;
+    registerReveal(
+      revealed
+        ? null
+        : view.type === 'mc'
+          ? () => checkChoice(chosen)
+          : typeIn && typed.trim()
+            ? submitTyped
+            : null,
+    );
+    return () => registerReveal(null);
+  });
 
   const origin = <SlideOrigin ids={view.context} revealed={revealed} />;
   const extra =
@@ -233,13 +291,35 @@ export function CardFace({
             <RichTextView value={view.question} />
           </div>
           {typeBox}
-          <ol className={`card-items${isList ? '' : ' is-set'}`}>
-            {view.items.map((id, i) => (
-              <li key={id} className={i < shown ? '' : 'is-hidden'}>
-                {i < shown ? <RemInline remId={id} /> : <span className="faint">?</span>}
-              </li>
-            ))}
+          <ol className={`card-items${isList ? '' : ' is-set'}${revealed ? ' is-gradable' : ''}`}>
+            {view.items.map((id, i) =>
+              revealed ? (
+                <li key={id} className={missed.includes(id) ? 'is-missed' : 'is-known'}>
+                  <button
+                    className="item-grade"
+                    aria-pressed={missed.includes(id)}
+                    title={missed.includes(id) ? 'Doch gewusst' : 'Nicht gewusst'}
+                    onClick={() => toggleMissed(id)}
+                  >
+                    <span className="item-mark" aria-hidden>
+                      {missed.includes(id) ? '✗' : '✓'}
+                    </span>
+                    <RemInline remId={id} />
+                  </button>
+                </li>
+              ) : (
+                <li key={id} className={i < shown ? '' : 'is-hidden'}>
+                  {i < shown ? <RemInline remId={id} /> : <span className="faint">?</span>}
+                </li>
+              ),
+            )}
           </ol>
+          {revealed && (
+            <div className="faint item-hint">
+              Tippe an, was du nicht wusstest ({view.items.length - missed.length}/
+              {view.items.length} gewusst) – die Bewertung wird vorgeschlagen.
+            </div>
+          )}
           {isList && !revealed && (
             <button
               className="btn btn-sm"
@@ -256,16 +336,11 @@ export function CardFace({
       );
     }
     case 'mc': {
-      const correctIds = options.filter((o) => o.correct).map((o) => o.remId);
       // Single choice (radio, answered on click) only when the user wants to see
-      // that there is exactly one correct answer; otherwise checkboxes + "Check".
+      // that there is exactly one correct answer; otherwise checkboxes, checked
+      // with the main "Show answer" button.
       const single = showAnswerKind && correctIds.length === 1;
-      const check = (ids: RemId[]): void => {
-        const right =
-          ids.length === correctIds.length && ids.every((id) => correctIds.includes(id));
-        onSuggest(right ? 3 : 1);
-        onReveal();
-      };
+      const check = checkChoice;
       return (
         <div className="card-face">
           <Context ids={view.context} />
@@ -320,11 +395,6 @@ export function CardFace({
               );
             })}
           </div>
-          {!single && !revealed && (
-            <button className="btn" disabled={chosen.length === 0} onClick={() => check(chosen)}>
-              Check answer
-            </button>
-          )}
           {extraAndOrigin}
         </div>
       );

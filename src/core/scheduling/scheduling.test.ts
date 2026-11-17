@@ -256,9 +256,13 @@ describe('PracticeSession', () => {
     expect(s.current(NOW)).toBe('a');
     s.answer('a', NOW + MINUTE, NOW);
     expect(s.current(NOW)).toBe('b');
-    expect(s.current(NOW + 2 * MINUTE)).toBe('a');
+    // The card on screen stays current although 'a' is due again meanwhile.
+    expect(s.current(NOW + 2 * MINUTE)).toBe('b');
+    // Progress counts cards: 'a' coming back does not grow the total.
+    expect(s.progress()).toEqual({ done: 0, remaining: 2, total: 2, answers: 1 });
     s.answer('b', NOW + 3 * DAY, NOW);
-    expect(s.progress()).toEqual({ done: 2, remaining: 1, total: 3 });
+    expect(s.progress()).toEqual({ done: 1, remaining: 1, total: 2, answers: 2 });
+    expect(s.current(NOW + 2 * MINUTE)).toBe('a');
     // Learn ahead when nothing else is left.
     expect(s.current(NOW)).toBe('a');
     s.answer('a', null, NOW);
