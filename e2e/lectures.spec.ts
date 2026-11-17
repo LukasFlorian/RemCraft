@@ -104,3 +104,58 @@ test('text boxes keep their text, can be deselected and move in one undo step', 
     .poll(async () => Math.round((await box(0).boundingBox())!.x))
     .toBe(Math.round(before!.x));
 });
+
+test('a share link shows the slides as images with their notes', async ({ page }) => {
+  // Export the demo course as a snapshot file (with the slide PDF embedded) ...
+  await page
+    .getByRole('treeitem', { name: /Demo-Kurs/ })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Teilen' }).click();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Als Datei' }).click(),
+  ]);
+  const snapshot = JSON.parse(readFileSync((await download.path())!, 'utf8')) as {
+    files: { id: string; mimeType: string; data?: string }[];
+  };
+  expect(snapshot.files.length).toBeGreaterThan(0);
+
+  // ... and serve it from a mocked Supabase as a published share.
+  const files = new Map(snapshot.files.map((f) => [f.id, f] as const));
+  await page.route('https://share.mock.test/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/rpc/get_share'))
+      return route.fulfill({
+        json: { ...snapshot, files: snapshot.files.map(({ data: _, ...f }) => f) },
+      });
+    const file = files.get(url.pathname.split('/').pop()!);
+    if (url.pathname.includes('/storage/') && file?.data)
+      return route.fulfill({
+        body: Buffer.from(file.data, 'base64'),
+        contentType: file.mimeType,
+      });
+    return route.fulfill({ json: {} });
+  });
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'remcraft.backend',
+      JSON.stringify({ supabaseUrl: 'https://share.mock.test', supabaseAnonKey: 'anon' }),
+    ),
+  );
+  // The backend configuration is read at start-up.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/#/s/tok123');
+  await page.reload();
+  await expect(page.getByRole('button', { name: /In meine Wissensbasis klonen/ })).toBeVisible();
+  const firstSlide = page.locator('.snap-slide').first();
+  await expect(firstSlide.locator('img')).toBeVisible({ timeout: 15_000 });
+  expect(
+    await firstSlide
+      .locator('img')
+      .evaluate((img) => (img as { naturalWidth: number }).naturalWidth),
+  ).toBeGreaterThan(100);
+  await page.screenshot({ path: 'test-results/share-mobile.png' });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.screenshot({ path: 'test-results/share-desktop.png' });
+});

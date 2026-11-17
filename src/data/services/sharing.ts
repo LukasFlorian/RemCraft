@@ -197,6 +197,16 @@ export class SharingService {
     return validateSnapshot(await this.backend.fetchSnapshot(token));
   }
 
+  /**
+   * A file of a published snapshot (e.g. a slide PDF for the read-only view).
+   *
+   * @returns The file, or `null` when it is not available.
+   */
+  async fetchFile(token: string, fileId: string): Promise<Blob | null> {
+    if (!this.backend) return null;
+    return this.backend.fetchSnapshotFile(token, fileId).catch(() => null);
+  }
+
   /** Clones a published snapshot. */
   async clonePublished(token: string, parentId: RemId | null): Promise<RemId> {
     const backend = this.requireBackend();
