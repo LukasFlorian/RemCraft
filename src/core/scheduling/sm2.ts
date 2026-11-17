@@ -155,7 +155,8 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
     // Compute all three successful intervals so they are strictly ordered.
     // Overdueness bonus: a share of the delay is added before multiplying
     // (RemNote defaults: 25 % Hard, 50 % Good, 100 % Easy).
-    const bonus = (share: number | undefined, fallback: number): number => late * (share ?? fallback);
+    const bonus = (share: number | undefined, fallback: number): number =>
+      late * (share ?? fallback);
     const hard = finalizeInterval(
       Math.max((current + bonus(params.overdueBonusHard, 0.25)) * params.hardInterval, current + 1),
       undefined,
@@ -165,7 +166,10 @@ export function createSm2Scheduler(params: Sm2Params): Scheduler {
       hard + 1,
     );
     const easy = Math.max(
-      finalizeInterval((current + bonus(params.overdueBonusEasy, 1)) * state.ease * params.easyBonus, undefined),
+      finalizeInterval(
+        (current + bonus(params.overdueBonusEasy, 1)) * state.ease * params.easyBonus,
+        undefined,
+      ),
       good + 1,
     );
 

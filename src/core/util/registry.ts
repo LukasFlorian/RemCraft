@@ -32,7 +32,8 @@ export class Registry<T extends Registrable> {
    * @throws Error when the id is taken and `replace` is not set.
    */
   register(item: T, options: { replace?: boolean } = {}): T {
-    if (this.items.has(item.id) && !options.replace) throw new Error(`${this.kind} "${item.id}" is already registered`);
+    if (this.items.has(item.id) && !options.replace)
+      throw new Error(`${this.kind} "${item.id}" is already registered`);
     this.items.set(item.id, item);
     return item;
   }

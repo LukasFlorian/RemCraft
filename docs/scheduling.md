@@ -71,7 +71,7 @@ The closest assignment up the tree wins - exactly like RemNote's custom schedule
 
 Priorities are set per document/folder and inherited: **Currently Studying** (active),
 **Maintaining**, **No Priority** (default) and **Paused**; **Exam** is derived from exams and
-beats all but _Paused_. The daily queue (`queue.ts`) is ordered:
+beats all but _Paused_. The daily queue (`queue.ts`) selects cards in this priority:
 
 1. (Re)learning cards due within 20 minutes (any priority)
 2. Exam cards: due reviews → today's new-card quota → today's final-review quota
@@ -80,9 +80,24 @@ beats all but _Paused_. The daily queue (`queue.ts`) is ordered:
 5. No Priority: due reviews → new cards (same daily limit)
 
 Paused cards never appear in the global queue, but can be practiced explicitly from their
-document. Within a bucket, reviews are ordered by retrievability (most at risk first) unless
-_shuffle_ is enabled. Practicing a document offers _spaced repetition_, _practice all_,
-_all in order_ and _cram_ (no scheduling effect).
+document. Within a bucket, reviews are ordered by retrievability (most at risk first) and new
+cards by document order.
+
+Mixing (it changes the order, never which cards are due):
+
+- **Lectures are interleaved.** Every card belongs to a group (the nearest document or slide
+  deck above it). After the (re)learning cards, the queue is spread evenly across groups while
+  each group keeps its own order, so one lecture never fills the session on its own. The
+  interleaving varies by study day. With _shuffle_ enabled the queue is shuffled instead.
+- **The new-card limit is shared** round-robin across groups instead of being used up by the
+  first course in the sidebar.
+- **Siblings are buried** (as in Anki): cards of the same Rem - e.g. the clozes of one
+  sentence, or the two directions of a card - appear at most once per day, so one card never
+  shows the answer to the next. The others stay due and come on a later day. (Re)learning
+  cards are never buried.
+
+Practicing a document offers _spaced repetition_, _practice all_, _all in order_ and _cram_
+(no scheduling effect); there all cards are shown, with siblings kept apart.
 
 ## Daily goal and streak
 

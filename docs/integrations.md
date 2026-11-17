@@ -13,7 +13,11 @@ with an **estimated duration** and no fixed time, e.g.
    real queue (`buildGlobalQueue`) for each of the next 14 days: exam quotas from the exam
    scheduler, due reviews, learning cards, priorities, new-card limits. `buildDailyTasks`
    (`src/core/planning/daily.ts`) groups the queue by course and estimates minutes from your
-   review history (seconds per answer, answers per new card / review; rounded up to 5 min).
+   review history: answers per new card / review, and the time per answer of each card - its
+   own average (last answers, at least two) or else its course's average, else the overall
+   average (rounded up to 5 min). Only active time counts: the practice clock pauses while
+   RemCraft is in the background or the card is being edited
+   (`src/core/stats/cardTimes.ts`).
 2. **Upload.** When enabled, the plan is uploaded to `daily_plans` after every relevant change
    (debounced). Days ahead assume nothing is practised before; the 00:01 run uses whatever was
    uploaded last.

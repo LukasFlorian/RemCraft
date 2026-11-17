@@ -5,7 +5,13 @@ import { rt } from '../richtext/ops';
 import { addStudyDays, DAY, HOUR, MINUTE, startOfStudyDay } from '../util/time';
 import { applyExamPolicy, examWindows, planExam } from './exam';
 import { resolveInheritance } from './inheritance';
-import { buildDocumentQueue, buildGlobalQueue, countDue } from './queue';
+import {
+  buildDocumentQueue,
+  buildGlobalQueue,
+  countDue,
+  separateSiblings,
+  spreadByGroup,
+} from './queue';
 import type { QueueEntry } from './queue';
 import { createScheduler } from './scheduler';
 import { PracticeSession } from './session';
@@ -147,6 +153,71 @@ describe('buildGlobalQueue', () => {
       { cardId: 'e1', bucket: 'exam-new', examId: 'E' },
       { cardId: 'e3', bucket: 'exam-final', examId: 'E' },
     ]);
+  });
+});
+
+describe('queue mixing', () => {
+  const opts = {
+    now: NOW,
+    dayStartHour: 4,
+    newCardsPerDay: 4,
+    newIntroducedToday: 0,
+    examQuotas: new Map(),
+    retrievability: () => 0.5,
+  };
+  /** Entry of lecture `group` (card id `group-n`, own Rem unless `rem` given). */
+  const inGroup = (
+    group: string,
+    n: number,
+    state: Partial<CardState> = {},
+    rem = `${group}-${n}`,
+  ): QueueEntry => ({ ...entry(`${group}-${n}`, 'active', state, n), remId: rem, groupId: group });
+  const due = { phase: 'review' as const, due: NOW - DAY, interval: 3, lastReview: NOW - 4 * DAY };
+
+  it('spreads groups evenly and keeps the order inside a group', () => {
+    const items = ['a1', 'a2', 'a3', 'a4', 'b1', 'b2'];
+    const out = spreadByGroup(items, (x) => x[0]!);
+    expect(out.filter((x) => x.startsWith('a'))).toEqual(['a1', 'a2', 'a3', 'a4']);
+    // b cards are not both at the start or the end.
+    const firstB = out.indexOf('b1');
+    const secondB = out.indexOf('b2');
+    expect(secondB - firstB).toBeGreaterThanOrEqual(2);
+  });
+
+  it('mixes due reviews of several lectures', () => {
+    const entries = [1, 2, 3, 4].flatMap((n) => [inGroup('A', n, due), inGroup('B', n, due)]);
+    const q = buildGlobalQueue(entries, opts).map((c) => c.cardId[0]);
+    // No lecture fills the first half on its own.
+    expect(new Set(q.slice(0, 4)).size).toBe(2);
+  });
+
+  it('shares the new-card limit across lectures', () => {
+    const entries = [1, 2, 3, 4, 5, 6].flatMap((n) => [inGroup('A', n), inGroup('B', n + 10)]);
+    const q = buildGlobalQueue(entries, opts).map((c) => c.cardId);
+    expect(q.filter((id) => id.startsWith('A'))).toHaveLength(2);
+    expect(q.filter((id) => id.startsWith('B'))).toHaveLength(2);
+  });
+
+  it('buries siblings: one card per Rem and day', () => {
+    const entries = [
+      inGroup('A', 1, due, 'cloze'),
+      inGroup('A', 2, due, 'cloze'),
+      inGroup('A', 3, due, 'cloze'),
+      inGroup('A', 4, due),
+      // A sibling of 'seen' was practised today: 'seen' waits for tomorrow.
+      inGroup('A', 5, { ...due, lastReview: NOW - HOUR, due: NOW + 3 * DAY }, 'seen'),
+      inGroup('A', 6, due, 'seen'),
+      // New siblings: only one is introduced.
+      inGroup('A', 7, {}, 'newcloze'),
+      inGroup('A', 8, {}, 'newcloze'),
+    ];
+    expect(buildGlobalQueue(entries, opts).map((c) => c.cardId)).toEqual(['A-1', 'A-4', 'A-7']);
+  });
+
+  it('keeps siblings apart when a whole document is practised', () => {
+    const items = ['x', 'x', 'x', 'y', 'z'];
+    const out = separateSiblings(items, (v) => v, 1);
+    for (let i = 1; i < out.length; i++) expect(out[i]).not.toBe(out[i - 1]);
   });
 });
 
@@ -317,6 +388,8 @@ describe('scheduler registry', () => {
     expect(s.interval).toBe(1);
     s = exp.review(s, 3, s.due);
     expect(s.interval).toBe(3);
-    expect(createScheduler({ ...createDefaultScheduler(), algorithm: 'unknown-plugin' }).algorithm).toBe('sm2');
+    expect(
+      createScheduler({ ...createDefaultScheduler(), algorithm: 'unknown-plugin' }).algorithm,
+    ).toBe('sm2');
   });
 });

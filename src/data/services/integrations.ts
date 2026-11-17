@@ -10,12 +10,14 @@
  * exams change, so the server never needs the scheduler itself.
  */
 import { buildDailyTasks, courseOf, estimateFromLogs } from '@core/planning/daily';
+import { lectureGroupOf } from '@core/scheduling/queue';
+import { cardTimes } from '@core/stats/cardTimes';
 import type { DailyTask } from '@core/planning/daily';
 import { buildGlobalQueue } from '@core/scheduling/queue';
 import type { ExamQuota, QueueEntry } from '@core/scheduling/queue';
 import { isExamActive, resolveInheritance } from '@core/scheduling/inheritance';
 import { planExam } from '@core/scheduling/exam';
-import type { RemId, Timestamp } from '@core/model/types';
+import type { CardId, RemId, Timestamp } from '@core/model/types';
 import { addStudyDays, isoDate, MINUTE, startOfStudyDay } from '@core/util/time';
 import {
   cardStateOf,
@@ -111,7 +113,8 @@ export function forecastDailyPlans(
   const dsh = settings.dayStartHour;
   const index = selectCardIndex(store);
   const exams = store.all('exams');
-  const estimate = estimateFromLogs(selectLogs(store));
+  const logs = selectLogs(store);
+  const estimate = estimateFromLogs(logs);
   const todayLogs = selectTodayLogs(store, now);
   const states = new Map(index.specs.map((s) => [s.id, cardStateOf(store, s)] as const));
   const scheduler = schedulerById(store, undefined);
@@ -119,6 +122,26 @@ export function forecastDailyPlans(
   const groupOf = (remId: RemId): ReturnType<typeof courseOf> => {
     if (!groupCache.has(remId)) groupCache.set(remId, courseOf(store, remId));
     return groupCache.get(remId);
+  };
+  // Measured pace: a card's own average answer time, else its course's.
+  const times = cardTimes(logs);
+  const courseSeconds = new Map<RemId, { sum: number; n: number }>();
+  for (const t of times.values()) {
+    const remId = index.byId.get(t.cardId)?.remId;
+    const course = remId ? groupOf(remId)?.id : undefined;
+    if (!course || t.avgSeconds === null) continue;
+    const c = courseSeconds.get(course) ?? { sum: 0, n: 0 };
+    c.sum += t.avgSeconds;
+    c.n++;
+    courseSeconds.set(course, c);
+  }
+  const clampSeconds = (s: number): number => Math.min(120, Math.max(3, s));
+  const secondsOf = (cardId: CardId): number | undefined => {
+    const own = times.get(cardId);
+    if (own && own.timed >= 2 && own.avgSeconds !== null) return clampSeconds(own.avgSeconds);
+    const remId = index.byId.get(cardId)?.remId;
+    const course = remId ? courseSeconds.get(groupOf(remId)?.id ?? '') : undefined;
+    return course && course.n >= 5 ? clampSeconds(course.sum / course.n) : undefined;
   };
 
   const plans: DailyPlan[] = [];
@@ -133,6 +156,7 @@ export function forecastDailyPlans(
       priority: inherited.get(spec.remId)?.priority ?? 'none',
       examIds: inherited.get(spec.remId)?.examIds ?? [],
       docOrder: index.docOrder.get(spec.remId) ?? 0,
+      groupId: lectureGroupOf(store, spec.remId),
     }));
     const examCardIds = new Set(entries.filter((e) => e.priority === 'exam').map((e) => e.cardId));
     const logs = i === 0 ? todayLogs : [];
@@ -183,6 +207,7 @@ export function forecastDailyPlans(
         groupOf,
         examName: (id) => exams.find((e) => e.id === id)?.name,
         estimate,
+        secondsOf,
         ...(opts.practiceUrl ? { practiceUrl: opts.practiceUrl } : {}),
         ...(opts.titleTemplate ? { titleTemplate: opts.titleTemplate } : {}),
       }),

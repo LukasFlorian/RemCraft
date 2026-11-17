@@ -1,6 +1,10 @@
 /**
  * The practice queue: shows cards one by one, records ratings and supports
- * skip, undo and editing the card in place.
+ * skip, undo, disabling a card and editing it in place.
+ *
+ * The time spent on a card is recorded with each answer (statistics, Todoist
+ * estimates). Only active time counts: while the app is in the background or
+ * the card is being edited, the clock is paused.
  *
  * URL parameters: `scope` = `global` | `<remId>` | `exam:<examId>`,
  * `mode` = `srs` | `all` | `all-in-order` | `cram`.
@@ -8,8 +12,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Pencil, SkipForward, Undo2, X } from 'lucide-react';
-import type { PracticeMode, Rating } from '@core/model/types';
+import { EyeOff, Pencil, SkipForward, Undo2, X } from 'lucide-react';
+import type { CardId, PracticeMode, Rating } from '@core/model/types';
 import type { DocumentPracticeMode, QueuedCard } from '@core/scheduling/queue';
 import { RATING_LABELS, RATINGS } from '@core/scheduling/scheduler';
 import { PracticeSession } from '@core/scheduling/session';
@@ -19,6 +23,7 @@ import { useApp, useSelector } from '../../app/context';
 import { Kbd } from '../../components/Controls';
 import { Modal } from '../../components/Modal';
 import { ProgressBar } from '../../components/Controls';
+import { useToast } from '../../components/Toast';
 import { Outliner } from '../../editor/Outliner';
 import { useHotkeys } from '../../hooks/useHotkeys';
 import { useRemTitle } from '../../hooks/useRemTitle';
@@ -61,8 +66,12 @@ export function PracticePage(): ReactNode {
   const [suggested, setSuggested] = useState<Rating | null>(null);
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState({ answered: 0, correct: 0, startedAt: Date.now() });
+  const toast = useToast();
   const shownAt = useRef(Date.now());
-  const logIds = useRef<(string | null)[]>([]);
+  /** Paused time of the current card (background, editing) and when the pause began. */
+  const paused = useRef({ ms: 0, since: null as number | null });
+  /** Undoable steps: answers (their log id, `null` in cram mode) and disabled cards. */
+  const steps = useRef<({ answer: string | null } | { disabled: CardId })[]>([]);
 
   const cardId = session.current(Date.now());
   // Re-render when the card's Rem changes (e.g. edited during practice).
@@ -77,7 +86,30 @@ export function PracticePage(): ReactNode {
 
   useEffect(() => {
     shownAt.current = Date.now();
+    paused.current = { ms: 0, since: document.hidden ? Date.now() : null };
   }, [cardId, tick]);
+
+  /** Starts or ends a pause of the answer clock. */
+  const pause = (on: boolean): void => {
+    const p = paused.current;
+    if (on && p.since === null) p.since = Date.now();
+    if (!on && p.since !== null) {
+      p.ms += Date.now() - p.since;
+      p.since = null;
+    }
+  };
+  useEffect(() => {
+    const onVisibility = (): void => pause(document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+  useEffect(() => pause(editing), [editing]);
+
+  /** Active milliseconds spent on the current card so far. */
+  const activeMs = (now: number): number => {
+    const p = paused.current;
+    return Math.max(0, now - shownAt.current - p.ms - (p.since !== null ? now - p.since : 0));
+  };
 
   /** Moves on to the next card (state is reset synchronously to avoid key races). */
   const advance = (): void => {
@@ -99,11 +131,11 @@ export function PracticePage(): ReactNode {
     const now = Date.now();
     const result = app.practice.answer(cardId, rating, {
       now,
-      durationMs: now - shownAt.current,
+      durationMs: activeMs(now),
       mode,
     });
     if (!result) return;
-    logIds.current.push(result.log?.id ?? null);
+    steps.current.push({ answer: result.log?.id ?? null });
     // In cram mode, forgotten cards come back; everything else is done.
     const nextDue = mode === 'cram' ? (rating === 1 ? now + 60_000 : null) : result.state.due;
     session.answer(cardId, nextDue, now);
@@ -116,11 +148,24 @@ export function PracticePage(): ReactNode {
   };
 
   const undo = (): void => {
-    const logId = logIds.current.pop();
-    if (logId === undefined) return;
-    if (logId) app.practice.undoAnswer(logId);
+    const step = steps.current.pop();
+    if (!step) return;
+    if ('disabled' in step) app.practice.setDisabled([step.disabled], false);
+    else {
+      if (step.answer) app.practice.undoAnswer(step.answer);
+      setStats((s) => ({ ...s, answered: Math.max(0, s.answered - 1) }));
+    }
     session.undo();
-    setStats((s) => ({ ...s, answered: Math.max(0, s.answered - 1) }));
+    advance();
+  };
+
+  /** Disables the current card (it no longer appears anywhere) and moves on. */
+  const disable = (): void => {
+    if (!cardId) return;
+    app.practice.setDisabled([cardId], true);
+    steps.current.push({ disabled: cardId });
+    session.drop(cardId);
+    toast('Karte deaktiviert (Rückgängig: U)');
     advance();
   };
 
@@ -147,6 +192,7 @@ export function PracticePage(): ReactNode {
       '3': () => answer(3),
       '4': () => answer(4),
       s: () => skip(),
+      d: () => disable(),
       u: () => undo(),
       'mod+z': (e) => {
         e.preventDefault();
@@ -193,10 +239,19 @@ export function PracticePage(): ReactNode {
           className="icon-btn"
           aria-label="Undo last answer"
           title="Undo (U)"
-          disabled={logIds.current.length === 0}
+          disabled={steps.current.length === 0}
           onClick={undo}
         >
           <Undo2 size={18} />
+        </button>
+        <button
+          className="icon-btn"
+          aria-label="Disable card"
+          title="Karte deaktivieren (D)"
+          disabled={!cardId}
+          onClick={disable}
+        >
+          <EyeOff size={18} />
         </button>
         <button
           className="icon-btn"

@@ -75,6 +75,8 @@ menu, Flashcards home/Cards/Stats/Exams, import dialog).
 | Practice: SRS, practice all, all in order, cram                  | ✅     | Cram does not change scheduling                                         |
 | Ratings Forgot / Partially / With effort / Easily + Skip + Undo  | ✅     | Interval previews on the buttons                                        |
 | Edit card during practice                                        | ✅     |                                                                         |
+| Disable a card during practice (D, undoable)                     | ✅     |                                                                         |
+| Answer time per card (active time only), hardest cards in Stats  | ✅     | Feeds the Todoist duration estimates                                    |
 | Card statistics per card                                         | 🟡     | State, due, reps in the card popover and browser                        |
 
 ## Scheduling & goals

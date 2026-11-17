@@ -30,7 +30,13 @@ import { planExam } from '@core/scheduling/exam';
 import type { InheritedInfo } from '@core/scheduling/inheritance';
 import { isExamActive, resolveInheritance } from '@core/scheduling/inheritance';
 import type { ExamQuota, QueuedCard, QueueEntry } from '@core/scheduling/queue';
-import { buildGlobalQueue, countDue, isLearningDue, isReviewDue } from '@core/scheduling/queue';
+import {
+  buildGlobalQueue,
+  countDue,
+  isLearningDue,
+  isReviewDue,
+  lectureGroupOf,
+} from '@core/scheduling/queue';
 import type { Scheduler } from '@core/scheduling/scheduler';
 import { createScheduler } from '@core/scheduling/scheduler';
 import { addStudyDays, MINUTE, startOfStudyDay } from '@core/util/time';
@@ -159,6 +165,14 @@ export function selectQueueEntries(store: Store, now: Timestamp): QueueEntry[] {
     () => {
       const index = selectCardIndex(store);
       const inherited = selectInheritance(store, now);
+      // Lecture of each card, so the queue can mix lectures (cached per parent).
+      const groups = new Map<RemId, string>();
+      const groupOf = (remId: RemId): string => {
+        const parent = store.get(remId)?.parentId ?? remId;
+        let g = groups.get(parent);
+        if (g === undefined) groups.set(parent, (g = lectureGroupOf(store, remId)));
+        return g;
+      };
       return index.specs.map((spec) => {
         const info = inherited.get(spec.remId);
         return {
@@ -168,6 +182,7 @@ export function selectQueueEntries(store: Store, now: Timestamp): QueueEntry[] {
           priority: info?.priority ?? 'none',
           examIds: info?.examIds ?? [],
           docOrder: index.docOrder.get(spec.remId) ?? 0,
+          groupId: groupOf(spec.remId),
         };
       });
     },

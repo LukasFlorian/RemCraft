@@ -10,7 +10,11 @@ import type {
   Rem,
   ReviewLog,
   SchedulerConfig,
-  Settings, Lecture, LectureEvent, SlideAnnotations } from '@core/model/types';
+  Settings,
+  Lecture,
+  LectureEvent,
+  SlideAnnotations,
+} from '@core/model/types';
 import type { Change, RecordOf } from '../store/store';
 import type { CollectionData, OutboxEntry, PersistenceAdapter, StoredFile } from './adapter';
 import { outboxEntryOf } from './adapter';

@@ -886,3 +886,23 @@
   border-color: var(--accent);
   background: var(--accent-soft);
 }
+
+/* Stats: hardest cards */
+.hard-cards tr.clickable {
+  cursor: pointer;
+}
+.hard-cards td:not(.hard-card-text) {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.hard-card-text {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .hard-card-text {
+    max-width: 160px;
+  }
+}

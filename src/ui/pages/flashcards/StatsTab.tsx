@@ -15,8 +15,11 @@ import {
   retentionRate,
   reviewsPerDay,
 } from '@core/stats/stats';
+import { cardTimes, hardestCards } from '@core/stats/cardTimes';
 import { addStudyDays, DAY, isoDate } from '@core/util/time';
 import { cardStateOf, selectCardIndex, selectLogs, selectSettings } from '@data/selectors';
+import { useNavigate } from 'react-router';
+import { toPlainText } from '@core/richtext/ops';
 import { useNow, useSelector } from '../../app/context';
 import { BarChart, Heatmap, StatTile } from '../../components/Charts';
 
@@ -42,6 +45,20 @@ export function StatsTab(): ReactNode {
     date: isoDate(d.day),
     count: d.count,
   }));
+  const navigate = useNavigate();
+  // Hardest cards: slow to answer or often forgotten (with their Rem's text).
+  const hardest = useSelector((s) =>
+    s.memo('hardestCards', [s.collectionVersion('logs'), s.collectionVersion('rems')], () => {
+      const index = selectCardIndex(s);
+      return hardestCards(cardTimes(selectLogs(s)), 15).flatMap((t) => {
+        const remId = index.byId.get(t.cardId)?.remId;
+        const rem = remId ? s.get(remId) : undefined;
+        return rem && !cardStateOf(s, index.byId.get(t.cardId)!).disabled
+          ? [{ ...t, remId: rem.id, text: toPlainText(rem.text) || '…' }]
+          : [];
+      });
+    }),
+  );
   const fmtDay = (t: number): string =>
     new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const every = Math.ceil(range / 10);
@@ -151,6 +168,49 @@ export function StatsTab(): ReactNode {
         <h3 className="card-title">Activity (last year)</h3>
         <Heatmap days={year} ariaLabel="Reviews per day over the last year" />
       </div>
+      <div className="card">
+        <h3 className="card-title">Schwierige Karten</h3>
+        <p className="muted" style={{ marginTop: 0 }}>
+          Karten, bei denen du am längsten brauchst oder die du oft vergisst (Ø der letzten
+          Antworten; nur aktive Zeit in der App).
+        </p>
+        {hardest.length === 0 ? (
+          <p className="faint">Noch zu wenige Antworten – jede Karte braucht mindestens zwei.</p>
+        ) : (
+          <table className="table hard-cards">
+            <thead>
+              <tr>
+                <th>Karte</th>
+                <th>Ø Zeit</th>
+                <th>Vergessen</th>
+                <th>Gesamt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hardest.map((t) => (
+                <tr
+                  key={t.cardId}
+                  className="clickable"
+                  title="Im Dokument öffnen"
+                  onClick={() => navigate(`/rem/${t.remId}`)}
+                >
+                  <td className="hard-card-text">{t.text}</td>
+                  <td>{Math.round(t.avgSeconds ?? 0)} s</td>
+                  <td>
+                    {t.forgot} / {t.answers}
+                  </td>
+                  <td>{formatSeconds(t.totalSeconds)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
+}
+
+/** Seconds as "45 s" or "3 min". */
+function formatSeconds(seconds: number): string {
+  return seconds < 90 ? `${Math.round(seconds)} s` : `${Math.round(seconds / 60)} min`;
 }
