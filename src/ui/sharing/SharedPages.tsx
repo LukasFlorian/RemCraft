@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { Copy, Eye, FileText, Folder, Presentation, Users } from 'lucide-react';
 import type { Rem, RemId, SlideAnnotations } from '@core/model/types';
 import { toPlainText } from '@core/richtext/ops';
@@ -309,6 +309,9 @@ export function SharedSnapshotPage(): ReactNode {
               </button>
             </header>
             <SnapshotView snapshot={snapshot} loadFile={loadFile} />
+            <p className="faint snap-legal">
+              Geteilt mit RemCraft · <Link to="/legal">Impressum &amp; Datenschutz</Link>
+            </p>
           </>
         )}
       </div>

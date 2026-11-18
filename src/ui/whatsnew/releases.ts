@@ -21,6 +21,14 @@ export interface Release {
 /** All releases, newest first. */
 export const RELEASES: Release[] = [
   {
+    id: '2026-11-18b',
+    title: 'Impressum, Datenschutz & Konto löschen',
+    items: [
+      'Impressum und Datenschutzerklärung findest du unten in der Seitenleiste.',
+      'Du kannst dein Konto mit allen Daten jetzt selbst löschen (Einstellungen → Account & Sync).',
+    ],
+  },
+  {
     id: '2026-11-18a',
     title: 'KI-Bearbeitung, Suchen & Ersetzen, Live-Links',
     items: [

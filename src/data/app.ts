@@ -249,6 +249,30 @@ export class RemCraftApp {
     });
   }
 
+  /**
+   * Deletes the account with all server data, then the local copy on this
+   * device (re-seeding the welcome content).
+   *
+   * Pending local changes are not uploaded first: they would be deleted
+   * right away anyway.
+   */
+  async deleteAccount(): Promise<void> {
+    if (!this.auth) throw new Error('Kein Server konfiguriert.');
+    this.stopSync();
+    try {
+      await this.auth.deleteAccount();
+    } catch (e) {
+      // Still signed in: resume syncing so nothing is lost, then report.
+      await this.handleUser(await this.auth.currentUser());
+      throw e;
+    }
+    await this.resetLocal(true);
+    this.setAccount({
+      user: null,
+      sync: { state: 'disabled', lastSyncedAt: null, error: null, pending: 0 },
+    });
+  }
+
   /** Deletes all local data (optionally re-seeding the welcome content). */
   async resetLocal(reseed: boolean): Promise<void> {
     await this.persister.flush();

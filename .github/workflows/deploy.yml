@@ -40,6 +40,12 @@ jobs:
           VITE_BASE_PATH: ${{ vars.BASE_PATH || format('/{0}/', github.event.repository.name) }}
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          # Operator details for Impressum and privacy policy (repository variables,
+          # so they never have to be committed). Address lines separated by "|".
+          VITE_LEGAL_NAME: ${{ vars.LEGAL_NAME }}
+          VITE_LEGAL_ADDRESS: ${{ vars.LEGAL_ADDRESS }}
+          VITE_LEGAL_EMAIL: ${{ vars.LEGAL_EMAIL }}
+          VITE_LEGAL_DATA_REGION: ${{ vars.LEGAL_DATA_REGION }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

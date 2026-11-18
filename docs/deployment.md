@@ -17,7 +17,8 @@ Without Supabase the app still works, but data stays in one browser.
 2. Open **SQL Editor** and run the files of [`supabase/migrations/`](../supabase/migrations) in
    order: `…_init.sql` (records table with row-level security, realtime, private `files`
    bucket, `keepalive()`), `…_sharing.sql` (links and shared spaces, see [sharing.md](sharing.md))
-   and `…_integrations.sql` (Todoist, see [integrations.md](integrations.md)). All are idempotent.
+   , `…_integrations.sql` (Todoist, see [integrations.md](integrations.md)) and
+   `…_delete_account.sql` (self-service account deletion). All are idempotent.
    _Alternative_: run the **Supabase migrate** workflow (needs the secrets listed in
    [`.github/workflows/supabase-migrate.yml`](../.github/workflows/supabase-migrate.yml)).
 3. **Authentication → URL Configuration**: set _Site URL_ to your app URL, e.g.
@@ -39,6 +40,25 @@ Without Supabase the app still works, but data stays in one browser.
 The **Supabase keep-alive** workflow calls `keepalive()` every Monday and Thursday so the free
 project is not paused. GitHub disables scheduled workflows in repositories without activity for
 60 days - re-enable it in the Actions tab if that happens (you get an email).
+
+## Legal notice and privacy policy
+
+As soon as other people can sign up, the instance processes their personal data (GDPR) and
+needs an Impressum (§ 5 DDG) and a privacy policy. Both are built in at `#/legal` (linked in the
+sidebar, the sign-in form and on shared pages). Fill in the operator details as repository
+**variables** (they are baked into the build and not committed):
+
+| Variable            | Example                                                              |
+| ------------------- | -------------------------------------------------------------------- |
+| `LEGAL_NAME`        | `Max Mustermann`                                                     |
+| `LEGAL_ADDRESS`     | `Musterstraße 1\|12345 Musterstadt` (lines separated by `\|`)        |
+| `LEGAL_EMAIL`       | `kontakt@example.org`                                                |
+| `LEGAL_DATA_REGION` | `der EU (Frankfurt)` - Supabase region, completes "gespeichert in …" |
+
+Then redeploy. Until they are set, the page shows a warning instead of the operator block.
+Check that the policy text in `src/ui/legal/LegalPage.tsx` still matches your setup (e.g. if
+you add services). Users can delete their account with all server data under
+_Settings → Account & Sync → Konto löschen_ (`delete_my_account()` + Storage API).
 
 ## Optional: Todoist daily tasks
 

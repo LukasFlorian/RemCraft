@@ -15,6 +15,8 @@ import type { PulledRow, RemoteBackend, RemoteRow } from './remote';
 
 /** Storage bucket for images and PDFs. */
 export const FILE_BUCKET = 'files';
+/** Public bucket of read-only links (see `supabaseShare.ts`). */
+const SHARE_BUCKET_NAME = 'shares';
 
 /** Creates the Supabase client. */
 export function createSupabase(config: BackendConfig): SupabaseClient {
@@ -187,6 +189,60 @@ export class AuthService {
 
   async signOut(): Promise<void> {
     await this.client.auth.signOut();
+  }
+
+  /**
+   * Deletes the signed-in account and all its server data.
+   *
+   * Storage objects are removed through the Storage API first (SQL cannot
+   * delete them): the user's own file folder and the files of their
+   * read-only links. `delete_my_account()` then deletes the auth user, which
+   * cascades to every table with user data. Finally the local session is
+   * dropped.
+   *
+   * Raises:
+   *   Error: When not signed in or a server step fails (nothing after the
+   *     failing step runs, so a retry continues where it stopped).
+   */
+  async deleteAccount(): Promise<void> {
+    const user = await this.currentUser();
+    if (!user) throw new Error('Nicht angemeldet.');
+    // 1. Own files: `files/<user id>/<file id>`.
+    await this.removeFolder(FILE_BUCKET, user.id);
+    // 2. Files of read-only links: `shares/<token>/<file id>`.
+    const { data: shares, error } = await this.client
+      .from('shares')
+      .select('token')
+      .eq('owner_id', user.id);
+    if (error) throw new Error(`Leselinks laden: ${error.message}`);
+    for (const { token } of (shares ?? []) as { token: string }[]) {
+      await this.removeFolder(SHARE_BUCKET_NAME, token);
+    }
+    // 3. The account itself (cascades to all tables).
+    const { error: rpcError } = await this.client.rpc('delete_my_account');
+    if (rpcError) throw new Error(`Konto löschen: ${rpcError.message}`);
+    // 4. The session belongs to a deleted user: drop it locally only.
+    await this.client.auth.signOut({ scope: 'local' });
+  }
+
+  /**
+   * Removes every object directly inside a storage folder.
+   *
+   * Args:
+   *   bucket: Bucket id.
+   *   folder: Folder name (no slashes).
+   */
+  private async removeFolder(bucket: string, folder: string): Promise<void> {
+    const storage = this.client.storage.from(bucket);
+    // Removing shifts the listing, so always read the first page again.
+    for (;;) {
+      const { data, error } = await storage.list(folder, { limit: 1000 });
+      if (error) throw new Error(`Dateien laden: ${error.message}`);
+      const names = (data ?? []).filter((f) => f.id !== null).map((f) => `${folder}/${f.name}`);
+      if (names.length === 0) return;
+      const { error: removeError } = await storage.remove(names);
+      if (removeError) throw new Error(`Dateien löschen: ${removeError.message}`);
+    }
   }
 }
 
