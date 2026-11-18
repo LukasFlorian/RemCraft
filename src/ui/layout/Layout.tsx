@@ -33,6 +33,12 @@ export function Layout(): ReactNode {
         e.preventDefault();
         modals.open({ kind: 'search' });
       },
+      'mod+shift+h': (e) => {
+        e.preventDefault();
+        // Find & replace in the open document (or everywhere).
+        const id = /^\/rem\/([^/?#]+)/.exec(location.pathname)?.[1] ?? null;
+        modals.open({ kind: 'replace', rootId: id });
+      },
       'mod+p': (e) => {
         e.preventDefault();
         modals.open({ kind: 'search' });
@@ -53,14 +59,15 @@ export function Layout(): ReactNode {
     },
     { allowInInputs: true },
   );
+  // Global undo/redo - unless a page or the outliner (selected blocks, the
+  // practice screen) handles the key itself. Their listeners may run after
+  // this one, so the decision waits until the key event has been dispatched.
   useHotkeys({
     'mod+z': (e) => {
-      e.preventDefault();
-      app.store.undo();
+      setTimeout(() => !e.defaultPrevented && app.store.undo(), 0);
     },
     'mod+shift+z': (e) => {
-      e.preventDefault();
-      app.store.redo();
+      setTimeout(() => !e.defaultPrevented && app.store.redo(), 0);
     },
   });
 

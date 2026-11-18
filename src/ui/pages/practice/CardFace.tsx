@@ -14,7 +14,7 @@ import { ImageView } from '../../editor/blocks';
 import { RemContent } from '../../editor/RemBlock';
 import { useRemTitle } from '../../hooks/useRemTitle';
 import { SlideView } from '../../lecture/SlideView';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { RichTextView } from '../../richtext/RichTextView';
 
 /** Props of {@link CardFace}. */
@@ -70,6 +70,7 @@ function ContextTitle({ id }: { id: RemId }): ReactNode {
  */
 function SlideOrigin({ ids, revealed }: { ids: RemId[]; revealed: boolean }): ReactNode {
   const navigate = useNavigate();
+  const location = useLocation();
   const slide = useSelector((s) =>
     [...ids]
       .reverse()
@@ -82,7 +83,12 @@ function SlideOrigin({ ids, revealed }: { ids: RemId[]; revealed: boolean }): Re
     <div className="slide-origin">
       <button
         className="btn btn-sm btn-ghost"
-        onClick={() => navigate(`/lecture/${slide.parentId}?slide=${n}`)}
+        // The lecture page offers a way back; the practice session is kept.
+        onClick={() =>
+          navigate(`/lecture/${slide.parentId}?slide=${n}`, {
+            state: { returnTo: location.pathname + location.search },
+          })
+        }
       >
         📄 Folie {n}
       </button>

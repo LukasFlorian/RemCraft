@@ -41,6 +41,8 @@ export interface ShareBackend {
   fetchSnapshot(token: string): Promise<ShareSnapshot>;
   /** Downloads a file of a published snapshot. */
   fetchSnapshotFile(token: string, fileId: string): Promise<Blob>;
+  /** Ids of the files already stored with a published snapshot. */
+  listSnapshotFiles(token: string): Promise<string[]>;
   /** Public URL of a file of a published snapshot. */
   snapshotFileUrl(token: string, fileId: string): string;
   /** Removes a published snapshot. */

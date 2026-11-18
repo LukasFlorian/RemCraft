@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Palette,
+  Replace,
+  Sparkles,
   ArrowRightLeft,
   Clock3,
   Copy,
@@ -116,6 +118,16 @@ export function useRemMenu(): (remId: RemId, options?: { includeOpen?: boolean }
               label: 'Icon und Farbe…',
               icon: <Palette size={15} />,
               onSelect: () => modals.open({ kind: 'icon', remId }),
+            },
+            {
+              label: 'Mit KI überarbeiten…',
+              icon: <Sparkles size={15} />,
+              onSelect: () => modals.open({ kind: 'ai-edit', rootId: remId }),
+            },
+            {
+              label: 'Suchen & Ersetzen… (⌘⇧H)',
+              icon: <Replace size={15} />,
+              onSelect: () => modals.open({ kind: 'replace', rootId: remId }),
             },
           ]
         : []),

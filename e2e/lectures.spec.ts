@@ -160,3 +160,21 @@ test('a share link shows the slides as images with their notes', async ({ page }
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.screenshot({ path: 'test-results/share-desktop.png' });
 });
+
+test('looking at a card’s slide does not restart the practice session', async ({ page }) => {
+  await page.goto('/#/practice?scope=global');
+  const progress = page.locator('.practice-top .col div').last();
+  // Answer one card, then find a card that came from a slide.
+  await page.keyboard.press('Space');
+  await page.keyboard.press('4');
+  const slideLink = page.getByRole('button', { name: /Folie \d+/ });
+  for (let i = 0; i < 15 && !(await slideLink.isVisible()); i++) {
+    await page.keyboard.press('Space');
+    await page.keyboard.press('4');
+  }
+  await expect(slideLink).toBeVisible();
+  const before = await progress.textContent();
+  await slideLink.click();
+  await page.getByRole('button', { name: 'Weiter üben' }).click();
+  await expect(progress).toHaveText(before!);
+});

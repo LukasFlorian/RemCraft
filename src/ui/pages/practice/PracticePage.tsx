@@ -13,10 +13,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { EyeOff, Pencil, SkipForward, Undo2, X } from 'lucide-react';
-import type { CardId, PracticeMode, Rating } from '@core/model/types';
+import type { PracticeMode, Rating } from '@core/model/types';
 import type { DocumentPracticeMode, QueuedCard } from '@core/scheduling/queue';
 import { RATING_LABELS, RATINGS } from '@core/scheduling/scheduler';
 import { PracticeSession } from '@core/scheduling/session';
+import { startOfStudyDay } from '@core/util/time';
+import type { CachedSession, PracticeStep } from './sessionCache';
+import { sessionFor } from './sessionCache';
 import { formatInterval } from '@core/util/time';
 import { selectCardView, selectSettings } from '@data/selectors';
 import { useApp, useSelector } from '../../app/context';
@@ -47,17 +50,31 @@ export function PracticePage(): ReactNode {
   const modeParam = (params.get('mode') ?? 'srs') as DocumentPracticeMode;
   const settings = useSelector(selectSettings);
 
-  // Build the queue once per session.
-  const initial = useMemo<QueuedCard[]>(() => {
-    const now = Date.now();
-    if (scopeParam === 'global') return app.practice.buildQueue({ kind: 'global' }, now);
-    if (scopeParam.startsWith('exam:')) {
-      const examId = scopeParam.slice(5);
-      return app.practice.buildQueue({ kind: 'global' }, now).filter((q) => q.examId === examId);
-    }
-    return app.practice.buildQueue({ kind: 'rem', remId: scopeParam, mode: modeParam }, now);
-  }, [app, scopeParam, modeParam]);
-  const session = useMemo(() => new PracticeSession(initial.map((q) => q.cardId)), [initial]);
+  // The running session of this scope (kept while looking at a slide etc.);
+  // a new one builds the queue once.
+  const sessionKey = `${scopeParam}|${modeParam}`;
+  const cached = useMemo(
+    () =>
+      sessionFor(sessionKey, startOfStudyDay(Date.now(), settings.dayStartHour), () => {
+        const now = Date.now();
+        let initial: QueuedCard[];
+        if (scopeParam === 'global') initial = app.practice.buildQueue({ kind: 'global' }, now);
+        else if (scopeParam.startsWith('exam:')) {
+          const examId = scopeParam.slice(5);
+          initial = app.practice
+            .buildQueue({ kind: 'global' }, now)
+            .filter((q) => q.examId === examId);
+        } else
+          initial = app.practice.buildQueue(
+            { kind: 'rem', remId: scopeParam, mode: modeParam },
+            now,
+          );
+        return new PracticeSession(initial.map((q) => q.cardId));
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [app, sessionKey],
+  );
+  const session = cached.session;
 
   const mode: PracticeMode =
     scopeParam === 'global' || scopeParam.startsWith('exam:') ? 'srs' : modeParam;
@@ -65,7 +82,10 @@ export function PracticePage(): ReactNode {
   const [revealed, setRevealed] = useState(false);
   const [suggested, setSuggested] = useState<Rating | null>(null);
   const [editing, setEditing] = useState(false);
-  const [stats, setStats] = useState({ answered: 0, correct: 0, startedAt: Date.now() });
+  const [stats, setStatsState] = useState(cached.stats);
+  /** Updates the session statistics (kept with the cached session). */
+  const setStats = (update: (s: CachedSession['stats']) => CachedSession['stats']): void =>
+    setStatsState((s) => (cached.stats = update(s)));
   const toast = useToast();
   /** What "Show answer" does for the current card (set by the card face). */
   const revealAction = useRef<(() => void) | null>(null);
@@ -74,7 +94,7 @@ export function PracticePage(): ReactNode {
   /** Paused time of the current card (background, editing) and when the pause began. */
   const paused = useRef({ ms: 0, since: null as number | null });
   /** Undoable steps: answers (their log id, `null` in cram mode) and disabled cards. */
-  const steps = useRef<({ answer: string | null } | { disabled: CardId })[]>([]);
+  const steps = useRef<PracticeStep[]>(cached.steps);
 
   const cardId = session.current(Date.now());
   // Re-render when the card's Rem changes (e.g. edited during practice).

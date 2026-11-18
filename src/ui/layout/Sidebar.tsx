@@ -124,7 +124,8 @@ function TreeItem({
             <ChevronRight size={13} />
           </button>
         ) : (
-          <span style={{ width: 18 }} />
+          // Same width as the toggle; must not shrink with long titles.
+          <span className="tree-toggle-spacer" />
         )}
         <RemIcon rem={rem} />
         <span className="ellipsis">{title}</span>

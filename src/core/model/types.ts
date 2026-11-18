@@ -496,6 +496,17 @@ export interface Settings {
   id: 'settings';
   /** Newest release note ("Was ist neu") the user has seen (synced across devices). */
   whatsNewSeen?: string;
+  /**
+   * Read-only share links that follow changes automatically ("live"), by
+   * token: the shared root and the parts it contains.
+   */
+  liveShares?: Record<
+    string,
+    {
+      rootId: RemId;
+      scope: { slides: boolean; notes: boolean; cards: boolean; annotations: boolean };
+    }
+  >;
   defaultSchedulerId: string;
   dailyGoalMode: DailyGoalMode;
   /** Used when `dailyGoalMode` is `custom-number`. */

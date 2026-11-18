@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   BarChart3,
   ChevronLeft,
@@ -99,6 +99,8 @@ export function LecturePage(): ReactNode {
 function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
+  // Opened from a card while practising: offer the way back into the session.
+  const returnTo = (useLocation().state as { returnTo?: string } | null)?.returnTo;
   const toast = useToast();
   const controller = useController();
   const [params, setParams] = useSearchParams();
@@ -387,9 +389,15 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   return (
     <div className={`lecture${focusMode ? ' focus-mode' : ''}`}>
       <div className="topbar lecture-top">
-        <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/rem/${deckId}`)}>
-          ← {toPlainText(deck.text) || 'Foliensatz'}
-        </button>
+        {returnTo ? (
+          <button className="btn btn-sm btn-primary" onClick={() => navigate(returnTo)}>
+            ← Weiter üben
+          </button>
+        ) : (
+          <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/rem/${deckId}`)}>
+            ← {toPlainText(deck.text) || 'Foliensatz'}
+          </button>
+        )}
         <span className="spacer" />
         {lecture && (
           <span className={`lecture-status ${running ? 'running' : 'paused'}`}>

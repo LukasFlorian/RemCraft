@@ -588,3 +588,10 @@
   gap: 6px;
   line-height: 1.45;
 }
+
+/* Share dialog: live option of new links */
+.share-live-option {
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}

@@ -121,8 +121,13 @@
   background: var(--surface-active);
 }
 
+.tree-toggle-spacer {
+  flex: 0 0 18px;
+}
+
 .tree-toggle {
   display: grid;
+  flex-shrink: 0;
   place-items: center;
   width: 18px;
   height: 18px;

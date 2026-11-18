@@ -17,7 +17,8 @@ import type { SpaceInfo, SpaceMember, SpaceRole } from '@core/sharing/spaces';
 import type { RemId } from '@core/model/types';
 import type { PublishedShare } from '@data/sync/shareBackend';
 import { SNAPSHOT_FILE_SUFFIX } from '@data/services/sharing';
-import { useAccount, useApp, useRem } from '../app/context';
+import { selectSettings } from '@data/selectors';
+import { useAccount, useApp, useRem, useSelector } from '../app/context';
 import { Modal } from '../components/Modal';
 import { Switch } from '../components/Controls';
 import { useToast } from '../components/Toast';
@@ -147,6 +148,10 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
   const [scope, setScope] = useState<ShareScope>(SHARE_PRESETS.all.scope);
   const [shares, setShares] = useState<PublishedShare[]>([]);
   const [busy, setBusy] = useState(false);
+  /** New links follow changes automatically unless switched off. */
+  const [liveNew, setLiveNew] = useState(true);
+  // Selected as stored (a stable reference), defaulted outside the selector.
+  const live = useSelector((st) => selectSettings(st).liveShares) ?? {};
   const stats = (() => {
     const snap = app.sharing.snapshot(remId, scope);
     return `${snap.rems.length} Rems, ${snap.files.length} Dateien`;
@@ -201,6 +206,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
           onClick={() =>
             void run(async () => {
               const token = await app.sharing.publish(remId, scope);
+              if (liveNew) app.sharing.setLive(token, { rootId: remId, scope });
               copy(appLink(`/s/${token}`));
               reload();
             })
@@ -209,12 +215,17 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
           <Link2 size={14} /> Link erstellen
         </button>
       </div>
+      <label className="row share-live-option">
+        <input type="checkbox" checked={liveNew} onChange={(e) => setLiveNew(e.target.checked)} />
+        Automatisch aktualisieren (live): Änderungen erscheinen nach etwa 20 Sekunden im Link
+      </label>
       {shares.length > 0 && (
         <table className="table compact">
           <thead>
             <tr>
               <th>Link</th>
               <th>Umfang</th>
+              <th>Live</th>
               <th>Stand</th>
               <th />
             </tr>
@@ -226,6 +237,24 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                   <code className="share-link">{appLink(`/s/${s.token}`)}</code>
                 </td>
                 <td>{s.scopeLabel}</td>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label="Automatisch aktualisieren"
+                    title={
+                      live[s.token]
+                        ? 'Folgt Änderungen automatisch – abschalten für einen festen Stand'
+                        : `Automatisch aktualisieren (Umfang: ${describeScope(scope)})`
+                    }
+                    checked={Boolean(live[s.token])}
+                    onChange={(e) =>
+                      app.sharing.setLive(
+                        s.token,
+                        e.target.checked ? { rootId: remId, scope } : null,
+                      )
+                    }
+                  />
+                </td>
                 <td>{new Date(s.updatedAt).toLocaleString()}</td>
                 <td className="row" style={{ gap: 4 }}>
                   <button
@@ -265,7 +294,9 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
       )}
       <p className="faint" style={{ margin: 0, fontSize: 12 }}>
         Wer den Link hat, kann den Stand ansehen (auch ohne Konto) und in die eigene Wissensbasis
-        klonen. Spätere Änderungen erscheinen erst nach „Aktualisieren“.
+        klonen. Live-Links übernehmen deine Änderungen automatisch, solange RemCraft bei dir
+        angemeldet geöffnet ist; andere Links bleiben beim festen Stand, bis du „Aktualisieren“
+        tippst. Bereits geklonte Kopien ändern sich nie.
       </p>
     </>
   );

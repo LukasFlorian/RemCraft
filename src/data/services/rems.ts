@@ -9,7 +9,8 @@ import { ancestors, walkSubtree } from '@core/model/graph';
 import { createRem } from '@core/model/factories';
 import { orderBetween, ordersBetween } from '@core/model/ordering';
 import type { Rem, RemId, RichText, Timestamp } from '@core/model/types';
-import { concat, rt, toPlainText } from '@core/richtext/ops';
+import type { ReplaceChange } from '@core/edit/findReplace';
+import { concat, richTextEqual, rt, toPlainText } from '@core/richtext/ops';
 import { fold } from '@core/search/search';
 import { newId } from '@core/util/ids';
 import { formatLongDate, isoDate, parseIsoDate } from '@core/util/time';
@@ -216,6 +217,26 @@ export class RemService {
     );
   }
 
+  /**
+   * Applies planned find/replace changes in one undo step. A change is only
+   * applied while the field still has the text it was planned for (it may
+   * have been edited meanwhile).
+   *
+   * @returns Number of changed fields.
+   */
+  applyReplace(changes: readonly ReplaceChange[]): number {
+    let applied = 0;
+    this.store.transact((tx) => {
+      for (const c of changes) {
+        const rem = tx.get('rems', c.remId);
+        if (!rem || !richTextEqual(rem[c.field], c.before)) continue;
+        tx.update('rems', c.remId, { [c.field]: c.after });
+        applied++;
+      }
+    });
+    return applied;
+  }
+
   /** Updates many Rems in one undo step. */
   updateMany(ids: readonly RemId[], patch: Partial<Rem> | ((rem: Rem) => Partial<Rem>)): void {
     this.store.transact((tx) => {
@@ -372,7 +393,7 @@ export class RemService {
   }
 
   /** Deletion inside a transaction. */
-  private deleteIn(tx: Transaction, ids: readonly RemId[], withSubtree: boolean): void {
+  deleteIn(tx: Transaction, ids: readonly RemId[], withSubtree: boolean): void {
     for (const id of ids) {
       const victims: RemId[] = [];
       if (withSubtree) walkSubtree(this.store, id, (r) => void victims.push(r.id));

@@ -1,6 +1,7 @@
 /**
  * Application service for import and export.
  */
+import type { EditOp } from '@core/ai/editPlan';
 import { createBackup, parseBackup } from '@core/io/backup';
 import type { Backup } from '@core/io/backup';
 import { csvToCardRems, parseCsv } from '@core/io/csv';
@@ -122,6 +123,78 @@ export class ImportExportService {
     );
     for (const r of created) tx.put('rems', r);
     return created.filter((r) => r.parentId === pos.parentId);
+  }
+
+  /**
+   * Applies AI edit operations (see `core/ai/editPlan.ts`) in one undo step.
+   * Lines are parsed exactly like pasted text, so the RemNote syntax creates
+   * the same cards as typing it would.
+   *
+   * @returns Number of applied operations.
+   */
+  applyEdits(ops: readonly EditOp[]): number {
+    let applied = 0;
+    this.store.transact((tx) => {
+      for (const op of ops) {
+        if (op.op === 'delete') {
+          if (!this.store.get(op.remId)) continue;
+          this.rems.deleteIn(tx, [op.remId], true);
+          applied++;
+        } else if (op.op === 'add') {
+          if (!this.store.get(op.parentId)) continue;
+          const afterOk = op.afterId && this.store.get(op.afterId)?.parentId === op.parentId;
+          this.insertOutline(tx, parseOutline(op.line), {
+            parentId: op.parentId,
+            afterId: afterOk ? op.afterId! : op.afterId === null ? null : undefined,
+          });
+          applied++;
+        } else {
+          const rem = tx.get('rems', op.remId);
+          if (!rem) continue;
+          if (op.correct !== undefined)
+            tx.update('rems', rem.id, { mcCorrect: op.correct || undefined });
+          if (op.line !== undefined) this.replaceLine(tx, rem, op.line);
+          applied++;
+        }
+      }
+    });
+    return applied;
+  }
+
+  /** Replaces the content of a Rem by a parsed RemNote-syntax line (children stay). */
+  private replaceLine(tx: Transaction, rem: Rem, line: string): void {
+    // `{CORRECT: A, C}` marks options of a multiple-choice Rem.
+    const marker = /\{CORRECT:\s*([A-Za-z](?:\s*,\s*[A-Za-z])*)\s*\}/.exec(line);
+    const [node] = parseOutline(marker ? line.replace(marker[0], ' ') : line);
+    if (!node) return;
+    const [parsed] = outlineToRems([{ ...node, children: [] }], rem.parentId, {
+      resolveRef: (name) => this.rems.ensureByName(name, tx),
+      resolveTag: (name) => this.rems.ensureByName(name, tx),
+      now: this.store.clock.now(),
+    });
+    if (!parsed) return;
+    tx.update('rems', rem.id, {
+      text: parsed.text,
+      back: parsed.back,
+      kind: parsed.kind,
+      direction: parsed.direction,
+      answerMode: parsed.answerMode,
+      tags: parsed.tags,
+      heading: parsed.heading,
+      todo: parsed.todo,
+      quote: parsed.quote,
+      clozeHints: parsed.clozeHints,
+      extraCardDetail: parsed.extraCardDetail,
+      ...(parsed.image ? { image: { ...rem.image, ...parsed.image } } : {}),
+    });
+    if (marker) {
+      const letters = marker[1]!.split(',').map((l) => l.trim().toUpperCase().charCodeAt(0) - 65);
+      this.store
+        .children(rem.id)
+        .forEach((child, i) =>
+          tx.update('rems', child.id, { mcCorrect: letters.includes(i) || undefined }),
+        );
+    }
   }
 
   /** Exports subtrees as RemNote-compatible Markdown. */
