@@ -22,6 +22,8 @@ export class FakeServer {
   private counter = 0;
   /** Files uploaded with published snapshots (to check that unchanged files are skipped). */
   shareUploads = 0;
+  /** File ids whose share upload fails (to test error reporting). */
+  failShareUploads = new Set<string>();
   readonly rows = new Map<string, StoredRow>();
   readonly files = new Map<string, Blob>();
   readonly spaces = new Map<
@@ -117,7 +119,16 @@ export class FakeServer {
       listSnapshotFiles: async (token) => [...(this.shares.get(token)?.files.keys() ?? [])],
       publish: async (snapshot, files, scopeLabel, token) => {
         const owner = me();
-        this.shareUploads += files.length;
+        const failed: { id: string; error: string }[] = [];
+        const loaded: (readonly [string, Blob])[] = [];
+        for (const f of files) {
+          const file = await f.load();
+          if (!file) failed.push({ id: f.id, error: 'not available' });
+          else if (this.failShareUploads.has(f.id))
+            failed.push({ id: f.id, error: 'The object exceeded the maximum allowed size' });
+          else loaded.push([f.id, file.blob] as const);
+        }
+        this.shareUploads += loaded.length;
         const existing = token ? this.shares.get(token) : undefined;
         if (existing && existing.owner !== owner) throw new Error('not allowed');
         const t = token ?? this.nextId('share');
@@ -126,13 +137,10 @@ export class FakeServer {
           snapshot: structuredClone(snapshot),
           scopeLabel,
           // Files are kept across updates (like the storage bucket).
-          files: new Map([
-            ...(existing?.files ?? []),
-            ...files.map((f) => [f.id, f.blob] as const),
-          ]),
+          files: new Map([...(existing?.files ?? []), ...loaded]),
           updatedAt: Date.now(),
         });
-        return t;
+        return { token: t, failed };
       },
       fetchSnapshot: async (token) => {
         const s = this.shares.get(token);

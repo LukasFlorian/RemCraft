@@ -16,7 +16,7 @@ import { ROLE_LABELS } from '@core/sharing/spaces';
 import type { SpaceInfo, SpaceMember, SpaceRole } from '@core/sharing/spaces';
 import type { RemId } from '@core/model/types';
 import type { PublishedShare } from '@data/sync/shareBackend';
-import { SNAPSHOT_FILE_SUFFIX } from '@data/services/sharing';
+import { ShareFilesError, SNAPSHOT_FILE_SUFFIX } from '@data/services/sharing';
 import { selectSettings } from '@data/selectors';
 import { useAccount, useApp, useRem, useSelector } from '../app/context';
 import { Modal } from '../components/Modal';
@@ -157,14 +157,46 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
     return `${snap.rems.length} Rems, ${snap.files.length} Dateien`;
   })();
 
+  /** Files missing on the server, per link (checked after every reload). */
+  const [missing, setMissing] = useState<Record<string, string[]>>({});
+  /** Files that failed in the last publish (shown until the next one). */
+  const [problems, setProblems] = useState<string[]>([]);
+
   const reload = (): void =>
     void (signedIn
       ? app.sharing.myShares().then(
-          (all) => setShares(all.filter((s) => s.rootId === remId)),
+          (all) => {
+            const mine = all.filter((s) => s.rootId === remId);
+            setShares(mine);
+            for (const s of mine)
+              app.sharing.missingFiles(s.token).then(
+                (names) => setMissing((m) => ({ ...m, [s.token]: names })),
+                () => undefined,
+              );
+          },
           () => undefined,
         )
       : undefined);
   useEffect(reload, [remId, signedIn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Publishes and reports files that could not be uploaded (the link itself
+   * is saved anyway).
+   *
+   * @param token Link to update, or `undefined` for a new one.
+   * @returns The token.
+   */
+  const publish = async (token?: string): Promise<string> => {
+    setProblems([]);
+    try {
+      return await app.sharing.publish(remId, scope, token);
+    } catch (e) {
+      if (!(e instanceof ShareFilesError)) throw e;
+      setProblems(e.problems);
+      toast('Link gespeichert, aber nicht alle Dateien wurden hochgeladen.', 'error');
+      return e.token;
+    }
+  };
 
   const run = async (fn: () => Promise<void>): Promise<void> => {
     setBusy(true);
@@ -205,7 +237,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
           disabled={busy || !signedIn}
           onClick={() =>
             void run(async () => {
-              const token = await app.sharing.publish(remId, scope);
+              const token = await publish();
               if (liveNew) app.sharing.setLive(token, { rootId: remId, scope });
               copy(appLink(`/s/${token}`));
               reload();
@@ -215,6 +247,18 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
           <Link2 size={14} /> Link erstellen
         </button>
       </div>
+      {problems.length > 0 && (
+        <div className="share-problems" role="alert">
+          <strong>Diese Dateien konnten nicht hochgeladen werden:</strong>
+          <ul>
+            {problems.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+          Prüfe die Verbindung und tippe dann beim Link auf „Aktualisieren“ – bereits hochgeladene
+          Dateien werden nicht erneut gesendet.
+        </div>
+      )}
       <label className="row share-live-option">
         <input type="checkbox" checked={liveNew} onChange={(e) => setLiveNew(e.target.checked)} />
         Automatisch aktualisieren (live): Änderungen erscheinen nach etwa 20 Sekunden im Link
@@ -235,6 +279,16 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
               <tr key={s.token}>
                 <td>
                   <code className="share-link">{appLink(`/s/${s.token}`)}</code>
+                  {(missing[s.token]?.length ?? 0) > 0 && (
+                    <div
+                      className="share-missing"
+                      title={(missing[s.token] ?? []).join('\n')}
+                      data-testid="share-missing"
+                    >
+                      {missing[s.token]?.length} Datei(en) fehlen im Link – „Aktualisieren“ lädt sie
+                      hoch.
+                    </div>
+                  )}
                 </td>
                 <td>{s.scopeLabel}</td>
                 <td>
@@ -268,11 +322,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                     className="icon-btn"
                     title={`Mit aktuellem Stand (${describeScope(scope)}) aktualisieren`}
                     disabled={busy}
-                    onClick={() =>
-                      void run(
-                        async () => (await app.sharing.publish(remId, scope, s.token), reload()),
-                      )
-                    }
+                    onClick={() => void run(async () => (await publish(s.token), reload()))}
                   >
                     <RefreshCw size={14} />
                   </button>

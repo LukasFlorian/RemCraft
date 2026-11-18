@@ -19,24 +19,36 @@ export interface PublishedShare {
 /** A file to publish with a snapshot. */
 export interface ShareUpload {
   id: string;
-  blob: Blob;
-  mimeType: string;
+  /**
+   * Loads the content (`null` when it is not available). Loaded one file at
+   * a time, so big folders do not keep every PDF in memory at once.
+   */
+  load: () => Promise<{ blob: Blob; mimeType: string } | null>;
+}
+
+/** Outcome of publishing a snapshot. */
+export interface PublishResult {
+  /** The share token (part of the share link). */
+  token: string;
+  /** Files that could not be uploaded (the snapshot itself is saved). */
+  failed: { id: string; error: string }[];
 }
 
 /** Sharing operations of the server. */
 export interface ShareBackend {
   // --- read-only snapshots (link, anyone can view and clone) ---------------
   /**
-   * Publishes (or, with `token`, updates) a snapshot and its files.
+   * Publishes (or, with `token`, updates) a snapshot and its files. Every
+   * file is attempted; failures are reported, not thrown.
    *
-   * @returns The share token (part of the share link).
+   * @returns The share token and the files that failed.
    */
   publish(
     snapshot: ShareSnapshot,
     files: readonly ShareUpload[],
     scopeLabel: string,
     token?: string,
-  ): Promise<string>;
+  ): Promise<PublishResult>;
   /** Fetches a published snapshot (works without an account). */
   fetchSnapshot(token: string): Promise<ShareSnapshot>;
   /** Downloads a file of a published snapshot. */

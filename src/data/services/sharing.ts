@@ -36,6 +36,21 @@ const SPACES_TTL = 60_000;
 /** Snapshot export file with embedded files. */
 export const SNAPSHOT_FILE_SUFFIX = '.remcraft.json';
 
+/** Some files of a published link could not be uploaded. */
+export class ShareFilesError extends Error {
+  /**
+   * @param token The link (saved despite the failed files).
+   * @param problems One line per failed file: name and reason.
+   */
+  constructor(
+    readonly token: string,
+    readonly problems: string[],
+  ) {
+    super(`${problems.length} Datei(en) konnten nicht hochgeladen werden:\n${problems.join('\n')}`);
+    this.name = 'ShareFilesError';
+  }
+}
+
 /** Sharing service. */
 export class SharingService {
   /** Server port (set while signed in with a backend). */
@@ -198,21 +213,39 @@ export class SharingService {
     return copy.rootId;
   }
 
-  /** Publishes (or updates) a read-only link share. */
+  /**
+   * Publishes (or updates) a read-only link share.
+   *
+   * Files missing in the link are uploaded (also ones that failed before),
+   * so "Aktualisieren" repairs a link.
+   *
+   * @returns The share token.
+   * @throws ShareFilesError When the snapshot was saved but some files could
+   *   not be uploaded (the error carries the token and the file names).
+   */
   async publish(rootId: RemId, scope: ShareScope, token?: string): Promise<string> {
     const backend = this.requireBackend();
     const snap = this.snapshot(rootId, scope);
-    // Files never change (new content gets a new id): upload only new ones.
+    // Files never change (new content gets a new id): upload only missing ones.
     const stored = new Set(token ? await backend.listSnapshotFiles(token).catch(() => []) : []);
-    const uploads: ShareUpload[] = [];
-    for (const f of snap.files) {
-      if (stored.has(f.id)) continue;
-      const blob = await this.files.blob(FILE_PREFIX + f.id);
-      if (!blob) continue;
-      f.mimeType = blob.type || f.mimeType;
-      uploads.push({ id: f.id, blob, mimeType: f.mimeType });
+    const uploads: ShareUpload[] = snap.files
+      .filter((f) => !stored.has(f.id))
+      .map((f) => ({
+        id: f.id,
+        load: async () => {
+          const blob = await this.files.blob(FILE_PREFIX + f.id);
+          return blob ? { blob, mimeType: blob.type || f.mimeType } : null;
+        },
+      }));
+    const result = await backend.publish(snap, uploads, describeScope(scope), token);
+    if (result.failed.length > 0) {
+      const names = new Map(snap.files.map((f) => [f.id, f.name]));
+      throw new ShareFilesError(
+        result.token,
+        result.failed.map((f) => `${names.get(f.id) || f.id}: ${f.error}`),
+      );
     }
-    return backend.publish(snap, uploads, describeScope(scope), token);
+    return result.token;
   }
 
   // ===========================================================================
@@ -294,8 +327,9 @@ export class SharingService {
     if (!live || !this.backend || !this.store.get(live.rootId)) return;
     try {
       await this.publish(live.rootId, live.scope, token);
-    } catch {
+    } catch (e) {
       // Offline or signed out: retried with the next change.
+      console.warn('Live-Link konnte nicht aktualisiert werden', e);
     }
   }
 
@@ -323,6 +357,23 @@ export class SharingService {
   async fetchFile(token: string, fileId: string): Promise<Blob | null> {
     if (!this.backend) return null;
     return this.backend.fetchSnapshotFile(token, fileId).catch(() => null);
+  }
+
+  /**
+   * Files of a published link that are missing on the server (e.g. uploads
+   * that failed). "Aktualisieren" uploads them again.
+   *
+   * @param token The link.
+   * @returns Names of the missing files.
+   */
+  async missingFiles(token: string): Promise<string[]> {
+    const backend = this.requireBackend();
+    const [snap, stored] = await Promise.all([
+      backend.fetchSnapshot(token),
+      backend.listSnapshotFiles(token),
+    ]);
+    const have = new Set(stored);
+    return (snap.files ?? []).filter((f) => !have.has(f.id)).map((f) => f.name || f.id);
   }
 
   /** Clones a published snapshot. */

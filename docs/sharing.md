@@ -35,6 +35,11 @@ Ways to share a snapshot:
     page is left). The setting is stored in the synced settings (`liveShares`), so every signed-in
     device of the owner keeps the link up to date while it is open. Files are only uploaded when
     they are new (files never change their content). Clones made from a link never change.
+  - **Large files** (above 20 MB, e.g. lecture PDFs; Supabase rejects objects above 50 MB on
+    the free plan) are stored in parts: `<id>.part0…N` plus a manifest `<id>.parts`
+    (`src/data/sync/chunkedFiles.ts`). The same applies to the private `files` bucket.
+  - Files that fail to upload do not stop the others; the dialog lists them and marks links with
+    missing files. _Aktualisieren_ uploads every file the link is still missing.
 - **File** (`*.remcraft.json`, no account needed): files embedded as base64. Recipients import it
   via _Import → Freigabe_.
 

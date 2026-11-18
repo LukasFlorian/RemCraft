@@ -23,6 +23,9 @@ import { annotatedSlideImage } from '../lecture/handoutImage';
 /** Loads a file of the snapshot (`null` when unavailable). */
 export type SnapshotFileLoader = (fileId: string) => Promise<Blob | null>;
 
+/** Error message of a slide whose PDF is not in the link. */
+const MISSING = 'missing';
+
 /** Rendered slide images of shared decks, by `file:page:box:width`. */
 const slideImages = new Map<string, Promise<string>>();
 /** Opened PDFs of shared decks, by file id. */
@@ -50,7 +53,8 @@ function SharedSlideImage({
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  /** Why the slide cannot be shown (`null` while loading or shown). */
+  const [failed, setFailed] = useState<string | null>(null);
   // Aspect ratio of the slide box (16:9 until the PDF is open).
   const [ratio, setRatio] = useState(16 / 9);
 
@@ -78,8 +82,10 @@ function SharedSlideImage({
       let pdf = sharedPdfs.get(fileId);
       if (!pdf) {
         pdf = loadFile(fileId).then((blob) => {
-          if (!blob) throw new Error('missing');
-          return pdfJsEngine.open(blob);
+          if (!blob) throw new Error(MISSING);
+          return pdfJsEngine.open(blob).catch(() => {
+            throw new Error('PDF konnte nicht geöffnet werden');
+          });
         });
         pdf.catch(() => sharedPdfs.delete(fileId));
         sharedPdfs.set(fileId, pdf);
@@ -98,7 +104,13 @@ function SharedSlideImage({
         img.src = u;
         setUrl(u);
       },
-      () => alive && setFailed(true),
+      (e: unknown) =>
+        alive &&
+        setFailed(
+          e instanceof Error && e.message === MISSING
+            ? 'Folien-Datei fehlt im Link'
+            : 'Folie konnte nicht dargestellt werden',
+        ),
     );
     return () => {
       alive = false;
@@ -110,7 +122,9 @@ function SharedSlideImage({
       {url ? (
         <img src={url} alt={alt} loading="lazy" />
       ) : (
-        <span className="faint">{failed ? 'Folie nicht verfügbar' : 'Folie wird geladen …'}</span>
+        <span className="faint" data-testid="slide-status">
+          {failed ?? 'Folie wird geladen …'}
+        </span>
       )}
     </div>
   );

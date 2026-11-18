@@ -445,3 +445,21 @@
   white-space: normal;
   line-height: 1.4;
 }
+
+/* Share dialog: files missing in a link, upload problems. */
+.share-missing {
+  margin-top: 4px;
+  color: var(--danger);
+  font-size: 12px;
+}
+.share-problems {
+  padding: 8px 10px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.share-problems ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}

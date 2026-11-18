@@ -11,6 +11,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import type { BackendConfig } from '../config';
+import { getChunked, putChunked } from './chunkedFiles';
+import type { ObjectStore } from './chunkedFiles';
 import type { PulledRow, RemoteBackend, RemoteRow } from './remote';
 
 /** Storage bucket for images and PDFs. */
@@ -92,26 +94,45 @@ export class SupabaseBackend implements RemoteBackend {
   }
 
   async uploadFile(id: string, blob: Blob, mimeType: string): Promise<void> {
-    const { error } = await this.client.storage
-      .from(FILE_BUCKET)
-      .upload(`${this.userId}/${id}`, blob, { contentType: mimeType, upsert: true });
-    if (error) throw new Error(`Upload failed: ${error.message}`);
+    // Large PDFs are split into parts (storage upload limit), see chunkedFiles.ts.
+    await putChunked(bucketStore(this.client, FILE_BUCKET), `${this.userId}/${id}`, blob, mimeType);
   }
 
   async downloadFile(id: string): Promise<Blob> {
-    const own = await this.client.storage.from(FILE_BUCKET).download(`${this.userId}/${id}`);
-    if (own.data) return own.data;
+    const store = bucketStore(this.client, FILE_BUCKET);
+    const own = await getChunked(store, `${this.userId}/${id}`);
+    if (own) return own;
     // Files of shared subtrees live in their space's folder.
     const { data: spaces } = await this.client
       .from('space_members')
       .select('space_id')
       .eq('user_id', this.userId);
     for (const { space_id } of (spaces ?? []) as { space_id: string }[]) {
-      const res = await this.client.storage.from(FILE_BUCKET).download(`spaces/${space_id}/${id}`);
-      if (res.data) return res.data;
+      const blob = await getChunked(store, `spaces/${space_id}/${id}`);
+      if (blob) return blob;
     }
-    throw new Error(`Download failed: ${own.error?.message ?? 'no data'}`);
+    throw new Error('Download failed: file not found');
   }
+}
+
+/**
+ * Object store over a Supabase Storage bucket (for `putChunked`/`getChunked`).
+ *
+ * Args:
+ *   client: Supabase client.
+ *   bucket: Bucket id.
+ */
+export function bucketStore(client: SupabaseClient, bucket: string): ObjectStore {
+  return {
+    put: async (path, blob, mimeType) => {
+      const { error } = await client.storage
+        .from(bucket)
+        .upload(path, blob, { contentType: mimeType, upsert: true });
+      if (error)
+        throw new Error(`Upload fehlgeschlagen (${path.split('/').pop()}): ${error.message}`);
+    },
+    get: async (path) => (await client.storage.from(bucket).download(path)).data ?? null,
+  };
 }
 
 /** Minimal authenticated user information. */

@@ -6,6 +6,7 @@
 import { newId } from '@core/util/ids';
 import type { PersistenceAdapter } from '../persistence/adapter';
 import type { RemoteBackend } from '../sync/remote';
+import { getChunked, urlStore } from '../sync/chunkedFiles';
 
 /** Prefix of file references. */
 export const FILE_PREFIX = 'file:';
@@ -73,9 +74,12 @@ export class FileService {
       }
     }
     if (!origin) return null;
-    const res = await fetch(origin).catch(() => null);
-    if (!res?.ok) return null;
-    const blob = await res.blob();
+    // The origin may be a split file (large PDFs, see chunkedFiles.ts).
+    const blob = await getChunked(
+      urlStore((path) => path),
+      origin,
+    ).catch(() => null);
+    if (!blob) return null;
     await this.persistence.putFile({
       id,
       name: id,
