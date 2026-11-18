@@ -82,9 +82,15 @@ export function buildSnapshot(
         a !== undefined && (a.strokes.length > 0 || a.boxes.length > 0 || a.marks.length > 0),
     )
     .map(({ spaceId: _s, ...a }) => a);
+  // Readable file names (for error messages): PDF name of decks, file names.
+  const names = new Map<string, string>();
+  for (const r of cleaned) {
+    if (r.deck?.src.startsWith('file:')) names.set(r.deck.src.slice(5), r.deck.pdfName);
+    if (r.file?.src.startsWith('file:')) names.set(r.file.src.slice(5), r.file.name);
+  }
   const files = [...new Set(cleaned.flatMap(fileRefs))].map((id) => ({
     id,
-    name: id,
+    name: names.get(id) || id,
     mimeType: 'application/octet-stream',
   }));
   return {

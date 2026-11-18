@@ -5,8 +5,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ShareSnapshot } from '@core/sharing/snapshot';
 import type { SpaceInfo, SpaceMember, SpaceRole } from '@core/sharing/spaces';
-import type { PublishedShare, ShareBackend, ShareUpload } from './shareBackend';
-import { FILE_BUCKET } from './supabase';
+import { completeFileIds, getChunked, putChunked, urlStore } from './chunkedFiles';
+import type { PublishedShare, PublishResult, ShareBackend, ShareUpload } from './shareBackend';
+import { bucketStore, FILE_BUCKET } from './supabase';
 
 /** Public bucket of read-only share files (`<token>/<file id>`). */
 export const SHARE_BUCKET = 'shares';
@@ -51,7 +52,7 @@ export class SupabaseShareBackend implements ShareBackend {
     files: readonly ShareUpload[],
     scopeLabel: string,
     token?: string,
-  ): Promise<string> {
+  ): Promise<PublishResult> {
     const row = {
       owner_id: this.me(),
       title: snapshot.title,
@@ -70,15 +71,28 @@ export class SupabaseShareBackend implements ShareBackend {
           'Freigabe erstellen',
         );
     const t = (saved as { token: string }).token;
+    const failed = await this.uploadSnapshotFiles(t, files);
+    return { token: t, failed };
+  }
+
+  async uploadSnapshotFiles(
+    token: string,
+    files: readonly ShareUpload[],
+  ): Promise<PublishResult['failed']> {
+    // Every file is tried, one failure must not hide the others.
+    const store = bucketStore(this.client, SHARE_BUCKET);
+    const failed: PublishResult['failed'] = [];
     for (const f of files) {
-      check(
-        await this.client.storage
-          .from(SHARE_BUCKET)
-          .upload(`${t}/${f.id}`, f.blob, { contentType: f.mimeType, upsert: true }),
-        'Datei hochladen',
-      );
+      try {
+        const file = await f.load();
+        if (!file)
+          throw new Error('Datei auf diesem Gerät nicht vorhanden und nicht vom Server ladbar');
+        await putChunked(store, `${token}/${f.id}`, file.blob, file.mimeType);
+      } catch (e) {
+        failed.push({ id: f.id, error: e instanceof Error ? e.message : String(e) });
+      }
     }
-    return t;
+    return failed;
   }
 
   async fetchSnapshot(token: string): Promise<ShareSnapshot> {
@@ -88,8 +102,17 @@ export class SupabaseShareBackend implements ShareBackend {
   }
 
   async listSnapshotFiles(token: string): Promise<string[]> {
-    const { data } = await this.client.storage.from(SHARE_BUCKET).list(token, { limit: 1000 });
-    return (data ?? []).map((f) => f.name);
+    const names: string[] = [];
+    // Paged: split PDFs add several objects per file.
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await this.client.storage
+        .from(SHARE_BUCKET)
+        .list(token, { limit: 1000, offset });
+      if (error) throw new Error(error.message);
+      names.push(...(data ?? []).map((f) => f.name));
+      if (!data || data.length < 1000) break;
+    }
+    return completeFileIds(names);
   }
 
   snapshotFileUrl(token: string, fileId: string): string {
@@ -97,16 +120,24 @@ export class SupabaseShareBackend implements ShareBackend {
   }
 
   async fetchSnapshotFile(token: string, fileId: string): Promise<Blob> {
-    const url = this.snapshotFileUrl(token, fileId);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Datei nicht gefunden (${res.status})`);
-    return res.blob();
+    const store = urlStore(
+      (path) => this.client.storage.from(SHARE_BUCKET).getPublicUrl(path).data.publicUrl,
+    );
+    const blob = await getChunked(store, `${token}/${fileId}`);
+    if (!blob) throw new Error('Datei fehlt im Link - der Besitzer muss ihn aktualisieren.');
+    return blob;
   }
 
   async unpublish(token: string): Promise<void> {
-    const { data } = await this.client.storage.from(SHARE_BUCKET).list(token);
-    if (data?.length)
-      await this.client.storage.from(SHARE_BUCKET).remove(data.map((f) => `${token}/${f.name}`));
+    // Remove page by page (the listing shrinks while removing).
+    for (;;) {
+      const { data } = await this.client.storage.from(SHARE_BUCKET).list(token, { limit: 1000 });
+      if (!data?.length) break;
+      const { error } = await this.client.storage
+        .from(SHARE_BUCKET)
+        .remove(data.map((f) => `${token}/${f.name}`));
+      if (error) break;
+    }
     check(await this.client.from('shares').delete().eq('token', token), 'Freigabe löschen');
   }
 
@@ -193,11 +224,11 @@ export class SupabaseShareBackend implements ShareBackend {
   }
 
   async uploadSpaceFile(spaceId: string, id: string, blob: Blob, mimeType: string): Promise<void> {
-    check(
-      await this.client.storage
-        .from(FILE_BUCKET)
-        .upload(`spaces/${spaceId}/${id}`, blob, { contentType: mimeType, upsert: true }),
-      'Datei hochladen',
+    await putChunked(
+      bucketStore(this.client, FILE_BUCKET),
+      `spaces/${spaceId}/${id}`,
+      blob,
+      mimeType,
     );
   }
 }

@@ -36,6 +36,21 @@ const SPACES_TTL = 60_000;
 /** Snapshot export file with embedded files. */
 export const SNAPSHOT_FILE_SUFFIX = '.remcraft.json';
 
+/** Some files of a published link could not be uploaded. */
+export class ShareFilesError extends Error {
+  /**
+   * @param token The link (saved despite the failed files).
+   * @param problems One line per failed file: name and reason.
+   */
+  constructor(
+    readonly token: string,
+    readonly problems: string[],
+  ) {
+    super(`${problems.length} Datei(en) konnten nicht hochgeladen werden:\n${problems.join('\n')}`);
+    this.name = 'ShareFilesError';
+  }
+}
+
 /** Sharing service. */
 export class SharingService {
   /** Server port (set while signed in with a backend). */
@@ -198,21 +213,31 @@ export class SharingService {
     return copy.rootId;
   }
 
-  /** Publishes (or updates) a read-only link share. */
+  /**
+   * Publishes (or updates) a read-only link share.
+   *
+   * Files missing in the link are uploaded (also ones that failed before),
+   * so "Aktualisieren" repairs a link.
+   *
+   * @returns The share token.
+   * @throws ShareFilesError When the snapshot was saved but some files could
+   *   not be uploaded (the error carries the token and the file names).
+   */
   async publish(rootId: RemId, scope: ShareScope, token?: string): Promise<string> {
     const backend = this.requireBackend();
     const snap = this.snapshot(rootId, scope);
-    // Files never change (new content gets a new id): upload only new ones.
+    // Files never change (new content gets a new id): upload only missing ones.
     const stored = new Set(token ? await backend.listSnapshotFiles(token).catch(() => []) : []);
-    const uploads: ShareUpload[] = [];
-    for (const f of snap.files) {
-      if (stored.has(f.id)) continue;
-      const blob = await this.files.blob(FILE_PREFIX + f.id);
-      if (!blob) continue;
-      f.mimeType = blob.type || f.mimeType;
-      uploads.push({ id: f.id, blob, mimeType: f.mimeType });
+    const uploads = this.uploadsFor(snap, (id) => !stored.has(id));
+    const result = await backend.publish(snap, uploads, describeScope(scope), token);
+    if (result.failed.length > 0) {
+      const names = new Map(snap.files.map((f) => [f.id, f.name]));
+      throw new ShareFilesError(
+        result.token,
+        result.failed.map((f) => `${names.get(f.id) || f.id}: ${f.error}`),
+      );
     }
-    return backend.publish(snap, uploads, describeScope(scope), token);
+    return result.token;
   }
 
   // ===========================================================================
@@ -294,8 +319,9 @@ export class SharingService {
     if (!live || !this.backend || !this.store.get(live.rootId)) return;
     try {
       await this.publish(live.rootId, live.scope, token);
-    } catch {
+    } catch (e) {
       // Offline or signed out: retried with the next change.
+      console.warn('Live-Link konnte nicht aktualisiert werden', e);
     }
   }
 
@@ -323,6 +349,93 @@ export class SharingService {
   async fetchFile(token: string, fileId: string): Promise<Blob | null> {
     if (!this.backend) return null;
     return this.backend.fetchSnapshotFile(token, fileId).catch(() => null);
+  }
+
+  /**
+   * Uploads for the files of a snapshot.
+   *
+   * Content is loaded lazily, from this device, the own storage or - for
+   * files that came with a cloned share - their public origin (like the
+   * lecture view does), so every file the app can show can be shared.
+   *
+   * @param snap The snapshot.
+   * @param include Which file ids to upload.
+   */
+  private uploadsFor(snap: ShareSnapshot, include: (id: string) => boolean): ShareUpload[] {
+    const origins = new Map<string, string>();
+    for (const r of snap.rems) {
+      const rem = this.store.get(r.id) ?? r;
+      for (const info of [rem.deck, rem.file, rem.image]) {
+        if (info?.origin && info.src.startsWith(FILE_PREFIX))
+          origins.set(info.src.slice(FILE_PREFIX.length), info.origin);
+      }
+    }
+    return snap.files
+      .filter((f) => include(f.id))
+      .map((f) => ({
+        id: f.id,
+        load: async () => {
+          const blob = await this.files.blob(FILE_PREFIX + f.id, origins.get(f.id));
+          return blob ? { blob, mimeType: blob.type || f.mimeType } : null;
+        },
+      }));
+  }
+
+  /**
+   * Uploads the files a published link is missing, without changing its
+   * content or date.
+   *
+   * @param token The link.
+   * @returns Problems (file name and reason) of files that still failed.
+   */
+  async repairLink(token: string): Promise<string[]> {
+    const backend = this.requireBackend();
+    const [snap, stored] = await Promise.all([
+      backend.fetchSnapshot(token),
+      backend.listSnapshotFiles(token),
+    ]);
+    const have = new Set(stored);
+    const uploads = this.uploadsFor(snap, (id) => !have.has(id));
+    if (uploads.length === 0) return [];
+    const names = new Map(snap.files.map((f) => [f.id, f.name]));
+    const failed = await backend.uploadSnapshotFiles(token, uploads);
+    return failed.map((f) => `${names.get(f.id) || f.id}: ${f.error}`);
+  }
+
+  /**
+   * Repairs every link of the signed-in user (files missing after failed
+   * uploads). Runs in the background after sign-in.
+   *
+   * @returns Number of links that still miss files.
+   */
+  async repairLinks(): Promise<number> {
+    if (!this.backend) return 0;
+    let broken = 0;
+    for (const share of await this.backend.myShares()) {
+      const problems = await this.repairLink(share.token).catch(() => ['?']);
+      if (problems.length > 0) {
+        broken++;
+        console.warn(`Leselink ${share.title}: Dateien fehlen weiterhin`, problems);
+      }
+    }
+    return broken;
+  }
+
+  /**
+   * Files of a published link that are missing on the server (e.g. uploads
+   * that failed). "Aktualisieren" uploads them again.
+   *
+   * @param token The link.
+   * @returns Names of the missing files.
+   */
+  async missingFiles(token: string): Promise<string[]> {
+    const backend = this.requireBackend();
+    const [snap, stored] = await Promise.all([
+      backend.fetchSnapshot(token),
+      backend.listSnapshotFiles(token),
+    ]);
+    const have = new Set(stored);
+    return (snap.files ?? []).filter((f) => !have.has(f.id)).map((f) => f.name || f.id);
   }
 
   /** Clones a published snapshot. */

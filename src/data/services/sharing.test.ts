@@ -1,6 +1,7 @@
 import { SHARE_PRESETS } from '@core/sharing/scope';
 import { rt, toPlainText } from '@core/richtext/ops';
 import { RemCraftApp } from '../app';
+import { ShareFilesError } from './sharing';
 import { MemoryAdapter } from '../persistence/memory';
 import { selectCardIndex } from '../selectors';
 import { FakeServer } from '../testing/fakeRemote';
@@ -92,6 +93,45 @@ describe('read-only shares', () => {
     owner.dispose();
     bob.dispose();
     other.dispose();
+  });
+
+  it('reports files that failed to upload and repairs the link on update', async () => {
+    const server = new FakeServer();
+    const owner = await user(server, 'alice');
+    const { doc } = course(owner);
+    const src = await owner.files.save(new Blob(['pdf'], { type: 'application/pdf' }), 'VL1.pdf');
+    const id = src.slice('file:'.length);
+    owner.rems.create(
+      { parentId: doc },
+      { text: rt('Anhang'), file: { src, name: 'VL1.pdf', mimeType: 'application/pdf', size: 3 } },
+    );
+    server.failShareUploads.add(id);
+    const error = await owner.sharing
+      .publish(doc, SHARE_PRESETS.all.scope)
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ShareFilesError);
+    const { token, problems } = error as ShareFilesError;
+    expect(problems[0]).toContain('VL1.pdf');
+    // The snapshot itself was saved; the file is reported as missing.
+    expect((await owner.sharing.fetch(token)).title).toBe('VL 1');
+    expect(await owner.sharing.missingFiles(token)).toEqual(['VL1.pdf']);
+    expect(await owner.sharing.fetchFile(token, id)).toBeNull();
+
+    // Repair uploads the missing file without touching the snapshot.
+    server.failShareUploads.clear();
+    expect(await owner.sharing.repairLinks()).toBe(0);
+    expect(await owner.sharing.missingFiles(token)).toEqual([]);
+    expect(await (await owner.sharing.fetchFile(token, id))!.text()).toBe('pdf');
+
+    // "Aktualisieren" also uploads files that are missing.
+    server.failShareUploads.add(id);
+    server.shares.get(token)!.files.delete(id);
+    expect(await owner.sharing.repairLink(token)).toHaveLength(1);
+    server.failShareUploads.clear();
+    await owner.sharing.publish(doc, SHARE_PRESETS.all.scope, token);
+    expect(await owner.sharing.missingFiles(token)).toEqual([]);
+    expect(await (await owner.sharing.fetchFile(token, id))!.text()).toBe('pdf');
+    owner.dispose();
   });
 
   it('live links follow changes; unchanged files are not uploaded again', async () => {

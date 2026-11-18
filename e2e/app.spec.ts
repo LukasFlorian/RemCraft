@@ -232,3 +232,19 @@ test('AI editing proposes changes that are previewed and applied in one step', a
   await expect(page.locator('.outliner')).toContainText('Was ist ein Hash?');
   await expect(page.locator('.outliner')).toContainText('Neue Karte');
 });
+
+test('legal page with Impressum, privacy policy and RemNote notice', async ({ page }) => {
+  await page.getByRole('button', { name: 'Impressum & Datenschutz' }).click();
+  await expect(page.getByRole('heading', { name: 'Datenschutzerklärung' })).toBeVisible();
+  await expect(page.getByTestId('remnote-notice')).toContainText('keiner Verbindung zu RemNote');
+  // No operator details in the test build: the page says so instead of showing blanks.
+  await expect(page.getByTestId('legal-missing').first()).toBeVisible();
+  // Phone width: the long text wraps, nothing scrolls sideways.
+  await page.setViewportSize({ width: 390, height: 800 });
+  const overflow = await page
+    .locator('.main-scroll')
+    .first()
+    .evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: 'test-results/legal-390.png' });
+});

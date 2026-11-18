@@ -1,7 +1,7 @@
 # RemCraft
 
-**RemCraft** is a free, self-hostable note-taking and spaced-repetition app modelled on
-[RemNote](https://www.remnote.com): hierarchical notes ("Rems"), documents and folders,
+**RemCraft** is a free, self-hostable note-taking and spaced-repetition app inspired by
+[RemNote](https://www.remnote.com) and compatible with its text format: hierarchical notes ("Rems"), documents and folders,
 references, tags and portals, every RemNote flashcard type, Anki-SM-2 and FSRS-6
 scheduling, a RemNote-style **exam scheduler**, statistics, import/export – and
 accounts with cross-device sync on a free Supabase project.
@@ -103,6 +103,13 @@ Details, alternatives (Netlify, Cloudflare Pages) and auth redirect settings:
 TypeScript (strict) · React 19 · ProseMirror · Vite · Dexie (IndexedDB) · Supabase ·
 KaTeX · pdf.js · Vitest · Playwright · GitHub Actions.
 
-## License
+## License and notices
 
-MIT
+MIT - see [LICENSE](LICENSE).
+
+RemCraft is an independent, non-commercial project. It is not affiliated with, endorsed by or
+sponsored by RemNote Inc. "RemNote" is a trademark of its owner and is used here only to
+describe compatibility (e.g. importing RemNote files). No code or assets of RemNote are used.
+
+If you run a public instance, fill in the operator details for the in-app Impressum and
+privacy policy (`#/legal`) - see [docs/deployment.md](docs/deployment.md#legal-notice-and-privacy-policy).

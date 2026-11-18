@@ -396,6 +396,12 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
         >
           <Settings size={17} /> Settings
         </button>
+        <button
+          className={`sidebar-legal${isActive('/legal') ? ' active' : ''}`}
+          onClick={() => go('/legal')}
+        >
+          Impressum &amp; Datenschutz
+        </button>
       </div>
     </aside>
   );

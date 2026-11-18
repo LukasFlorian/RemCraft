@@ -4,7 +4,8 @@
  */
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Cloud, CloudOff, LogIn, LogOut, RefreshCw } from 'lucide-react';
+import { Cloud, CloudOff, LogIn, LogOut, RefreshCw, Trash2 } from 'lucide-react';
+import { Link } from 'react-router';
 import { isBuildTimeConfig, setStoredBackendConfig } from '@data/config';
 import { useAccount, useApp } from '../../app/context';
 import { useDialogs } from '../../components/Confirm';
@@ -79,8 +80,57 @@ export function AccountSection(): ReactNode {
       </div>
       <p className="faint" style={{ margin: 0, fontSize: 13 }}>
         Your notes are stored on this device first (works offline) and synchronised with your
-        Supabase project. Changes from other devices arrive in real time.
+        Supabase project. Changes from other devices arrive in real time. Details:{' '}
+        <Link to="/legal">Datenschutzerklärung</Link>.
       </p>
+      <DeleteAccount />
+    </div>
+  );
+}
+
+/**
+ * "Delete account": removes the account and every server copy of the user's
+ * data (records, files, read-only links, spaces, integrations) and the local
+ * copy on this device. Asks for the email address as confirmation.
+ */
+function DeleteAccount(): ReactNode {
+  const app = useApp();
+  const account = useAccount();
+  const toast = useToast();
+  const dialogs = useDialogs();
+  return (
+    <div className="col danger-zone" style={{ gap: 8 }}>
+      <h3 style={{ margin: 0, fontSize: 15 }}>Konto löschen</h3>
+      <p className="faint" style={{ margin: 0, fontSize: 13 }}>
+        Löscht dein Konto und alle Daten auf dem Server (Notizen, Dateien, Lernverlauf, Leselinks,
+        gemeinsame Bereiche, die dir gehören, Integrationen) sowie die lokale Kopie auf diesem
+        Gerät. Exportiere vorher, was du behalten willst. Das kann nicht rückgängig gemacht werden.
+      </p>
+      <div>
+        <button
+          className="btn btn-danger"
+          onClick={async () => {
+            const typed = await dialogs.prompt({
+              title: 'Konto endgültig löschen?',
+              label: `Zur Bestätigung deine E-Mail-Adresse eingeben (${account.user?.email ?? ''})`,
+              confirmLabel: 'Endgültig löschen',
+            });
+            if (typed === null) return;
+            if (typed.trim().toLowerCase() !== (account.user?.email ?? '').toLowerCase()) {
+              toast('E-Mail-Adresse stimmt nicht überein - nichts gelöscht.', 'error');
+              return;
+            }
+            try {
+              await app.deleteAccount();
+              toast('Dein Konto und deine Daten wurden gelöscht.');
+            } catch (e) {
+              toast(e instanceof Error ? e.message : String(e), 'error');
+            }
+          }}
+        >
+          <Trash2 size={15} /> Konto und alle Daten löschen
+        </button>
+      </div>
     </div>
   );
 }
@@ -150,6 +200,10 @@ function SignIn(): ReactNode {
         <button className="btn btn-primary" disabled={busy}>
           {mode === 'signin' ? 'Sign in' : 'Create account'}
         </button>
+        <p className="faint legal-consent" style={{ margin: 0, fontSize: 13 }}>
+          Hinweise zur Verarbeitung deiner Daten findest du in der{' '}
+          <Link to="/legal">Datenschutzerklärung</Link>.
+        </p>
       </form>
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <button
