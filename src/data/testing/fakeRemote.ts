@@ -20,6 +20,8 @@ interface StoredRow extends PulledRow {
 export class FakeServer {
   private seq = 0;
   private counter = 0;
+  /** Files uploaded with published snapshots (to check that unchanged files are skipped). */
+  shareUploads = 0;
   readonly rows = new Map<string, StoredRow>();
   readonly files = new Map<string, Blob>();
   readonly spaces = new Map<
@@ -112,8 +114,10 @@ export class FakeServer {
     };
     return {
       snapshotFileUrl: (token, fileId) => `https://shares.test/${token}/${fileId}`,
+      listSnapshotFiles: async (token) => [...(this.shares.get(token)?.files.keys() ?? [])],
       publish: async (snapshot, files, scopeLabel, token) => {
         const owner = me();
+        this.shareUploads += files.length;
         const existing = token ? this.shares.get(token) : undefined;
         if (existing && existing.owner !== owner) throw new Error('not allowed');
         const t = token ?? this.nextId('share');
@@ -121,7 +125,11 @@ export class FakeServer {
           owner,
           snapshot: structuredClone(snapshot),
           scopeLabel,
-          files: new Map(files.map((f) => [f.id, f.blob])),
+          // Files are kept across updates (like the storage bucket).
+          files: new Map([
+            ...(existing?.files ?? []),
+            ...files.map((f) => [f.id, f.blob] as const),
+          ]),
           updatedAt: Date.now(),
         });
         return t;

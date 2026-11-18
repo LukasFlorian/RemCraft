@@ -11,7 +11,8 @@
  *   sync engine. A pre-commit hook keeps `spaceId` consistent when Rems are
  *   created, moved or deleted inside shared subtrees.
  */
-import type { RemId, SlideAnnotations } from '@core/model/types';
+import { ancestors } from '@core/model/graph';
+import type { Rem, RemId, Settings, SlideAnnotations } from '@core/model/types';
 import { describeScope } from '@core/sharing/scope';
 import type { ShareScope } from '@core/sharing/scope';
 import { buildSnapshot, cloneSnapshot, fileRefs, validateSnapshot } from '@core/sharing/snapshot';
@@ -21,6 +22,7 @@ import type { SpaceInfo, SpaceMember, SpaceRole } from '@core/sharing/spaces';
 import { newId } from '@core/util/ids';
 import { orderBetween } from '@core/model/ordering';
 import type { PersistenceAdapter } from '../persistence/adapter';
+import { selectSettings } from '../selectors';
 import type { Store, Transaction } from '../store/store';
 import type { PublishedShare, ShareBackend, ShareUpload } from '../sync/shareBackend';
 import type { FileService } from './files';
@@ -56,6 +58,7 @@ export class SharingService {
         changes.filter((c) => c.after).map((c) => ({ collection: c.collection, id: c.id })),
       ),
     );
+    this.watchLiveShares();
   }
 
   // ===========================================================================
@@ -199,14 +202,108 @@ export class SharingService {
   async publish(rootId: RemId, scope: ShareScope, token?: string): Promise<string> {
     const backend = this.requireBackend();
     const snap = this.snapshot(rootId, scope);
+    // Files never change (new content gets a new id): upload only new ones.
+    const stored = new Set(token ? await backend.listSnapshotFiles(token).catch(() => []) : []);
     const uploads: ShareUpload[] = [];
     for (const f of snap.files) {
+      if (stored.has(f.id)) continue;
       const blob = await this.files.blob(FILE_PREFIX + f.id);
       if (!blob) continue;
       f.mimeType = blob.type || f.mimeType;
       uploads.push({ id: f.id, blob, mimeType: f.mimeType });
     }
     return backend.publish(snap, uploads, describeScope(scope), token);
+  }
+
+  // ===========================================================================
+  // Live read-only links
+  // ===========================================================================
+
+  /** Read-only links that follow changes automatically (synced setting). */
+  liveShares(): NonNullable<Settings['liveShares']> {
+    return selectSettings(this.store).liveShares ?? {};
+  }
+
+  /**
+   * Turns automatic updates of a link on or off.
+   *
+   * @param token The link.
+   * @param live Root and scope to keep up to date, `null` to stop.
+   */
+  setLive(token: string, live: { rootId: RemId; scope: ShareScope } | null): void {
+    const current = selectSettings(this.store);
+    const next = { ...(current.liveShares ?? {}) };
+    if (live) next[token] = live;
+    else delete next[token];
+    this.store.transact((tx) => void tx.put('settings', { ...current, liveShares: next }), {
+      undoable: false,
+    });
+  }
+
+  /** Links waiting for an automatic update, with their timers. */
+  private readonly pendingLive = new Map<string, ReturnType<typeof setTimeout>>();
+
+  /** Delay of automatic link updates after the last change. */
+  static LIVE_DELAY_MS = 20_000;
+
+  /**
+   * Watches changes and republishes live links whose content changed
+   * (debounced; runs on this device while it is signed in).
+   */
+  private watchLiveShares(): void {
+    this.store.onCommit((e) => {
+      if (e.origin === 'load' || e.origin === 'tab') return;
+      const live = Object.entries(this.liveShares());
+      if (live.length === 0 || !this.backend) return;
+      const touched = new Set<RemId>();
+      for (const c of e.changes) {
+        if (c.collection === 'rems') {
+          const rem = (c.after ?? c.before) as Rem | undefined;
+          if (rem) {
+            touched.add(rem.id);
+            if (rem.parentId) touched.add(rem.parentId);
+          }
+        } else if (c.collection === 'annotations') touched.add(c.id);
+      }
+      if (touched.size === 0) return;
+      for (const [token, { rootId }] of live) {
+        const inside = [...touched].some(
+          (id) => id === rootId || ancestors(this.store, id).some((r) => r.id === rootId),
+        );
+        if (inside) this.scheduleLive(token);
+      }
+    });
+    // Leaving the page: send pending updates right away.
+    if (typeof window !== 'undefined')
+      window.addEventListener('pagehide', () => void this.flushLive());
+  }
+
+  /** Schedules the update of a live link. */
+  private scheduleLive(token: string): void {
+    clearTimeout(this.pendingLive.get(token));
+    this.pendingLive.set(
+      token,
+      setTimeout(() => void this.updateLive(token), SharingService.LIVE_DELAY_MS),
+    );
+  }
+
+  /** Republishes a live link now. */
+  private async updateLive(token: string): Promise<void> {
+    this.pendingLive.delete(token);
+    const live = this.liveShares()[token];
+    if (!live || !this.backend || !this.store.get(live.rootId)) return;
+    try {
+      await this.publish(live.rootId, live.scope, token);
+    } catch {
+      // Offline or signed out: retried with the next change.
+    }
+  }
+
+  /** Sends all pending live updates immediately. */
+  async flushLive(): Promise<void> {
+    const tokens = [...this.pendingLive.keys()];
+    for (const t of tokens) clearTimeout(this.pendingLive.get(t));
+    await Promise.all(tokens.map((t) => this.updateLive(t)));
   }
 
   /** Fetches a published snapshot by token. */
@@ -247,7 +344,8 @@ export class SharingService {
 
   /** Removes a published share. */
   async unpublish(token: string): Promise<void> {
-    return this.requireBackend().unpublish(token);
+    await this.requireBackend().unpublish(token);
+    if (this.liveShares()[token]) this.setLive(token, null);
   }
 
   // ===========================================================================

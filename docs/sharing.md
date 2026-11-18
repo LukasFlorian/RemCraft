@@ -30,6 +30,11 @@ Ways to share a snapshot:
   `shares` bucket under the unguessable token. Anyone with the link can view it (also without an
   account) and click **In meine Wissensbasis klonen**. _Aktualisieren_ republishes the current
   state under the same link; the trash icon revokes it.
+  - **Live links** (default for new links, switchable per link): the owner's app republishes the
+    link about 20 seconds after a change inside the shared subtree (and immediately when the
+    page is left). The setting is stored in the synced settings (`liveShares`), so every signed-in
+    device of the owner keeps the link up to date while it is open. Files are only uploaded when
+    they are new (files never change their content). Clones made from a link never change.
 - **File** (`*.remcraft.json`, no account needed): files embedded as base64. Recipients import it
   via _Import → Freigabe_.
 

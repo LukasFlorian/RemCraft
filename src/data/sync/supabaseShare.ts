@@ -87,6 +87,11 @@ export class SupabaseShareBackend implements ShareBackend {
     return data as ShareSnapshot;
   }
 
+  async listSnapshotFiles(token: string): Promise<string[]> {
+    const { data } = await this.client.storage.from(SHARE_BUCKET).list(token, { limit: 1000 });
+    return (data ?? []).map((f) => f.name);
+  }
+
   snapshotFileUrl(token: string, fileId: string): string {
     return this.client.storage.from(SHARE_BUCKET).getPublicUrl(`${token}/${fileId}`).data.publicUrl;
   }

@@ -94,6 +94,35 @@ describe('read-only shares', () => {
     other.dispose();
   });
 
+  it('live links follow changes; unchanged files are not uploaded again', async () => {
+    const server = new FakeServer();
+    const owner = await user(server, 'alice');
+    const { doc } = course(owner);
+    const src = await owner.files.save(new Blob(['img'], { type: 'image/png' }), 'a.png');
+    owner.rems.create({ parentId: doc }, { text: rt('Bild'), image: { src } });
+    const token = await owner.sharing.publish(doc, SHARE_PRESETS.all.scope);
+    expect(server.shareUploads).toBe(1);
+    owner.sharing.setLive(token, { rootId: doc, scope: SHARE_PRESETS.all.scope });
+
+    // An edit inside the shared document updates the link after the delay.
+    owner.rems.create({ parentId: doc }, { text: rt('Neue Notiz') });
+    await owner.sharing.flushLive();
+    const snap = await owner.sharing.fetch(token);
+    expect(snap.rems.map((r) => toPlainText(r.text))).toContain('Neue Notiz');
+    expect(server.shareUploads).toBe(1); // the image was not uploaded again
+
+    // Edits elsewhere do not touch the link; manual links stay as they are.
+    owner.rems.createDocument(null, 'Anderes');
+    await owner.sharing.flushLive();
+    owner.sharing.setLive(token, null);
+    owner.rems.create({ parentId: doc }, { text: rt('Nach dem Abschalten') });
+    await owner.sharing.flushLive();
+    expect((await owner.sharing.fetch(token)).rems.map((r) => toPlainText(r.text))).not.toContain(
+      'Nach dem Abschalten',
+    );
+    owner.dispose();
+  });
+
   it('round-trips a snapshot file without an account', async () => {
     const a = await RemCraftApp.create({
       persistence: new MemoryAdapter(),
