@@ -285,8 +285,19 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                       title={(missing[s.token] ?? []).join('\n')}
                       data-testid="share-missing"
                     >
-                      {missing[s.token]?.length} Datei(en) fehlen im Link – „Aktualisieren“ lädt sie
-                      hoch.
+                      {missing[s.token]?.length} Datei(en) fehlen im Link.{' '}
+                      <button
+                        className="link-btn"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(async () => {
+                            setProblems(await app.sharing.repairLink(s.token));
+                            reload();
+                          })
+                        }
+                      >
+                        Jetzt hochladen
+                      </button>
                     </div>
                   )}
                 </td>

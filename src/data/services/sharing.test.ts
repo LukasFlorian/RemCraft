@@ -117,7 +117,16 @@ describe('read-only shares', () => {
     expect(await owner.sharing.missingFiles(token)).toEqual(['VL1.pdf']);
     expect(await owner.sharing.fetchFile(token, id)).toBeNull();
 
-    // "Aktualisieren" uploads the missing file.
+    // Repair uploads the missing file without touching the snapshot.
+    server.failShareUploads.clear();
+    expect(await owner.sharing.repairLinks()).toBe(0);
+    expect(await owner.sharing.missingFiles(token)).toEqual([]);
+    expect(await (await owner.sharing.fetchFile(token, id))!.text()).toBe('pdf');
+
+    // "Aktualisieren" also uploads files that are missing.
+    server.failShareUploads.add(id);
+    server.shares.get(token)!.files.delete(id);
+    expect(await owner.sharing.repairLink(token)).toHaveLength(1);
     server.failShareUploads.clear();
     await owner.sharing.publish(doc, SHARE_PRESETS.all.scope, token);
     expect(await owner.sharing.missingFiles(token)).toEqual([]);

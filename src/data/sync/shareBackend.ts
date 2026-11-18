@@ -49,6 +49,16 @@ export interface ShareBackend {
     scopeLabel: string,
     token?: string,
   ): Promise<PublishResult>;
+  /**
+   * Uploads files to an existing link without changing its snapshot (used to
+   * repair links whose uploads failed).
+   *
+   * @returns The files that failed.
+   */
+  uploadSnapshotFiles(
+    token: string,
+    files: readonly ShareUpload[],
+  ): Promise<PublishResult['failed']>;
   /** Fetches a published snapshot (works without an account). */
   fetchSnapshot(token: string): Promise<ShareSnapshot>;
   /** Downloads a file of a published snapshot. */

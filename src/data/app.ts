@@ -85,6 +85,10 @@ export class RemCraftApp {
   private account: AccountState;
   private readonly accountListeners = new Set<() => void>();
   private unsubscribeSyncStatus: (() => void) | null = null;
+  /** Pending background repair of the user's read-only links. */
+  private repairTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Delay before links are checked for missing files after sign-in. */
+  static LINK_REPAIR_DELAY_MS = 20_000;
   /** Serialises {@link handleUser} calls. */
   private userQueue: Promise<void> = Promise.resolve();
 
@@ -216,9 +220,17 @@ export class RemCraftApp {
     this.unsubscribeSyncStatus = this.sync.onStatus((sync) => this.setAccount({ sync }));
     this.setAccount({ user, sync: this.sync.getStatus() });
     this.sync.start();
+    // Links whose file uploads failed earlier get their files once the app
+    // runs signed in (after the first sync has settled).
+    this.repairTimer = setTimeout(() => {
+      this.repairTimer = null;
+      void this.sharing.repairLinks().catch(() => undefined);
+    }, RemCraftApp.LINK_REPAIR_DELAY_MS);
   }
 
   private stopSync(): void {
+    if (this.repairTimer) clearTimeout(this.repairTimer);
+    this.repairTimer = null;
     this.sync?.stop();
     this.sync = null;
     this.files.remote = null;

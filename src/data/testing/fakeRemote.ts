@@ -114,21 +114,27 @@ export class FakeServer {
       const s = this.spaces.get(id)!;
       return { id, name: s.name, rootId: s.rootId, ownerId: s.ownerId, role: s.members.get(uid)! };
     };
-    return {
+    const backend: ShareBackend = {
       snapshotFileUrl: (token, fileId) => `https://shares.test/${token}/${fileId}`,
       listSnapshotFiles: async (token) => [...(this.shares.get(token)?.files.keys() ?? [])],
-      publish: async (snapshot, files, scopeLabel, token) => {
-        const owner = me();
+      uploadSnapshotFiles: async (token, files) => {
+        const share = this.shares.get(token);
+        if (!share || share.owner !== me()) throw new Error('not allowed');
         const failed: { id: string; error: string }[] = [];
-        const loaded: (readonly [string, Blob])[] = [];
         for (const f of files) {
           const file = await f.load();
           if (!file) failed.push({ id: f.id, error: 'not available' });
           else if (this.failShareUploads.has(f.id))
-            failed.push({ id: f.id, error: 'The object exceeded the maximum allowed size' });
-          else loaded.push([f.id, file.blob] as const);
+            failed.push({ id: f.id, error: 'upload failed' });
+          else {
+            share.files.set(f.id, file.blob);
+            this.shareUploads++;
+          }
         }
-        this.shareUploads += loaded.length;
+        return failed;
+      },
+      publish: async (snapshot, files, scopeLabel, token) => {
+        const owner = me();
         const existing = token ? this.shares.get(token) : undefined;
         if (existing && existing.owner !== owner) throw new Error('not allowed');
         const t = token ?? this.nextId('share');
@@ -137,9 +143,11 @@ export class FakeServer {
           snapshot: structuredClone(snapshot),
           scopeLabel,
           // Files are kept across updates (like the storage bucket).
-          files: new Map([...(existing?.files ?? []), ...loaded]),
+          files: new Map(existing?.files ?? []),
           updatedAt: Date.now(),
         });
+        // Uploaded like the real backend: one by one, failures reported.
+        const failed = await backend.uploadSnapshotFiles(t, files);
         return { token: t, failed };
       },
       fetchSnapshot: async (token) => {
@@ -210,5 +218,6 @@ export class FakeServer {
         this.files.set(`spaces/${spaceId}/${id}`, blob);
       },
     };
+    return backend;
   }
 }

@@ -71,6 +71,14 @@ export class SupabaseShareBackend implements ShareBackend {
           'Freigabe erstellen',
         );
     const t = (saved as { token: string }).token;
+    const failed = await this.uploadSnapshotFiles(t, files);
+    return { token: t, failed };
+  }
+
+  async uploadSnapshotFiles(
+    token: string,
+    files: readonly ShareUpload[],
+  ): Promise<PublishResult['failed']> {
     // Every file is tried, one failure must not hide the others.
     const store = bucketStore(this.client, SHARE_BUCKET);
     const failed: PublishResult['failed'] = [];
@@ -79,12 +87,12 @@ export class SupabaseShareBackend implements ShareBackend {
         const file = await f.load();
         if (!file)
           throw new Error('Datei auf diesem Gerät nicht vorhanden und nicht vom Server ladbar');
-        await putChunked(store, `${t}/${f.id}`, file.blob, file.mimeType);
+        await putChunked(store, `${token}/${f.id}`, file.blob, file.mimeType);
       } catch (e) {
         failed.push({ id: f.id, error: e instanceof Error ? e.message : String(e) });
       }
     }
-    return { token: t, failed };
+    return failed;
   }
 
   async fetchSnapshot(token: string): Promise<ShareSnapshot> {
