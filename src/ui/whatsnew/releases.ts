@@ -21,6 +21,18 @@ export interface Release {
 /** All releases, newest first. */
 export const RELEASES: Release[] = [
   {
+    id: '2026-11-18a',
+    title: 'KI-Bearbeitung, Suchen & Ersetzen, Live-Links',
+    items: [
+      'Mit KI überarbeiten (Dokument-Menü): sag in Worten, was geändert werden soll – du prüfst jeden Vorschlag, bevor er übernommen wird.',
+      'Suchen & Ersetzen (⌘⇧H oder im Dokument-Menü): mit Vorschau, einzelne Treffer abwählbar, ein Rückgängig für alles.',
+      'Leselinks können sich automatisch aktualisieren („Live“ im Teilen-Dialog) – deine Änderungen erscheinen nach etwa 20 Sekunden.',
+      'Beim Üben „Folie ansehen“ und mit „Weiter üben“ zurück – die Sitzung läuft dort weiter, wo du warst.',
+      'Karten im Vorlesungs-Widget zählen wie beim Üben – jetzt auch mit gemessener Zeit.',
+      'Kleinigkeiten: Icons in der Seitenleiste stehen bündig, Cmd+Z bei markierten Zeilen macht nur noch einen Schritt rückgängig.',
+    ],
+  },
+  {
     id: '2026-11-17c',
     title: 'Üben, Teilen und ein neues Icon',
     items: [
@@ -37,11 +49,6 @@ export const RELEASES: Release[] = [
       'Zeilen und Bilder mit „Up“/„Down“ in der Bearbeiten-Leiste verschieben.',
       'Karte beim Üben bearbeiten: nur noch diese Karte im Editor, und die Tastatur bleibt beim Tippen offen.',
       'Vorlesungsansicht auf dem Handy: aktuelle Folie groß oben, darunter Notizen und Karten.',
-      'Suchen & Ersetzen (⌘⇧H oder im Dokument-Menü): mit Vorschau, einzelne Treffer abwählbar, ein Rückgängig für alles.',
-      'Karten im Vorlesungs-Widget zählen wie beim Üben – jetzt auch mit gemessener Zeit.',
-      'Leselinks können sich jetzt automatisch aktualisieren („Live“ im Teilen-Dialog) – deine Änderungen erscheinen nach etwa 20 Sekunden.',
-      'Beim Üben „Folie ansehen“ und mit „Weiter üben“ zurück – die Sitzung läuft dort weiter, wo du warst.',
-      'Mit KI überarbeiten (Dokument-Menü): sag in Worten, was geändert werden soll – du prüfst jeden Vorschlag, bevor er übernommen wird.',
     ],
   },
 ];
