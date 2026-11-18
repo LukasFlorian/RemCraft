@@ -4,7 +4,7 @@
  * spaced-repetition reviews, so the lecture and the flashcard queue share one
  * learning state - the loop "slides → notes → cards" is closed.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Ban, Check, RotateCcw, X } from 'lucide-react';
 import { walkSubtree } from '@core/model/graph';
@@ -86,9 +86,20 @@ export function SlideCards({
       : undefined,
   );
 
+  // Time on the card (like the practice screen; feeds stats and Todoist estimates).
+  const shownAt = useRef(Date.now());
+  useEffect(() => {
+    shownAt.current = Date.now();
+  }, [cardId]);
+
+  /**
+   * Rates the card: a regular review (scheduling, daily goal, statistics),
+   * exactly as if it had been answered on the practice screen.
+   */
   const answer = (rating: Rating): void => {
     if (!cardId) return;
-    app.practice.answer(cardId, rating, { now: Date.now(), durationMs: 0, mode: 'srs' });
+    const now = Date.now();
+    app.practice.answer(cardId, rating, { now, durationMs: now - shownAt.current, mode: 'srs' });
     setRevealed(false);
     setPos((p) => p + 1);
   };

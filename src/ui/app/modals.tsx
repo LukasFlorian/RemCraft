@@ -9,6 +9,7 @@ import type { RemId } from '@core/model/types';
 /** Modals that can be opened globally. */
 export type GlobalModal =
   | { kind: 'search' }
+  | { kind: 'replace'; rootId: RemId | null; query?: string }
   | { kind: 'import'; parentId?: RemId | null; source?: string }
   | { kind: 'occlusion'; remId: RemId }
   | { kind: 'recorder'; remId: RemId }

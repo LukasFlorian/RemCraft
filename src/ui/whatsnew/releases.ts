@@ -37,6 +37,8 @@ export const RELEASES: Release[] = [
       'Zeilen und Bilder mit „Up“/„Down“ in der Bearbeiten-Leiste verschieben.',
       'Karte beim Üben bearbeiten: nur noch diese Karte im Editor, und die Tastatur bleibt beim Tippen offen.',
       'Vorlesungsansicht auf dem Handy: aktuelle Folie groß oben, darunter Notizen und Karten.',
+      'Suchen & Ersetzen (⌘⇧H oder im Dokument-Menü): mit Vorschau, einzelne Treffer abwählbar, ein Rückgängig für alles.',
+      'Karten im Vorlesungs-Widget zählen wie beim Üben – jetzt auch mit gemessener Zeit.',
     ],
   },
 ];

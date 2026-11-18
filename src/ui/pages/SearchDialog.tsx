@@ -8,6 +8,7 @@ import { Plus, Search } from 'lucide-react';
 import { RemIcon } from '../components/RemIcon';
 import type { RemId } from '@core/model/types';
 import { useApp, useSelector } from '../app/context';
+import { useModals } from '../app/modals';
 import { Modal } from '../components/Modal';
 import { searchStore } from '../hooks/search';
 import { useRemTitle } from '../hooks/useRemTitle';
@@ -17,6 +18,7 @@ import { RichTextView } from '../richtext/RichTextView';
 export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
   const app = useApp();
   const navigate = useNavigate();
+  const modals = useModals();
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState(0);
   const hits = useSelector((s) => (query.trim() ? searchStore(s, query, 40) : null));
@@ -71,6 +73,16 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
             }
           }}
         />
+        <button
+          className="btn btn-sm btn-ghost"
+          title="Suchen & Ersetzen (⌘⇧H)"
+          onClick={() => {
+            onClose();
+            modals.open({ kind: 'replace', rootId: null, query: query.trim() });
+          }}
+        >
+          Ersetzen…
+        </button>
       </div>
       <div className="search-results">
         {!hits && <div className="menu-label">Recent documents</div>}

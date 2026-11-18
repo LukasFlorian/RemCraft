@@ -163,3 +163,28 @@ test('editing a card while practising shows only that card and keeps the focus',
   // All three characters arrived: the editor kept the focus while typing.
   await expect(dialog.locator('.rem').first()).toContainText('abc');
 });
+
+test('find and replace in a document with preview and one undo step', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+  await page.keyboard.type('Replace Doc');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Hashing nutzt Hash-Funktionen');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Ein Hash >> Streuwert');
+  await page.keyboard.press('Escape');
+
+  await page.keyboard.press('ControlOrMeta+Shift+H');
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Suchen', { exact: true }).fill('Hash');
+  await dialog.getByLabel('Ersetzen durch').fill('Streu');
+  await dialog.getByText('Ganzes Wort').click();
+  // "Hashing" is no whole-word match; "Hash-Funktionen" and "Hash" are.
+  await expect(dialog.locator('.replace-list li')).toHaveCount(2);
+  // Leave out the first change.
+  await dialog.getByLabel('Diese Änderung übernehmen').first().uncheck();
+  await dialog.getByRole('button', { name: '1 ersetzen' }).click();
+  await expect(page.locator('.outliner')).toContainText('Ein Streu');
+  await expect(page.locator('.outliner')).toContainText('Hashing nutzt Hash-Funktionen');
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.locator('.outliner')).toContainText('Ein Hash');
+});
