@@ -10,6 +10,7 @@ import type { RemId } from '@core/model/types';
 export type GlobalModal =
   | { kind: 'search' }
   | { kind: 'replace'; rootId: RemId | null; query?: string }
+  | { kind: 'ai-edit'; rootId: RemId }
   | { kind: 'import'; parentId?: RemId | null; source?: string }
   | { kind: 'occlusion'; remId: RemId }
   | { kind: 'recorder'; remId: RemId }

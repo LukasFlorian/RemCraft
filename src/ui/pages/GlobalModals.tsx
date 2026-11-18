@@ -9,6 +9,7 @@ import { ExamEditor } from './ExamEditor';
 import { ImportDialog } from './ImportDialog';
 import { MoveDialog } from './MoveDialog';
 import { OcclusionEditor } from './OcclusionEditor';
+import { AiEditDialog } from './AiEditDialog';
 import { ReplaceDialog } from './ReplaceDialog';
 import { SearchDialog } from './SearchDialog';
 
@@ -19,6 +20,8 @@ export function GlobalModals(): ReactNode {
   switch (modal.kind) {
     case 'search':
       return <SearchDialog onClose={close} />;
+    case 'ai-edit':
+      return <AiEditDialog rootId={modal.rootId} onClose={close} />;
     case 'replace':
       return <ReplaceDialog rootId={modal.rootId} initialQuery={modal.query} onClose={close} />;
     case 'import':

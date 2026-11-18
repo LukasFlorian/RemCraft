@@ -1014,3 +1014,39 @@
 .replace-preview .badge {
   align-self: flex-start;
 }
+
+/* AI editing */
+.ai-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ai-edit-input {
+  resize: vertical;
+  min-height: 72px;
+}
+.ai-edit-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ai-edit-examples .pill {
+  height: auto;
+  min-height: 26px;
+  padding: 4px 10px;
+  font-size: 12px;
+  text-align: left;
+  white-space: normal;
+}
+.ai-edit-summary {
+  font-size: 13px;
+}
+.replace-preview.is-add {
+  border-color: var(--success, #16a34a);
+}
+.replace-preview.is-delete {
+  border-color: var(--danger);
+}
+.replace-preview.is-delete .replace-before {
+  color: var(--danger);
+}

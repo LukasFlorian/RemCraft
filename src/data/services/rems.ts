@@ -393,7 +393,7 @@ export class RemService {
   }
 
   /** Deletion inside a transaction. */
-  private deleteIn(tx: Transaction, ids: readonly RemId[], withSubtree: boolean): void {
+  deleteIn(tx: Transaction, ids: readonly RemId[], withSubtree: boolean): void {
     for (const id of ids) {
       const victims: RemId[] = [];
       if (withSubtree) walkSubtree(this.store, id, (r) => void victims.push(r.id));

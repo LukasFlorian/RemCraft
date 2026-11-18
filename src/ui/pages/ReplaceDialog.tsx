@@ -9,6 +9,7 @@ import type { FindOptions, ReplaceChange } from '@core/edit/findReplace';
 import { planReplace, remsInScope } from '@core/edit/findReplace';
 import type { RemId } from '@core/model/types';
 import { useApp, useSelector } from '../app/context';
+import { useModals } from '../app/modals';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
@@ -34,6 +35,7 @@ export function ReplaceDialog({
   const app = useApp();
   const toast = useToast();
   const navigate = useNavigate();
+  const modals = useModals();
   const scopeTitle = useRemTitle(rootId, 'Ohne Titel');
   const [scope, setScope] = useState<'doc' | 'all'>(rootId ? 'doc' : 'all');
   const [opts, setOpts] = useState<FindOptions>({
@@ -174,6 +176,19 @@ export function ReplaceDialog({
           </ul>
         )}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
+          {rootId && (
+            <button
+              className="btn btn-ghost"
+              title="Für Änderungen, die sich nicht als Suchen & Ersetzen ausdrücken lassen"
+              onClick={() => {
+                onClose();
+                modals.open({ kind: 'ai-edit', rootId });
+              }}
+            >
+              Mit KI überarbeiten…
+            </button>
+          )}
+          <span className="spacer" />
           <button className="btn" onClick={onClose}>
             Abbrechen
           </button>

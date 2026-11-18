@@ -188,3 +188,47 @@ test('find and replace in a document with preview and one undo step', async ({ p
   await page.keyboard.press('ControlOrMeta+z');
   await expect(page.locator('.outliner')).toContainText('Ein Hash');
 });
+
+test('AI editing proposes changes that are previewed and applied in one step', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('remcraft.whatsNewSeen', '9999');
+    localStorage.setItem(
+      'remcraft.ai',
+      JSON.stringify({ baseUrl: 'https://ai.mock.test/v1', apiKey: 'k', model: 'm' }),
+    );
+  });
+  // The model turns the concept card into a basic card and adds a line.
+  await page.route('https://ai.mock.test/**', async (route) => {
+    const body = route.request().postDataJSON() as { messages: { content: string }[] };
+    const prompt = body.messages[1]!.content;
+    const ref = /\[(r\d+)\] Hash\s+::\s+Streuwert/.exec(prompt)![1];
+    const content = JSON.stringify({
+      summary: 'Eine Karte umgestellt.',
+      ops: [
+        { op: 'update', ref, line: 'Was ist ein Hash? >> Ein Streuwert' },
+        { op: 'add', parent: 'r1', after: ref, line: 'Neue Karte >> ja' },
+      ],
+    });
+    await route.fulfill({ json: { choices: [{ message: { content } }] } });
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+  await page.keyboard.type('KI Doc');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Hash :: Streuwert');
+  await page.keyboard.press('Escape');
+
+  await page
+    .locator('.topbar')
+    .getByRole('button', { name: /More|Mehr/ })
+    .click();
+  await page.getByRole('menuitem', { name: /Mit KI überarbeiten/ }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Anweisung').fill('Mach normale Karten daraus');
+  await dialog.getByRole('button', { name: /Vorschläge holen/ }).click();
+  await expect(dialog.getByText('Eine Karte umgestellt.')).toBeVisible();
+  await expect(dialog.locator('.ai-edit-list li')).toHaveCount(2);
+  await dialog.getByRole('button', { name: '2 übernehmen' }).click();
+  await expect(page.locator('.outliner')).toContainText('Was ist ein Hash?');
+  await expect(page.locator('.outliner')).toContainText('Neue Karte');
+});

@@ -39,6 +39,7 @@ export const RELEASES: Release[] = [
       'Vorlesungsansicht auf dem Handy: aktuelle Folie groß oben, darunter Notizen und Karten.',
       'Suchen & Ersetzen (⌘⇧H oder im Dokument-Menü): mit Vorschau, einzelne Treffer abwählbar, ein Rückgängig für alles.',
       'Karten im Vorlesungs-Widget zählen wie beim Üben – jetzt auch mit gemessener Zeit.',
+      'Mit KI überarbeiten (Dokument-Menü): sag in Worten, was geändert werden soll – du prüfst jeden Vorschlag, bevor er übernommen wird.',
     ],
   },
 ];
