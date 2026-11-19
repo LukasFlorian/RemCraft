@@ -13,6 +13,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 /** Resolves a path relative to the repository root. */
 const r = (p: string): string => fileURLToPath(new URL(p, import.meta.url));
 
+/** Beta build (`VITE_CHANNEL=beta`), deployed to `<base>/beta/` next to the stable app. */
+const beta = process.env.VITE_CHANNEL === 'beta';
+
 export default defineConfig(({ mode }) => ({
   base: process.env.VITE_BASE_PATH ?? '/',
   resolve: {
@@ -31,8 +34,10 @@ export default defineConfig(({ mode }) => ({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
         manifest: {
-          name: 'RemCraft',
-          short_name: 'RemCraft',
+          name: beta ? 'RemCraft Beta' : 'RemCraft',
+          short_name: beta ? 'RemCraft β' : 'RemCraft',
+          // Separate app identity, so both can be installed side by side.
+          id: beta ? 'remcraft-beta' : 'remcraft',
           description: 'Notes and spaced-repetition flashcards',
           theme_color: '#1f2030',
           background_color: '#1f2030',
@@ -50,7 +55,12 @@ export default defineConfig(({ mode }) => ({
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           // Only app routes fall back to index.html; files such as the skill
           // download (remcraft-flashcards.zip) must come from the network.
-          navigateFallbackDenylist: [/\/[^/?]+\.[a-z0-9]+(\?.*)?$/i],
+          // The stable app's service worker also covers `beta/` (same origin,
+          // parent scope): never answer beta navigations with the stable app.
+          navigateFallbackDenylist: [
+            /\/[^/?]+\.[a-z0-9]+(\?.*)?$/i,
+            ...(beta ? [] : [/\/beta(\/|$)/]),
+          ],
         },
       }),
   ],

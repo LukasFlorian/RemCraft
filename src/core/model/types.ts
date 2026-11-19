@@ -496,6 +496,8 @@ export interface Settings {
   id: 'settings';
   /** Newest release note ("Was ist neu") the user has seen (synced across devices). */
   whatsNewSeen?: string;
+  /** The user tests beta features (the stable app then links to the beta app). */
+  betaTester?: boolean;
   /**
    * Read-only share links that follow changes automatically ("live"), by
    * token: the shared root and the parts it contains.

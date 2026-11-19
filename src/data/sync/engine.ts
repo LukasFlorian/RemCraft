@@ -13,6 +13,7 @@
 import type { CollectionName } from '@core/model/types';
 import type { PersistenceAdapter } from '../persistence/adapter';
 import type { RecordOf, Store } from '../store/store';
+import { COLLECTION_NAMES } from '../store/store';
 import type { RemoteBackend, RemoteRow } from './remote';
 
 /** Observable sync status. */
@@ -26,6 +27,8 @@ export interface SyncStatus {
 
 /** Meta key storing the last pulled sequence number. */
 const SEQ_KEY = 'sync.lastSeq';
+/** Collections this app version knew at its last pull (see `pull`). */
+const KNOWN_KEY = 'sync.collections';
 const BATCH = 500;
 
 /** Options of {@link SyncEngine}. */
@@ -192,6 +195,15 @@ export class SyncEngine {
 
   /** Downloads and applies remote changes. */
   private async pull(): Promise<void> {
+    // Rows of collections this version does not know (written by a newer app,
+    // e.g. the beta channel) are skipped. When an update adds collections,
+    // pull everything again once so their older rows arrive too.
+    const known = [...COLLECTION_NAMES].sort().join(',');
+    if ((await this.persistence.getMeta<string>(KNOWN_KEY)) !== known) {
+      await this.persistence.setMeta(SEQ_KEY, 0);
+      await this.persistence.setMeta(KNOWN_KEY, known);
+    }
+    const isKnown = new Set<string>(COLLECTION_NAMES);
     let since = (await this.persistence.getMeta<number>(SEQ_KEY)) ?? 0;
     for (;;) {
       const rows = await this.remote.pull(since, BATCH);
@@ -201,6 +213,7 @@ export class SyncEngine {
         (await this.persistence.outbox(100_000)).map((e) => [e.key, e.updatedAt]),
       );
       const items = rows
+        .filter((r) => isKnown.has(r.collection))
         .filter((r) => (pending.get(`${r.collection}:${r.id}`) ?? -1) < r.updated_at)
         .map((r) => ({
           collection: r.collection as CollectionName,

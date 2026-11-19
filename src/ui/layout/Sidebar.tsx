@@ -29,6 +29,8 @@ import { useLocalState } from '../hooks/useLocalState';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { useActiveLecture } from '../lecture/useLecture';
 import { RemIcon } from '../components/RemIcon';
+import { CHANNEL, otherChannelUrl } from '../app/channel';
+import { selectSettings } from '@data/selectors';
 
 /** Documents and folders below a Rem (what the sidebar tree shows). */
 function useDocChildren(id: RemId | null): Rem[] {
@@ -256,6 +258,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
     navigate(path);
     onNavigate?.();
   };
+  const betaTester = useSelector((st) => selectSettings(st).betaTester ?? false);
   const isActive = (prefix: string): boolean =>
     prefix === '/' ? location.pathname === '/' : location.pathname.startsWith(prefix);
 
@@ -266,6 +269,11 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
         <span className="sidebar-title ellipsis" title={account.user?.email ?? 'Local only'}>
           {account.user?.email ?? 'RemCraft'}
         </span>
+        {CHANNEL === 'beta' && (
+          <span className="badge badge-beta" title="Beta-Version: neue Funktionen, evtl. Fehler">
+            Beta
+          </span>
+        )}
         {account.configured && (
           <span
             className={`sync-dot ${account.sync.state}`}
@@ -396,6 +404,11 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
         >
           <Settings size={17} /> Settings
         </button>
+        {(CHANNEL === 'beta' || betaTester) && (
+          <a className="sidebar-legal" href={otherChannelUrl()}>
+            {CHANNEL === 'beta' ? 'Zur stabilen Version' : 'Beta-Version öffnen'}
+          </a>
+        )}
         <button
           className={`sidebar-legal${isActive('/legal') ? ' active' : ''}`}
           onClick={() => go('/legal')}

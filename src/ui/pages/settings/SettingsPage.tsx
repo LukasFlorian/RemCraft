@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { NavLink, useParams } from 'react-router';
 import { AccountSection } from './AccountSection';
 import { AiSection } from './AiSection';
+import { BetaSection } from './BetaSection';
 import { DataSection } from './DataSection';
 import { FlashcardSection } from './FlashcardSection';
 import { GeneralSection } from './GeneralSection';
@@ -24,6 +25,7 @@ const SECTIONS = [
   { id: 'data', label: 'Import, Export & Data', render: () => <DataSection /> },
   { id: 'ai', label: 'AI (experimental)', render: () => <AiSection /> },
   { id: 'shortcuts', label: 'Keyboard shortcuts', render: () => <ShortcutsSection /> },
+  { id: 'beta', label: 'Beta-Version', render: () => <BetaSection /> },
 ] as const;
 
 /** The settings page. */

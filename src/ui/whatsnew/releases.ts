@@ -21,6 +21,13 @@ export interface Release {
 /** All releases, newest first. */
 export const RELEASES: Release[] = [
   {
+    id: '2026-11-19a',
+    title: 'Beta-Version zum Ausprobieren',
+    items: [
+      'Neue Funktionen kannst du jetzt vorab in der Beta-Version testen (Einstellungen → Beta-Version). Deine Daten bleiben dieselben.',
+    ],
+  },
+  {
     id: '2026-11-18b',
     title: 'Folien in Leselinks, Impressum & Datenschutz',
     items: [

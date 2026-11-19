@@ -13,7 +13,8 @@ export default defineConfig({
     trace: 'off',
   },
   webServer: {
-    command: 'npm run build && npx vite preview --port 4173 --strictPort',
+    // The beta build: a superset of stable (also shows features flagged `beta`).
+    command: 'VITE_CHANNEL=beta npm run build && npx vite preview --port 4173 --strictPort',
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

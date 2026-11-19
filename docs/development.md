@@ -89,3 +89,37 @@ starts (`id` increases, e.g. `2026-11-18a`; items are short German sentences fro
 point of view). The last seen id is stored in the synced settings (and locally), so every user
 sees each entry once, on whichever device opens the new version first; first-time users see
 nothing.
+
+## Beta channel
+
+RemCraft is deployed twice from `main` by `.github/workflows/deploy.yml`:
+
+| App    | URL            | Build                                    | Shows                            |
+| ------ | -------------- | ---------------------------------------- | -------------------------------- |
+| Stable | `<base>/`      | `npm run build`                          | features with status `stable`    |
+| Beta   | `<base>/beta/` | `VITE_CHANNEL=beta`, base `<base>/beta/` | also features with status `beta` |
+
+**Flow for a new user-facing feature**
+
+1. Register it in `src/core/release/features.ts` with `status: 'beta'` and guard its entry points
+   with `feature('<name>')` (`src/ui/app/channel.ts`): sidebar items, routes, menu entries.
+2. Merge into `main` once typecheck, lint, unit/component tests and e2e tests pass (e2e tests run
+   against the beta build, so flagged features are covered). Only the beta app shows it.
+3. Beta testers try it (Settings → Beta-Version; "Fehler melden" opens a GitHub issue with the
+   label `beta`).
+4. After it has been stable for a while: set `status: 'stable'` and add the release note
+   (`src/ui/whatsnew/releases.ts`). Release notes describe the stable app only.
+
+Fixes and small changes to stable features do not need a flag.
+
+**Rules that keep both apps working on the same server**
+
+- Both apps share the Supabase project, accounts and synced data. Server changes must be additive
+  (new tables/columns/collections, never renamed or removed ones while stable still uses them).
+- New synced collections are fine: older apps skip rows of collections they do not know and pull
+  everything again once an update adds them (`SyncEngine.pull`).
+- Beta keeps its own IndexedDB (`remcraft-beta`) and tab channel, so a newer local schema never
+  breaks the stable app. Signed-in users see the same data in both; local-only data does not cross.
+- The stable service worker never answers navigations below `beta/` (`navigateFallbackDenylist`).
+- Who is a beta tester is a synced setting (`settings.betaTester`): the stable app then links to
+  the beta app in the sidebar. Anyone can open `<base>/beta/`; nothing secret is behind it.

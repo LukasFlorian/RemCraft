@@ -33,6 +33,17 @@ import { SupabaseShareBackend } from './sync/supabaseShare';
 import type { AuthUser } from './sync/supabase';
 import { AuthService, createSupabase, SupabaseBackend } from './sync/supabase';
 import { TabSync } from './sync/tabs';
+import { parseChannel } from '@core/release/features';
+
+/**
+ * Local storage namespace of this build: the beta app (served below the
+ * stable one, same origin) keeps its own IndexedDB and tab channel, so a
+ * newer database schema in beta never breaks the stable app.
+ */
+const LOCAL_NAMESPACE =
+  parseChannel((import.meta.env as Record<string, string | undefined>).VITE_CHANNEL) === 'beta'
+    ? 'remcraft-beta'
+    : 'remcraft';
 
 /** Meta key: id of the user whose data is stored locally. */
 const USER_KEY = 'auth.userId';
@@ -162,7 +173,7 @@ export class RemCraftApp {
         unsubscribeDirty();
       }
     });
-    this.tabSync = new TabSync(this.store);
+    this.tabSync = new TabSync(this.store, LOCAL_NAMESPACE);
     this.persister.onLocalWrite = () => this.sync?.schedulePush();
 
     if (this.auth) {
@@ -331,7 +342,7 @@ export class RemCraftApp {
 /** Opens IndexedDB, falling back to memory when unavailable. */
 async function openPersistence(): Promise<PersistenceAdapter> {
   try {
-    const adapter = new DexieAdapter();
+    const adapter = new DexieAdapter(LOCAL_NAMESPACE);
     await adapter.getMeta('probe');
     return adapter;
   } catch (err) {
