@@ -13,6 +13,7 @@ import { MemoryAdapter } from './persistence/memory';
 import { Persister } from './persistence/persister';
 import { seedStore } from './seed';
 import { ExamService } from './services/exams';
+import { HabitService } from './services/habits';
 import { FileService } from './services/files';
 import { ImportExportService } from './services/io';
 import { LectureService } from './services/lectures';
@@ -80,6 +81,7 @@ export class RemCraftApp {
   readonly rems = new RemService(this.store);
   readonly practice = new PracticeService(this.store);
   readonly exams = new ExamService(this.store);
+  readonly habits = new HabitService(this.store);
   readonly settings = new SettingsService(this.store);
   readonly io = new ImportExportService(this.store, this.rems);
   readonly files: FileService;

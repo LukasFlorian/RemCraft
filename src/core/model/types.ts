@@ -672,6 +672,73 @@ export interface LectureSettings {
   longDwellSeconds: number;
 }
 
+// ---------------------------------------------------------------------------
+// Habits
+// ---------------------------------------------------------------------------
+
+/** Build a good habit or quit a bad one. */
+export type HabitKind = 'build' | 'quit';
+
+/**
+ * How a day is recorded: done or not (`check`), a count (`count`, e.g.
+ * glasses of water), a measured value with unit (`measure`, e.g. 5 km), or
+ * automatically from the flashcard reviews of that day (`flashcards`).
+ */
+export type HabitTracking = 'check' | 'count' | 'measure' | 'flashcards';
+
+/** Period of a goal. */
+export type HabitPeriod = 'day' | 'week' | 'month';
+
+/** A reminder: weekdays (0 = Monday … 6 = Sunday) and a time ("HH:MM"). */
+export interface HabitReminder {
+  id: string;
+  weekdays: number[];
+  time: string;
+}
+
+/** A habit. */
+export interface Habit {
+  id: string;
+  name: string;
+  description: string;
+  /** Icon name (see `HABIT_ICONS` in the UI). */
+  icon: string;
+  /** Hex colour of its tiles. */
+  color: string;
+  kind: HabitKind;
+  tracking: HabitTracking;
+  /** Value a day needs to count as done (`count`, `measure`, `flashcards`); 1 for `check`. */
+  target: number;
+  /** Unit of measured values (e.g. "km", "Seiten"). */
+  unit?: string;
+  /** Goal: `times` done days per `period` (e.g. 3 per week). */
+  goal: { period: HabitPeriod; times: number };
+  reminders: HabitReminder[];
+  /** Day the habit starts ("YYYY-MM-DD"); quit habits count clean days from here. */
+  startDay: string;
+  /** Fractional index for manual ordering. */
+  order: string;
+  archived?: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * One day of a habit (id `<habit id>:<YYYY-MM-DD>`). For quit habits a
+ * positive value records a slip on that day.
+ */
+export interface HabitEntry {
+  id: string;
+  habitId: string;
+  /** Local calendar day "YYYY-MM-DD". */
+  day: string;
+  /** Done (1/0), count or measured value; 0 with only a note. */
+  value: number;
+  /** Note of the day. */
+  note?: string;
+  updatedAt: Timestamp;
+}
+
 /** Names of all synchronised collections. */
 export type CollectionName =
   | 'rems'
@@ -682,7 +749,9 @@ export type CollectionName =
   | 'settings'
   | 'annotations'
   | 'lectures'
-  | 'lectureEvents';
+  | 'lectureEvents'
+  | 'habits'
+  | 'habitEntries';
 
 /** Maps every collection name to its record type. */
 export interface CollectionTypes {
@@ -695,4 +764,6 @@ export interface CollectionTypes {
   annotations: SlideAnnotations;
   lectures: Lecture;
   lectureEvents: LectureEvent;
+  habits: Habit;
+  habitEntries: HabitEntry;
 }
