@@ -76,3 +76,45 @@ test('habits fit on a phone screen', async ({ page }) => {
   await page.goto('/#/habits');
   await page.screenshot({ path: 'test-results/habits-390.png' });
 });
+
+test('reordering shows where the habit lands', async ({ page }) => {
+  await page.goto('/#/habits');
+  for (const name of ['Eins', 'Zwei', 'Drei']) {
+    await page
+      .getByRole('button', { name: /Neu|Erste Gewohnheit/ })
+      .first()
+      .click();
+    await page.getByPlaceholder('z. B. Sport').fill(name);
+    await page.getByRole('button', { name: 'Speichern' }).click();
+    await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  }
+  const titles = page.locator('.habit-card strong');
+  await expect(titles).toHaveText(['Eins', 'Zwei', 'Drei']);
+
+  // Grab "Drei" and move it above "Eins".
+  const handle = page
+    .getByTestId('habit-card')
+    .filter({ hasText: 'Drei' })
+    .getByLabel('Verschieben');
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  const first = (await page.getByTestId('habit-card').first().boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, first.y + 5, { steps: 12 });
+  await expect(page.getByTestId('habit-drop-line')).toHaveCount(1);
+  // The line sits right above "Eins".
+  const line = (await page.getByTestId('habit-drop-line').boundingBox())!;
+  expect(line.y).toBeLessThan(first.y);
+  await page.mouse.up();
+  await expect(page.getByTestId('habit-drop-line')).toHaveCount(0);
+  await expect(titles).toHaveText(['Drei', 'Eins', 'Zwei']);
+
+  // Keyboard: focus the handle of "Drei" and move it down.
+  await page
+    .getByTestId('habit-card')
+    .filter({ hasText: 'Drei' })
+    .getByLabel('Verschieben')
+    .focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(titles).toHaveText(['Eins', 'Drei', 'Zwei']);
+});

@@ -25,20 +25,74 @@
 .habit-list-compact {
   gap: 4px;
 }
+/* Reordering: the grabbed habit follows the pointer, a line marks the drop position. */
+.habit-drag {
+  position: relative;
+}
 .habit-drag.dragging {
-  opacity: 0.5;
+  z-index: 5;
+  scale: 1.02;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.15s;
+  pointer-events: none;
+}
+.habit-list.is-sorting {
+  user-select: none;
+  cursor: grabbing;
+}
+.habit-drop-line {
+  position: relative;
+  z-index: 6; /* above the dragged habit, which may cover the gap */
+  height: 4px;
+  margin: -8px 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+.habit-drop-line::before,
+.habit-drop-line::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.habit-drop-line::before {
+  left: -6px;
+}
+.habit-drop-line::after {
+  right: -6px;
+}
+.habit-list-checklist .habit-drop-line,
+.habit-list-compact .habit-drop-line {
+  margin: -2px 0 2px;
 }
 .habit-handle {
   display: inline-grid;
   place-items: center;
-  width: 16px;
+  width: 18px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
   color: var(--text-faint);
   cursor: grab;
   flex-shrink: 0;
+  touch-action: none;
+}
+.habit-handle:hover,
+.habit-handle:focus-visible {
+  color: var(--text);
+  background: var(--surface);
 }
 @media (pointer: coarse) {
   .habit-handle {
-    display: none;
+    width: 26px;
+    height: 36px;
   }
 }
 
