@@ -8,6 +8,7 @@ import { Menu as MenuIcon } from 'lucide-react';
 import { useModals } from '../app/modals';
 import { useApp } from '../app/context';
 import { useHotkeys } from '../hooks/useHotkeys';
+import { useHabitReminders } from '../habits/useHabitReminders';
 import { useLocalState } from '../hooks/useLocalState';
 import { CaretPopup } from '../editor/CaretPopup';
 import { EditToolbar } from '../editor/EditToolbar';
@@ -27,6 +28,7 @@ export function Layout(): ReactNode {
   // Close the mobile drawer on navigation.
   useEffect(() => setMobileOpen(false), [location.pathname, setMobileOpen]);
 
+  useHabitReminders();
   useHotkeys(
     {
       'mod+k': (e) => {

@@ -89,5 +89,7 @@ export function emptyData(): CollectionData {
     annotations: [],
     lectures: [],
     lectureEvents: [],
+    habits: [],
+    habitEntries: [],
   };
 }

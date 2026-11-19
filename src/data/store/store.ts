@@ -79,6 +79,8 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'annotations',
   'lectures',
   'lectureEvents',
+  'habits',
+  'habitEntries',
 ];
 
 /** Key of a record inside a transaction. */
@@ -161,6 +163,8 @@ export class Store implements RemGraph {
     annotations: new Map(),
     lectures: new Map(),
     lectureEvents: new Map(),
+    habits: new Map(),
+    habitEntries: new Map(),
   };
   /** Per-collection change counters (for memoisation). */
   private readonly versions: Record<CollectionName, number> = {
@@ -173,6 +177,8 @@ export class Store implements RemGraph {
     annotations: 0,
     lectures: 0,
     lectureEvents: 0,
+    habits: 0,
+    habitEntries: 0,
   };
   /** Global change counter (the React snapshot). */
   private globalVersion = 0;

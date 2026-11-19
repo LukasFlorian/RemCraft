@@ -214,6 +214,8 @@ export class ImportExportService {
       annotations: [...this.store.all('annotations')],
       lectures: [...this.store.all('lectures')],
       lectureEvents: [...this.store.all('lectureEvents')],
+      habits: [...this.store.all('habits')],
+      habitEntries: [...this.store.all('habitEntries')],
     });
   }
 

@@ -49,6 +49,27 @@ describe('multi-device sync', () => {
     b.dispose();
   });
 
+  it('ignores collections this version does not know (written by a newer app)', async () => {
+    const server = new FakeServer();
+    const a = await device(server);
+    // A row of a future collection, e.g. written by the beta app.
+    await server.client().push([
+      {
+        collection: 'futureThings' as never,
+        id: 'x',
+        data: { id: 'x', updatedAt: 1 },
+        updated_at: Date.now(),
+        deleted: false,
+      },
+    ]);
+    const doc = a.rems.createDocument(null, 'Still syncing');
+    const b = await device(server);
+    await settle(a, b);
+    expect(toPlainText(b.store.get(doc.id)!.text)).toBe('Still syncing');
+    a.dispose();
+    b.dispose();
+  });
+
   it('resolves concurrent edits with last-writer-wins', async () => {
     const server = new FakeServer();
     const a = await device(server);

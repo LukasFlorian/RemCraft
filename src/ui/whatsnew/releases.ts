@@ -21,6 +21,15 @@ export interface Release {
 /** All releases, newest first. */
 export const RELEASES: Release[] = [
   {
+    id: '2026-11-19a',
+    title: 'Beta-Version, markierte Suchtreffer',
+    items: [
+      'Neue Funktionen kannst du jetzt vorab in der Beta-Version testen (Einstellungen → Beta-Version). Deine Daten bleiben dieselben.',
+      'Suche (⌘K): Treffer sind in den Ergebnissen markiert; bei langen Texten siehst du den passenden Ausschnitt.',
+      'Karteikarten-Übersicht: Dokumente mit langen Namen stehen jetzt bündig mit den anderen.',
+    ],
+  },
+  {
     id: '2026-11-18b',
     title: 'Folien in Leselinks, Impressum & Datenschutz',
     items: [

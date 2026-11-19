@@ -80,6 +80,14 @@ test('search finds Rems', async ({ page }) => {
   await page.keyboard.press('Control+k');
   await page.getByPlaceholder(/Search Rems/).fill('mitochondria');
   await expect(page.locator('.search-result').first()).toContainText('powerhouse');
+  // The matched word is highlighted (CSS Custom Highlight API).
+  await expect
+    .poll(() => page.evaluate<number>("CSS.highlights.get('search-hit')?.size ?? 0"))
+    .toBeGreaterThan(0);
+  const marked = await page.evaluate<string[]>(
+    "[...(CSS.highlights.get('search-hit') ?? [])].map((r) => r.toString())",
+  );
+  expect(marked.map((t) => t.toLowerCase())).toContain('mitochondria');
   // Opening a hit scrolls to it inside its document and highlights it.
   await page.locator('.search-result').first().click();
   const hit = page.locator('.rem.is-search-hit');
@@ -247,4 +255,21 @@ test('legal page with Impressum, privacy policy and RemNote notice', async ({ pa
     .evaluate((el) => el.scrollWidth - el.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   await page.screenshot({ path: 'test-results/legal-390.png' });
+});
+
+test('flashcard home rows stay aligned with long titles (phone width)', async ({ page }) => {
+  for (const title of ['Kurz', 'Ein ziemlich langer Dokumenttitel über Datenbanksysteme Teil 2']) {
+    await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+    await page.getByLabel('Title').fill(title);
+    await page.getByLabel('Title').press('Enter');
+    await page.keyboard.type('Frage >> Antwort');
+    await page.keyboard.press('Escape');
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/#/flashcards');
+  const lefts = await page
+    .locator('.priority-row .tree-icon')
+    .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+  expect(lefts.length).toBeGreaterThanOrEqual(3);
+  expect(new Set(lefts).size).toBe(1);
 });

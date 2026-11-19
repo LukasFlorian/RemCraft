@@ -32,7 +32,12 @@ jobs:
       - run: npm ci
       - run: npm test
       - name: Build
-        run: npm run build
+        # Stable app at <base>, beta app (features flagged "beta" switched on,
+        # own local database) at <base>beta/. Same server and accounts.
+        run: |
+          npm run build
+          VITE_CHANNEL=beta VITE_BASE_PATH="${VITE_BASE_PATH}beta/" npx vite build --outDir dist-beta
+          mv dist-beta dist/beta
         env:
           # Project sites are served from /<repository>/.
           # Custom domain (e.g. remcraft.example.com): set the repository variable

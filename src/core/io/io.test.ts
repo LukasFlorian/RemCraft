@@ -180,6 +180,8 @@ describe('backup', () => {
         annotations: [],
         lectures: [],
         lectureEvents: [],
+        habits: [],
+        habitEntries: [],
       },
       5,
     );

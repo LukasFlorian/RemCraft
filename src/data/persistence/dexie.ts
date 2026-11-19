@@ -13,6 +13,8 @@ import type {
   Settings,
   Lecture,
   LectureEvent,
+  Habit,
+  HabitEntry,
   SlideAnnotations,
 } from '@core/model/types';
 import type { Change, RecordOf } from '../store/store';
@@ -30,6 +32,8 @@ class RemCraftDatabase extends Dexie {
   annotations!: Table<SlideAnnotations, string>;
   lectures!: Table<Lecture, string>;
   lectureEvents!: Table<LectureEvent, string>;
+  habits!: Table<Habit, string>;
+  habitEntries!: Table<HabitEntry, string>;
   outbox!: Table<OutboxEntry, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
   files!: Table<StoredFile, string>;
@@ -51,6 +55,8 @@ class RemCraftDatabase extends Dexie {
     });
     // Version 2: lecture mode (Fokus) collections.
     this.version(2).stores({ annotations: 'id', lectures: 'id', lectureEvents: 'id' });
+    // Version 3: habits.
+    this.version(3).stores({ habits: 'id', habitEntries: 'id, habitId' });
   }
 }
 
@@ -64,6 +70,8 @@ const COLLECTIONS: readonly CollectionName[] = [
   'annotations',
   'lectures',
   'lectureEvents',
+  'habits',
+  'habitEntries',
 ];
 
 /** IndexedDB-backed {@link PersistenceAdapter}. */

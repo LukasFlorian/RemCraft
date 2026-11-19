@@ -1,7 +1,7 @@
 /**
  * Global search (⌘K): find any Rem and jump to it, or create a document.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { Plus, Search } from 'lucide-react';
@@ -13,6 +13,10 @@ import { Modal } from '../components/Modal';
 import { searchStore } from '../hooks/search';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { RichTextView } from '../richtext/RichTextView';
+import { parseSearchQuery } from '@core/search/search';
+import { findMatches, snippet } from '@core/search/highlight';
+import { toPlainText } from '@core/richtext/ops';
+import { useTextHighlight } from '../hooks/useTextHighlight';
 
 /** The search dialog. */
 export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
@@ -31,6 +35,8 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
     ),
   );
   const ids = hits ? hits.map((h) => h.remId) : recent.map((r) => r.id);
+  // Words to highlight in the results (not #tags or is: filters).
+  const terms = useMemo(() => parseSearchQuery(query).terms, [query]);
   const total = ids.length + (query.trim() ? 1 : 0);
   useEffect(() => setIndex(0), [query]);
 
@@ -95,6 +101,7 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
           <SearchResult
             key={id}
             remId={id}
+            terms={hits ? terms : []}
             active={i === index}
             onHover={() => setIndex(i)}
             onOpen={() => open(id)}
@@ -114,13 +121,19 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
   );
 }
 
+/** Matches further in than this many characters are likely cut off: show a snippet. */
+const SNIPPET_AFTER = 50;
+
 function SearchResult({
   remId,
+  terms,
   active,
   onHover,
   onOpen,
 }: {
   remId: RemId;
+  /** Search terms to highlight. */
+  terms: readonly string[];
   active: boolean;
   onHover: () => void;
   onOpen: () => void;
@@ -128,6 +141,15 @@ function SearchResult({
   const app = useApp();
   const rem = useSelector((s) => s.get(remId));
   const parent = useRemTitle(rem?.parentId ?? null, '');
+  const textRef = useRef<HTMLSpanElement>(null);
+  useTextHighlight(textRef, terms, rem);
+  // Plain text of the result, for a snippet when the match would be cut off.
+  const plain = rem
+    ? toPlainText(rem.text) + (rem.back?.length ? ` → ${toPlainText(rem.back)}` : '')
+    : '';
+  const matches = terms.length > 0 ? findMatches(plain, terms) : [];
+  const excerpt =
+    matches.length > 0 && matches[0]![0] > SNIPPET_AFTER ? snippet(plain, matches) : null;
   if (!rem) return null;
   void app;
   return (
@@ -141,7 +163,7 @@ function SearchResult({
     >
       <RemIcon rem={rem} size={16} />
       <span className="col" style={{ gap: 0, minWidth: 0, flex: 1 }}>
-        <span className="ellipsis">
+        <span className="ellipsis" ref={textRef}>
           <RichTextView value={rem.text} inertRefs />
           {rem.back && rem.back.length > 0 && (
             <>
@@ -150,6 +172,13 @@ function SearchResult({
             </>
           )}
         </span>
+        {excerpt && (
+          <span className="search-snippet" data-testid="search-snippet">
+            {excerpt.map((p, i) =>
+              p.match ? <mark key={i}>{p.text}</mark> : <span key={i}>{p.text}</span>,
+            )}
+          </span>
+        )}
         {parent && (
           <span className="faint ellipsis" style={{ fontSize: 12 }}>
             {parent}

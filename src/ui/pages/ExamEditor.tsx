@@ -221,15 +221,17 @@ function ScopeItem({
             <ChevronRight size={13} />
           </button>
         ) : (
-          <span style={{ width: 18 }} />
+          <span className="tree-toggle-spacer" />
         )}
         <input type="checkbox" checked={scope.includes(remId)} onChange={() => toggle(remId)} />
         {isFolder ? (
-          <Folder size={15} className="icon-folder" />
+          <Folder size={15} className="icon-folder tree-icon" />
         ) : (
-          <FileText size={15} className="icon-doc" />
+          <FileText size={15} className="icon-doc tree-icon" />
         )}
-        <span className="ellipsis">{title}</span>
+        <span className="ellipsis" style={{ minWidth: 0 }}>
+          {title}
+        </span>
       </label>
       {open && <ScopeLevel parentId={remId} depth={depth + 1} scope={scope} toggle={toggle} />}
     </>
