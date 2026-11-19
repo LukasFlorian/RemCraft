@@ -1050,3 +1050,35 @@
 .replace-preview.is-delete .replace-before {
   color: var(--danger);
 }
+
+/* Long titles shrink (with an ellipsis), never the toggle, icon or buttons. */
+.priority-row > .priority-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+.priority-row > .due-btn,
+.priority-row > .icon-btn,
+.priority-row > .badge {
+  flex-shrink: 0;
+}
+
+/* Search: matched words in results. */
+::highlight(search-hit) {
+  background-color: color-mix(in srgb, #facc15 45%, transparent);
+  color: var(--text);
+}
+.search-snippet {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.search-snippet mark {
+  background: color-mix(in srgb, #facc15 45%, transparent);
+  color: var(--text);
+  border-radius: 2px;
+}

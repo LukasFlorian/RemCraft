@@ -270,10 +270,13 @@ function PriorityItem({
             <ChevronRight size={13} />
           </button>
         ) : (
-          <span style={{ width: 18 }} />
+          <span className="tree-toggle-spacer" />
         )}
-        <RemIcon rem={rem} size={16} />
-        <button className="link-plain ellipsis" onClick={() => navigate(`/rem/${remId}`)}>
+        <RemIcon rem={rem} size={16} className="tree-icon" />
+        <button
+          className="link-plain ellipsis priority-title"
+          onClick={() => navigate(`/rem/${remId}`)}
+        >
           {title}
         </button>
         <span className="spacer" />
