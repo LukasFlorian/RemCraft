@@ -11,6 +11,7 @@ import './styles/layout.css';
 import './styles/editor.css';
 import './styles/pages.css';
 import './styles/lecture.css';
+import './styles/habits.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

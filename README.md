@@ -95,6 +95,7 @@ Details, alternatives (Netlify, Cloudflare Pages) and auth redirect settings:
 | [docs/lectures.md](docs/lectures.md)                   | Slide decks, lecture mode, card files, Claude skill            |
 | [docs/sharing.md](docs/sharing.md)                     | Read-only snapshots and live collaboration                     |
 | [docs/integrations.md](docs/integrations.md)           | Todoist daily study tasks                                      |
+| [docs/habits.md](docs/habits.md)                       | Habit tracker (beta)                                           |
 | [docs/extending.md](docs/extending.md)                 | Extension points (Anki & co.)                                  |
 | [docs/adr/](docs/adr)                                  | Architecture decision records                                  |
 

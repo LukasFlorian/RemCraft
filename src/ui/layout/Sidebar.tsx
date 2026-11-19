@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock3,
+  Flame,
   HelpCircle,
   Layers,
   LayoutGrid,
@@ -29,8 +30,9 @@ import { useLocalState } from '../hooks/useLocalState';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { useActiveLecture } from '../lecture/useLecture';
 import { RemIcon } from '../components/RemIcon';
-import { CHANNEL, otherChannelUrl } from '../app/channel';
+import { CHANNEL, feature, otherChannelUrl } from '../app/channel';
 import { selectSettings } from '@data/selectors';
+import { useHabitsOpenToday } from '../habits/useHabitReminders';
 
 /** Documents and folders below a Rem (what the sidebar tree shows). */
 function useDocChildren(id: RemId | null): Rem[] {
@@ -259,6 +261,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
     onNavigate?.();
   };
   const betaTester = useSelector((st) => selectSettings(st).betaTester ?? false);
+  const habitsOpen = useHabitsOpenToday();
   const isActive = (prefix: string): boolean =>
     prefix === '/' ? location.pathname === '/' : location.pathname.startsWith(prefix);
 
@@ -322,6 +325,19 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
           <Presentation size={17} /> Vorlesungen{' '}
           {activeLecture && <span className="nav-count badge badge-success">live</span>}
         </button>
+        {feature('habits') && (
+          <button
+            className={`nav-item${isActive('/habits') ? ' active' : ''}`}
+            onClick={() => go('/habits')}
+          >
+            <Flame size={17} /> Gewohnheiten{' '}
+            {habitsOpen > 0 && (
+              <span className="nav-count" title="Heute noch offen">
+                {habitsOpen}
+              </span>
+            )}
+          </button>
+        )}
         <button
           className={`nav-item${isActive('/edit-later') ? ' active' : ''}`}
           onClick={() => go('/edit-later')}

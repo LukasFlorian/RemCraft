@@ -53,6 +53,8 @@ export default defineConfig(({ mode }) => ({
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          // Opens the app at the habit when a reminder notification is tapped.
+          importScripts: ['sw-notifications.js'],
           // Only app routes fall back to index.html; files such as the skill
           // download (remcraft-flashcards.zip) must come from the network.
           // The stable app's service worker also covers `beta/` (same origin,

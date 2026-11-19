@@ -17,6 +17,10 @@ import { FlashcardsPage } from '../pages/flashcards/FlashcardsPage';
 import { PracticePage } from '../pages/practice/PracticePage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
 import { LegalPage } from '../legal/LegalPage';
+import { HabitsPage } from '../habits/HabitsPage';
+import { HabitDetailPage } from '../habits/HabitDetailPage';
+import { HabitStatsPage } from '../habits/HabitStatsPage';
+import { feature } from './channel';
 import { HandoutPage } from '../lecture/HandoutPage';
 import { LecturePage } from '../lecture/LecturePage';
 import { LecturesPage } from '../lecture/LecturesPage';
@@ -47,6 +51,14 @@ const router = createHashRouter([
       { path: 's/:token', element: <SharedSnapshotPage /> },
       { path: 'join/:token', element: <JoinSpacePage /> },
       { path: 'legal', element: <LegalPage /> },
+      // Beta feature: only registered where it is enabled.
+      ...(feature('habits')
+        ? [
+            { path: 'habits', element: <HabitsPage /> },
+            { path: 'habits/stats', element: <HabitStatsPage /> },
+            { path: 'habits/:habitId', element: <HabitDetailPage /> },
+          ]
+        : []),
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/:section', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
