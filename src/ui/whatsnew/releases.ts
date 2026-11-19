@@ -21,6 +21,13 @@ export interface Release {
 /** All releases, newest first. */
 export const RELEASES: Release[] = [
   {
+    id: '2026-11-19b',
+    title: 'Beta auch am Handy',
+    items: [
+      'Der Link zur Beta-Version öffnet jetzt auch in der installierten App am Handy wirklich die Beta (vorher erschien teils wieder die normale Version).',
+    ],
+  },
+  {
     id: '2026-11-19a',
     title: 'Beta-Version, markierte Suchtreffer',
     items: [
