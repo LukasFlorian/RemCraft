@@ -6,6 +6,7 @@
  */
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { t as tr } from '@core/i18n';
 
 /** One series of a bar chart. */
 export interface BarSeries {
@@ -214,13 +215,17 @@ export function Heatmap({ days, ariaLabel }: HeatmapProps): ReactNode {
         )}
       </svg>
       <div className="row faint" style={{ fontSize: 12, justifyContent: 'space-between' }}>
-        <span>{hover ? `${hover.date}: ${hover.count} reviews` : 'Hover a day for details'}</span>
+        <span>
+          {hover
+            ? tr('{date}: {count} reviews', { date: hover.date, count: hover.count })
+            : tr('Hover a day for details')}
+        </span>
         <span className="row" style={{ gap: 3 }}>
-          Less{' '}
+          {tr('Less')}{' '}
           {[0, 1, 2, 3, 4].map((l) => (
             <i key={l} className="heat-key" style={{ background: `var(--seq-${l})` }} />
           ))}{' '}
-          More
+          {tr('More')}
         </span>
       </div>
     </div>

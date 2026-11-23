@@ -14,18 +14,19 @@ import { IntegrationsSection } from './IntegrationsSection';
 import { LectureSection } from './LectureSection';
 import { SchedulerSection } from './SchedulerSection';
 import { ShortcutsSection } from './ShortcutsSection';
+import { t } from '@core/i18n';
 
 const SECTIONS = [
-  { id: 'account', label: 'Account & Sync', render: () => <AccountSection /> },
-  { id: 'general', label: 'Appearance', render: () => <GeneralSection /> },
-  { id: 'flashcards', label: 'Flashcards', render: () => <FlashcardSection /> },
-  { id: 'schedulers', label: 'Schedulers', render: () => <SchedulerSection /> },
-  { id: 'lectures', label: 'Vorlesungen', render: () => <LectureSection /> },
-  { id: 'integrations', label: 'Integrationen (Todoist)', render: () => <IntegrationsSection /> },
-  { id: 'data', label: 'Import, Export & Data', render: () => <DataSection /> },
-  { id: 'ai', label: 'AI (experimental)', render: () => <AiSection /> },
-  { id: 'shortcuts', label: 'Keyboard shortcuts', render: () => <ShortcutsSection /> },
-  { id: 'beta', label: 'Beta-Version', render: () => <BetaSection /> },
+  { id: 'account', label: t('Account & Sync'), render: () => <AccountSection /> },
+  { id: 'general', label: t('Appearance'), render: () => <GeneralSection /> },
+  { id: 'flashcards', label: t('Flashcards'), render: () => <FlashcardSection /> },
+  { id: 'schedulers', label: t('Schedulers'), render: () => <SchedulerSection /> },
+  { id: 'lectures', label: t('Lectures'), render: () => <LectureSection /> },
+  { id: 'integrations', label: t('Integrations (Todoist)'), render: () => <IntegrationsSection /> },
+  { id: 'data', label: t('Import, Export & Data'), render: () => <DataSection /> },
+  { id: 'ai', label: t('AI (experimental)'), render: () => <AiSection /> },
+  { id: 'shortcuts', label: t('Keyboard shortcuts'), render: () => <ShortcutsSection /> },
+  { id: 'beta', label: t('Beta version'), render: () => <BetaSection /> },
 ] as const;
 
 /** The settings page. */
@@ -36,7 +37,7 @@ export function SettingsPage(): ReactNode {
     <div className="main-scroll">
       <div className="page page-wide">
         <div className="page-header">
-          <h1>Settings</h1>
+          <h1>{t('Settings')}</h1>
         </div>
         <div className="settings-layout">
           <nav className="settings-nav">

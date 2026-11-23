@@ -21,6 +21,7 @@ import { annotatedSlideImage } from './handoutImage';
 import { useSlideImage } from './useSlides';
 import { clock, selectLectureState, useLectureSettings } from './useLecture';
 import { useDeckSlides } from './useSlides';
+import { t } from '@core/i18n';
 
 /** The handout. */
 export function HandoutPage(): ReactNode {
@@ -71,16 +72,19 @@ export function HandoutPage(): ReactNode {
       <div className="page page-wide">
         <div className="row no-print" style={{ marginBottom: 16 }}>
           <button className="btn btn-ghost" onClick={() => navigate(-1)}>
-            ← Zurück
+            {t('← Back')}
           </button>
           <span className="spacer" />
           <span className="muted" style={{ fontSize: 13 }}>
             {allReady
-              ? 'Tipp: im Druckdialog „Kopf- und Fußzeilen“ ausschalten.'
-              : `Folien werden vorbereitet … ${ready.size}/${slides.length}`}
+              ? t('Tip: turn off “Headers and footers” in the print dialog.')
+              : t('Preparing slides … {size}/{length}', {
+                  size: ready.size,
+                  length: slides.length,
+                })}
           </span>
           <button className="btn btn-primary" disabled={!allReady} onClick={() => window.print()}>
-            <Printer size={15} /> Drucken / als PDF speichern
+            <Printer size={15} /> {t('Print / save as PDF')}
           </button>
         </div>
         <section className="handout-cover">
@@ -92,25 +96,28 @@ export function HandoutPage(): ReactNode {
                 <h3>{l.name}</h3>
                 {st.goal && (
                   <p>
-                    <strong>Ziel:</strong> {st.goal}
+                    <strong>{t('Goal:')}</strong> {st.goal}
                   </p>
                 )}
                 {st.summary && (
                   <p style={{ whiteSpace: 'pre-wrap' }}>
-                    <strong>Zusammenfassung:</strong> {st.summary}
+                    <strong>{t('Summary:')}</strong> {st.summary}
                   </p>
                 )}
                 <p className="muted">
-                  Dauer {clock(k.durationMs)} ·{' '}
-                  {k.focusRatio === null ? '' : `${Math.round(k.focusRatio * 100)} % in der App · `}
-                  {k.drifts}× abgeschweift · {k.checkinsAnswered} Check-ins
+                  {t('Duration')} {clock(k.durationMs)} ·{' '}
+                  {k.focusRatio === null
+                    ? ''
+                    : t('{0} % in the app · ', { '0': Math.round(k.focusRatio * 100) })}
+                  {k.drifts}
+                  {t('× drifted ·')} {k.checkinsAnswered} {t('Check-ins')}
                 </p>
               </div>
             );
           })}
           {questions.length > 0 && (
             <>
-              <h3>Offene Fragen</h3>
+              <h3>{t('Open questions')}</h3>
               <ul>
                 {questions.map((q) => (
                   <li key={q}>{q}</li>
@@ -128,14 +135,16 @@ export function HandoutPage(): ReactNode {
               </div>
               <div className="handout-right">
                 <div className="handout-meta">
-                  <strong>Folie {i + 1}</strong>
-                  {s.slideFlags?.includes('important') && ' ★ wichtig'}
-                  {s.slideFlags?.includes('unclear') && ' ? unklar'}
+                  <strong>
+                    {t('Slide')} {i + 1}
+                  </strong>
+                  {s.slideFlags?.includes('important') && t(' ★ important')}
+                  {s.slideFlags?.includes('unclear') && t(' ? unclear')}
                   {st && st.dwellMs > 0 && (
                     <span className="muted">
                       {' '}
                       · {fmtDuration(st.dwellMs)}
-                      {st.awayMs ? `, ${fmtDuration(st.awayMs)} außerhalb` : ''}
+                      {st.awayMs ? t(', {0} outside', { '0': fmtDuration(st.awayMs) }) : ''}
                     </span>
                   )}
                 </div>
@@ -185,9 +194,13 @@ function HandoutSlideImage({
     };
   }, [url, ann]); // eslint-disable-line react-hooks/exhaustive-deps
   return src ? (
-    <img className="handout-img" src={src} alt={`Folie ${(slide.slide?.index ?? 0) + 1}`} />
+    <img
+      className="handout-img"
+      src={src}
+      alt={t('Slide {0}', { '0': (slide.slide?.index ?? 0) + 1 })}
+    />
   ) : (
-    <div className="handout-img placeholder faint">Folie wird geladen…</div>
+    <div className="handout-img placeholder faint">{t('Loading slide…')}</div>
   );
 }
 

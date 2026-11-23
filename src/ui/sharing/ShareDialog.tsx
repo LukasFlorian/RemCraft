@@ -23,6 +23,7 @@ import { Modal } from '../components/Modal';
 import { Switch } from '../components/Controls';
 import { useToast } from '../components/Toast';
 import { RemContent } from '../editor/RemBlock';
+import { t } from '@core/i18n';
 
 /** Absolute link to an in-app route (hash routing). */
 export function appLink(route: string): string {
@@ -43,7 +44,7 @@ function useCopy(): (text: string) => void {
   const toast = useToast();
   return (text) =>
     void navigator.clipboard.writeText(text).then(
-      () => toast('Link kopiert'),
+      () => toast(t('Link copied')),
       () => toast(text),
     );
 }
@@ -58,7 +59,7 @@ export function ShareDialog({ remId, onClose }: { remId: RemId; onClose: () => v
     <Modal
       title={
         <span>
-          Teilen: <RemContent rem={rem} />
+          {t('Share:')} <RemContent rem={rem} />
         </span>
       }
       onClose={onClose}
@@ -66,16 +67,17 @@ export function ShareDialog({ remId, onClose }: { remId: RemId; onClose: () => v
     >
       <div className="segmented">
         <button className={tab === 'link' ? 'active' : ''} onClick={() => setTab('link')}>
-          <Link2 size={14} /> Link (nur lesen, klonbar)
+          <Link2 size={14} /> {t('Link (read only, cloneable)')}
         </button>
         <button className={tab === 'live' ? 'active' : ''} onClick={() => setTab('live')}>
-          <Users size={14} /> Live zusammenarbeiten
+          <Users size={14} /> {t('Collaborate live')}
         </button>
       </div>
       {!account.user && (
         <p className="muted" style={{ margin: 0 }}>
-          Für Links und Zusammenarbeit musst du angemeldet sein (Einstellungen → Konto). Als Datei
-          teilen geht auch ohne Konto.
+          {t(
+            'Links and collaboration need you to be signed in (Settings → Account). Sharing as a file works without an account.',
+          )}
         </p>
       )}
       {tab === 'link' ? (
@@ -114,27 +116,27 @@ function ScopePicker({
         <Switch
           checked={scope.slides}
           onChange={(v) => onChange({ ...scope, slides: v })}
-          label="Folien (PDF)"
+          label={t('Slides (PDF)')}
         />
         <Switch
           checked={scope.notes}
           onChange={(v) => onChange({ ...scope, notes: v })}
-          label="Notizen"
+          label={t('Notes')}
         />
         <Switch
           checked={scope.cards}
           onChange={(v) => onChange({ ...scope, cards: v })}
-          label="Karteikarten"
+          label={t('Flashcards')}
         />
         <Switch
           checked={scope.annotations}
           disabled={!scope.slides}
           onChange={(v) => onChange({ ...scope, annotations: v })}
-          label="Annotationen"
+          label={t('Annotations')}
         />
       </div>
       <p className="faint" style={{ margin: 0, fontSize: 12 }}>
-        Lernfortschritt wird nie geteilt. Ohne „Karteikarten“ werden Karten zu normalen Notizen.
+        {t('Learning progress is never shared. Without “Flashcards”, cards become normal notes.')}
       </p>
     </div>
   );
@@ -193,7 +195,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
     } catch (e) {
       if (!(e instanceof ShareFilesError)) throw e;
       setProblems(e.problems);
-      toast('Link gespeichert, aber nicht alle Dateien wurden hochgeladen.', 'error');
+      toast(t('Link saved, but not all files were uploaded.'), 'error');
       return e.token;
     }
   };
@@ -230,7 +232,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
             })
           }
         >
-          <Download size={14} /> Als Datei
+          <Download size={14} /> {t('As file')}
         </button>
         <button
           className="btn btn-primary"
@@ -244,33 +246,34 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
             })
           }
         >
-          <Link2 size={14} /> Link erstellen
+          <Link2 size={14} /> {t('Create link')}
         </button>
       </div>
       {problems.length > 0 && (
         <div className="share-problems" role="alert">
-          <strong>Diese Dateien konnten nicht hochgeladen werden:</strong>
+          <strong>{t('These files could not be uploaded:')}</strong>
           <ul>
             {problems.map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ul>
-          Prüfe die Verbindung und tippe dann beim Link auf „Aktualisieren“ – bereits hochgeladene
-          Dateien werden nicht erneut gesendet.
+          {t(
+            'Check the connection and then tap “Refresh” on the link – files already uploaded are not sent again.',
+          )}
         </div>
       )}
       <label className="row share-live-option">
         <input type="checkbox" checked={liveNew} onChange={(e) => setLiveNew(e.target.checked)} />
-        Automatisch aktualisieren (live): Änderungen erscheinen nach etwa 20 Sekunden im Link
+        {t('Update automatically (live): changes appear in the link after about 20 seconds')}
       </label>
       {shares.length > 0 && (
         <table className="table compact">
           <thead>
             <tr>
-              <th>Link</th>
-              <th>Umfang</th>
-              <th>Live</th>
-              <th>Stand</th>
+              <th>{t('Link')}</th>
+              <th>{t('Scope')}</th>
+              <th>{t('Live')}</th>
+              <th>{t('Version')}</th>
               <th />
             </tr>
           </thead>
@@ -285,7 +288,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                       title={(missing[s.token] ?? []).join('\n')}
                       data-testid="share-missing"
                     >
-                      {missing[s.token]?.length} Datei(en) fehlen im Link.{' '}
+                      {missing[s.token]?.length} {t('file(s) missing in the link.')}{' '}
                       <button
                         className="link-btn"
                         disabled={busy}
@@ -296,7 +299,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                           })
                         }
                       >
-                        Jetzt hochladen
+                        {t('Upload now')}
                       </button>
                     </div>
                   )}
@@ -305,11 +308,11 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                 <td>
                   <input
                     type="checkbox"
-                    aria-label="Automatisch aktualisieren"
+                    aria-label={t('Update automatically')}
                     title={
                       live[s.token]
-                        ? 'Folgt Änderungen automatisch – abschalten für einen festen Stand'
-                        : `Automatisch aktualisieren (Umfang: ${describeScope(scope)})`
+                        ? t('Follows changes automatically – switch off for a fixed state')
+                        : t('Update automatically (scope: {0})', { '0': describeScope(scope) })
                     }
                     checked={Boolean(live[s.token])}
                     onChange={(e) =>
@@ -324,14 +327,14 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                 <td className="row" style={{ gap: 4 }}>
                   <button
                     className="icon-btn"
-                    title="Link kopieren"
+                    title={t('Copy link')}
                     onClick={() => copy(appLink(`/s/${s.token}`))}
                   >
                     <Copy size={14} />
                   </button>
                   <button
                     className="icon-btn"
-                    title={`Mit aktuellem Stand (${describeScope(scope)}) aktualisieren`}
+                    title={t('Update with the current state ({0})', { '0': describeScope(scope) })}
                     disabled={busy}
                     onClick={() => void run(async () => (await publish(s.token), reload()))}
                   >
@@ -339,7 +342,7 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                   </button>
                   <button
                     className="icon-btn"
-                    title="Link zurückziehen"
+                    title={t('Revoke link')}
                     disabled={busy}
                     onClick={() =>
                       void run(async () => (await app.sharing.unpublish(s.token), reload()))
@@ -354,10 +357,9 @@ function LinkTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
         </table>
       )}
       <p className="faint" style={{ margin: 0, fontSize: 12 }}>
-        Wer den Link hat, kann den Stand ansehen (auch ohne Konto) und in die eigene Wissensbasis
-        klonen. Live-Links übernehmen deine Änderungen automatisch, solange RemCraft bei dir
-        angemeldet geöffnet ist; andere Links bleiben beim festen Stand, bis du „Aktualisieren“
-        tippst. Bereits geklonte Kopien ändern sich nie.
+        {t(
+          'Anyone with the link can view this state (also without an account) and clone it into their own knowledge base. Live links follow your changes automatically while RemCraft is open and signed in for you; other links keep their fixed state until you tap “Refresh”. Copies already cloned never change.',
+        )}
       </p>
     </>
   );
@@ -391,13 +393,14 @@ function LiveTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
   };
 
   if (rem?.spaceId && !space)
-    return <p className="muted">Teil eines geteilten Bereichs (lädt …).</p>;
+    return <p className="muted">{t('Part of a shared space (loading …).')}</p>;
   if (!space) {
     return (
       <>
         <p style={{ margin: 0 }}>
-          Der ganze Bereich (mit allen Unterseiten, Folien, Notizen und Karten) wird live mit
-          anderen synchronisiert. Jede Person lernt mit ihrem eigenen Fortschritt.
+          {t(
+            'The whole space (with all subpages, slides, notes and cards) is synchronised live with others. Everyone learns with their own progress.',
+          )}
         </p>
         <div className="row">
           <span className="spacer" />
@@ -406,7 +409,7 @@ function LiveTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
             disabled={busy || !signedIn}
             onClick={() => void run(async () => void (await app.sharing.shareLive(remId)))}
           >
-            <Users size={14} /> Live teilen
+            <Users size={14} /> {t('Share live')}
           </button>
         </div>
       </>
@@ -415,12 +418,12 @@ function LiveTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
   return (
     <>
       <p style={{ margin: 0 }}>
-        Geteilt als <strong>{space.name}</strong> · deine Rolle: {ROLE_LABELS[space.role]}
-        {space.rootId !== remId && ' (über einen übergeordneten Bereich)'}
+        {t('Shared as')} <strong>{space.name}</strong> {t('· your role:')} {ROLE_LABELS[space.role]}
+        {space.rootId !== remId && t(' (via a parent space)')}
       </p>
       {owner && (
         <div className="row">
-          <span className="muted">Einladungslink:</span>
+          <span className="muted">{t('Invite link:')}</span>
           {(['writer', 'reader'] as const).map((role) => (
             <button
               key={role}
@@ -471,7 +474,7 @@ function LiveTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
                 {owner && m.role !== 'owner' && (
                   <button
                     className="icon-btn"
-                    title="Entfernen"
+                    title={t('Remove')}
                     onClick={() =>
                       void run(
                         async () => (
@@ -497,12 +500,12 @@ function LiveTab({ remId, signedIn }: { remId: RemId; signedIn: boolean }): Reac
           onClick={() =>
             confirm(
               owner
-                ? 'Teilen beenden? Mitglieder behalten eine eigene Kopie.'
-                : 'Bereich verlassen? Du behältst eine eigene Kopie.',
+                ? t('Stop sharing? Members keep their own copy.')
+                : t('Leave the space? You keep your own copy.'),
             ) && void run(() => app.sharing.leave(space.id))
           }
         >
-          {owner ? 'Teilen beenden' : 'Verlassen'}
+          {owner ? t('Stop sharing') : t('Leave')}
         </button>
       </div>
     </>

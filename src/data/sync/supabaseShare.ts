@@ -8,6 +8,7 @@ import type { SpaceInfo, SpaceMember, SpaceRole } from '@core/sharing/spaces';
 import { completeFileIds, getChunked, putChunked, urlStore } from './chunkedFiles';
 import type { PublishedShare, PublishResult, ShareBackend, ShareUpload } from './shareBackend';
 import { bucketStore, FILE_BUCKET } from './supabase';
+import { t as tr } from '@core/i18n';
 
 /** Public bucket of read-only share files (`<token>/<file id>`). */
 export const SHARE_BUCKET = 'shares';
@@ -43,7 +44,7 @@ export class SupabaseShareBackend implements ShareBackend {
   ) {}
 
   private me(): string {
-    if (!this.userId) throw new Error('Anmeldung erforderlich');
+    if (!this.userId) throw new Error(tr('Sign-in required'));
     return this.userId;
   }
 
@@ -64,11 +65,11 @@ export class SupabaseShareBackend implements ShareBackend {
     const saved = token
       ? check(
           await this.client.from('shares').update(row).eq('token', token).select('token').single(),
-          'Freigabe aktualisieren',
+          tr('Updating share'),
         )
       : check(
           await this.client.from('shares').insert(row).select('token').single(),
-          'Freigabe erstellen',
+          tr('Creating share'),
         );
     const t = (saved as { token: string }).token;
     const failed = await this.uploadSnapshotFiles(t, files);
@@ -85,8 +86,7 @@ export class SupabaseShareBackend implements ShareBackend {
     for (const f of files) {
       try {
         const file = await f.load();
-        if (!file)
-          throw new Error('Datei auf diesem Gerät nicht vorhanden und nicht vom Server ladbar');
+        if (!file) throw new Error(tr('File not on this device and not loadable from the server'));
         await putChunked(store, `${token}/${f.id}`, file.blob, file.mimeType);
       } catch (e) {
         failed.push({ id: f.id, error: e instanceof Error ? e.message : String(e) });
@@ -96,8 +96,8 @@ export class SupabaseShareBackend implements ShareBackend {
   }
 
   async fetchSnapshot(token: string): Promise<ShareSnapshot> {
-    const data = check(await this.client.rpc('get_share', { p_token: token }), 'Freigabe laden');
-    if (!data) throw new Error('Freigabe nicht gefunden (Link falsch oder zurückgezogen)');
+    const data = check(await this.client.rpc('get_share', { p_token: token }), tr('Loading share'));
+    if (!data) throw new Error(tr('Share not found (wrong link or revoked)'));
     return data as ShareSnapshot;
   }
 
@@ -124,7 +124,7 @@ export class SupabaseShareBackend implements ShareBackend {
       (path) => this.client.storage.from(SHARE_BUCKET).getPublicUrl(path).data.publicUrl,
     );
     const blob = await getChunked(store, `${token}/${fileId}`);
-    if (!blob) throw new Error('Datei fehlt im Link - der Besitzer muss ihn aktualisieren.');
+    if (!blob) throw new Error(tr('File missing in the link – the owner needs to refresh it.'));
     return blob;
   }
 
@@ -138,7 +138,7 @@ export class SupabaseShareBackend implements ShareBackend {
         .remove(data.map((f) => `${token}/${f.name}`));
       if (error) break;
     }
-    check(await this.client.from('shares').delete().eq('token', token), 'Freigabe löschen');
+    check(await this.client.from('shares').delete().eq('token', token), tr('Deleting share'));
   }
 
   async myShares(): Promise<PublishedShare[]> {
@@ -148,7 +148,7 @@ export class SupabaseShareBackend implements ShareBackend {
         .select('token,title,root_id,scope_label,updated_at')
         .eq('owner_id', this.me())
         .order('updated_at', { ascending: false }),
-      'Freigaben laden',
+      tr('Loading shares'),
     );
     return (rows ?? []).map(
       (r: {
@@ -170,7 +170,7 @@ export class SupabaseShareBackend implements ShareBackend {
   async createSpace(name: string, rootId: string): Promise<SpaceInfo> {
     const rows = check(
       await this.client.rpc('create_space', { p_name: name, p_root: rootId }),
-      'Space erstellen',
+      tr('Creating space'),
     ) as SpaceRow[];
     return toSpace(rows[0]!);
   }
@@ -178,28 +178,30 @@ export class SupabaseShareBackend implements ShareBackend {
   async createInvite(spaceId: string, role: Exclude<SpaceRole, 'owner'>): Promise<string> {
     return check(
       await this.client.rpc('create_invite', { p_space: spaceId, p_role: role }),
-      'Einladung erstellen',
+      tr('Creating invitation'),
     ) as string;
   }
 
   async joinSpace(inviteToken: string): Promise<SpaceInfo> {
     const rows = check(
       await this.client.rpc('join_space', { p_token: inviteToken }),
-      'Beitreten',
+      tr('Join'),
     ) as SpaceRow[];
-    if (!rows[0]) throw new Error('Einladung ungültig');
+    if (!rows[0]) throw new Error(tr('Invalid invitation'));
     return toSpace(rows[0]);
   }
 
   async mySpaces(): Promise<SpaceInfo[]> {
     if (!this.userId) return [];
-    return (check(await this.client.rpc('my_spaces'), 'Spaces laden') as SpaceRow[]).map(toSpace);
+    return (check(await this.client.rpc('my_spaces'), tr('Loading spaces')) as SpaceRow[]).map(
+      toSpace,
+    );
   }
 
   async members(spaceId: string): Promise<SpaceMember[]> {
     const rows = check(
       await this.client.from('space_members').select('user_id,email,role').eq('space_id', spaceId),
-      'Mitglieder laden',
+      tr('Loading members'),
     );
     return (rows ?? []).map((r: { user_id: string; email: string | null; role: SpaceRole }) => ({
       userId: r.user_id,
@@ -215,12 +217,12 @@ export class SupabaseShareBackend implements ShareBackend {
   ): Promise<void> {
     check(
       await this.client.rpc('set_space_member', { p_space: spaceId, p_user: userId, p_role: role }),
-      'Mitglied ändern',
+      tr('Changing member'),
     );
   }
 
   async leaveSpace(spaceId: string): Promise<void> {
-    check(await this.client.rpc('leave_space', { p_space: spaceId }), 'Space verlassen');
+    check(await this.client.rpc('leave_space', { p_space: spaceId }), tr('Leaving space'));
   }
 
   async uploadSpaceFile(spaceId: string, id: string, blob: Blob, mimeType: string): Promise<void> {

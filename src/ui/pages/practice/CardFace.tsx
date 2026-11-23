@@ -16,6 +16,7 @@ import { useRemTitle } from '../../hooks/useRemTitle';
 import { SlideView } from '../../lecture/SlideView';
 import { useLocation, useNavigate } from 'react-router';
 import { RichTextView } from '../../richtext/RichTextView';
+import { t } from '@core/i18n';
 
 /** Props of {@link CardFace}. */
 export interface CardFaceProps {
@@ -90,7 +91,7 @@ function SlideOrigin({ ids, revealed }: { ids: RemId[]; revealed: boolean }): Re
           })
         }
       >
-        📄 Folie {n}
+        {t('📄 Slide')} {n}
       </button>
       {revealed && (
         <div className="slide-origin-thumb">
@@ -205,15 +206,15 @@ export function CardFace({
       <input
         className="input"
         autoFocus
-        placeholder="Type your answer and press Enter"
+        placeholder={t('Type your answer and press Enter')}
         value={typed}
         disabled={revealed}
         onChange={(e) => setTyped(e.target.value)}
       />
       {result && (
         <div className={`type-result ${result.correct ? 'ok' : 'bad'}`}>
-          {result.correct ? '✓ Correct' : '✗ Not quite'} · {Math.round(result.similarity * 100)} %
-          match
+          {result.correct ? t('✓ Correct') : t('✗ Not quite')} ·{' '}
+          {Math.round(result.similarity * 100)} {t('% match')}
         </div>
       )}
     </form>
@@ -278,7 +279,7 @@ export function CardFace({
                 </li>
               ))}
             </ul>
-            <div className="faint">What is this?</div>
+            <div className="faint">{t('What is this?')}</div>
             {typeBox}
             {revealed && (
               <div className="card-answer">
@@ -304,7 +305,7 @@ export function CardFace({
                   <button
                     className="item-grade"
                     aria-pressed={missed.includes(id)}
-                    title={missed.includes(id) ? 'Doch gewusst' : 'Nicht gewusst'}
+                    title={missed.includes(id) ? t('Knew it after all') : t("Didn't know")}
                     onClick={() => toggleMissed(id)}
                   >
                     <span className="item-mark" aria-hidden>
@@ -322,8 +323,10 @@ export function CardFace({
           </ol>
           {revealed && (
             <div className="faint item-hint">
-              Tippe an, was du nicht wusstest ({view.items.length - missed.length}/
-              {view.items.length} gewusst) – die Bewertung wird vorgeschlagen.
+              {t("Tap what you didn't know ({known}/{total} known) – the rating is suggested.", {
+                known: view.items.length - missed.length,
+                total: view.items.length,
+              })}
             </div>
           )}
           {isList && !revealed && (
@@ -334,7 +337,8 @@ export function CardFace({
                 setListShown((n) => n + 1);
               }}
             >
-              Reveal next item ({listShown}/{view.items.length})
+              {t('Reveal next item (')}
+              {listShown}/{view.items.length})
             </button>
           )}
           {extraAndOrigin}
@@ -356,10 +360,10 @@ export function CardFace({
           {!revealed && (
             <div className="faint" style={{ fontSize: 13 }}>
               {!showAnswerKind
-                ? 'Select all correct answers.'
+                ? t('Select all correct answers.')
                 : single
-                  ? 'One correct answer.'
-                  : 'Several correct answers - select all.'}
+                  ? t('One correct answer.')
+                  : t('Several correct answers - select all.')}
             </div>
           )}
           <div className="mc-options" role={single ? 'radiogroup' : 'group'}>

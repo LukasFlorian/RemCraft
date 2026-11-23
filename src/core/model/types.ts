@@ -498,6 +498,8 @@ export interface Settings {
   whatsNewSeen?: string;
   /** The user tests beta features (the stable app then links to the beta app). */
   betaTester?: boolean;
+  /** Interface language (synced; each device follows it). */
+  language?: 'en' | 'de';
   /**
    * Read-only share links that follow changes automatically ("live"), by
    * token: the shared root and the parts it contains.

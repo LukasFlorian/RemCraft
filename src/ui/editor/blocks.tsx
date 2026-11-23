@@ -13,6 +13,7 @@ import { searchStore } from '../hooks/search';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { RichTextView } from '../richtext/RichTextView';
 import { Outliner } from './Outliner';
+import { t } from '@core/i18n';
 
 /** Resolves a `file:` / data / http source to a displayable URL. */
 export function useFileUrl(src: string | undefined, origin?: string): string | null {
@@ -52,7 +53,7 @@ export function ImageView({
   onResize?: (width: number) => void;
 }): ReactNode {
   const url = useFileUrl(src, origin);
-  if (!url) return <div className="image-placeholder">Loading image…</div>;
+  if (!url) return <div className="image-placeholder">{t('Loading image…')}</div>;
   return (
     <div className="image-block" style={width ? { width } : undefined}>
       <img src={url} alt="" draggable={false} />
@@ -109,7 +110,7 @@ export function FileView({ rem }: { rem: Rem }): ReactNode {
         <span className="spacer" />
         {isPdf && url && (
           <button className="btn btn-sm" onClick={() => setOpen((o) => !o)}>
-            {open ? 'Hide' : 'Show'} PDF
+            {open ? t('Hide') : t('Show')} PDF
           </button>
         )}
         {url && (
@@ -120,7 +121,7 @@ export function FileView({ rem }: { rem: Rem }): ReactNode {
             rel="noreferrer"
             download={rem.file.name}
           >
-            <ExternalLink size={14} /> Open
+            <ExternalLink size={14} /> {t('Open')}
           </a>
         )}
       </div>
@@ -152,7 +153,7 @@ export function EmbedView({ url }: { url: string }): ReactNode {
     <iframe
       className="embed-frame"
       src={e.src}
-      title="Embedded content"
+      title={t('Embedded content')}
       allow="fullscreen; picture-in-picture"
       sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
     />
@@ -164,7 +165,8 @@ export function PortalView({ targetId }: { targetId: RemId }): ReactNode {
   const navigate = useNavigate();
   const exists = useSelector((s) => Boolean(s.get(targetId)));
   const title = useRemTitle(targetId);
-  if (!exists) return <div className="portal portal-missing">Portal target was deleted.</div>;
+  if (!exists)
+    return <div className="portal portal-missing">{t('Portal target was deleted.')}</div>;
   return (
     <div className="portal" onClick={(e) => e.stopPropagation()}>
       <div className="portal-header">
@@ -186,7 +188,9 @@ export function SearchPortalView({ query }: { query: string }): ReactNode {
     <div className="portal search-portal" onClick={(e) => e.stopPropagation()}>
       <div className="portal-header">
         <Search size={14} /> <span className="mono">{query}</span>{' '}
-        <span className="faint">· {hits.length} results</span>
+        <span className="faint">
+          · {hits.length} {t('results')}
+        </span>
       </div>
       <ul className="search-portal-list">
         {hits.map((h) => {
@@ -208,7 +212,7 @@ export function SearchPortalView({ query }: { query: string }): ReactNode {
             </li>
           );
         })}
-        {hits.length === 0 && <li className="faint">No results</li>}
+        {hits.length === 0 && <li className="faint">{t('No results')}</li>}
       </ul>
     </div>
   );
@@ -242,9 +246,9 @@ export function TagTableView({ tagId }: { tagId: RemId }): ReactNode {
       <table className="table">
         <thead>
           <tr>
-            <th>Name</th>
+            <th>{t('Name')}</th>
             {properties.map((p) => (
-              <th key={p.id}>{toPlainText(p.text) || 'Property'}</th>
+              <th key={p.id}>{toPlainText(p.text) || t('Property')}</th>
             ))}
           </tr>
         </thead>
@@ -253,7 +257,7 @@ export function TagTableView({ tagId }: { tagId: RemId }): ReactNode {
             <tr key={rowId}>
               <td>
                 <button className="link-btn" onClick={() => navigate(`/rem/${rowId}`)}>
-                  {app.rems.title(rowId) || 'Untitled'}
+                  {app.rems.title(rowId) || t('Untitled')}
                 </button>
               </td>
               {properties.map((p) => (
@@ -270,8 +274,9 @@ export function TagTableView({ tagId }: { tagId: RemId }): ReactNode {
           {rows.length === 0 && (
             <tr>
               <td colSpan={properties.length + 1} className="faint">
-                Tag Rems with this Rem (#) to add rows. Add children marked as “Property” to add
-                columns.
+                {t(
+                  'Tag Rems with this Rem (#) to add rows. Add children marked as “Property” to add columns.',
+                )}
               </td>
             </tr>
           )}

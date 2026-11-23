@@ -4,6 +4,7 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Modal } from './Modal';
+import { t } from '@core/i18n';
 
 /** Options of a confirmation. */
 interface ConfirmOptions {
@@ -72,13 +73,13 @@ export function DialogProvider({ children }: { children: ReactNode }): ReactNode
           footer={
             <>
               <button className="btn" onClick={() => close(false)}>
-                Cancel
+                {t('Cancel')}
               </button>
               <button
                 className={`btn ${pending.kind === 'confirm' && pending.options.danger ? 'btn-danger' : 'btn-primary'}`}
                 onClick={() => close(true)}
               >
-                {pending.options.confirmLabel ?? 'OK'}
+                {pending.options.confirmLabel ?? t('OK')}
               </button>
             </>
           }

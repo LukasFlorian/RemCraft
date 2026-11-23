@@ -36,6 +36,7 @@ import { useController } from './controller';
 import { docToPatch, patchEquals, remToDoc } from './convert';
 import { detectTrigger, handleTextInput } from './inputRules';
 import { schema } from './schema';
+import { t } from '@core/i18n';
 
 /** Props of {@link BlockEditor}. */
 export interface BlockEditorProps {
@@ -80,8 +81,8 @@ export function refNodeView(app: RemCraftApp, navigate: (id: RemId) => void) {
     const render = (): void => {
       const rem = app.store.get(id);
       dom.textContent = rem
-        ? toPlainText(rem.text, (r) => toPlainText(app.store.get(r)?.text ?? [])) || 'Untitled'
-        : 'deleted reference';
+        ? toPlainText(rem.text, (r) => toPlainText(app.store.get(r)?.text ?? [])) || t('Untitled')
+        : t('deleted reference');
       dom.classList.toggle('ref-missing', !rem);
     };
     render();
@@ -103,7 +104,7 @@ export function latexNodeView(edit: (source: string) => Promise<string | null>) 
     dom.className = 'latex latex-node';
     dom.contentEditable = 'false';
     dom.innerHTML = renderLatex(node.attrs.source as string);
-    dom.title = 'Double-click to edit';
+    dom.title = t('Double-click to edit');
     dom.addEventListener('dblclick', (e) => {
       e.preventDefault();
       void edit(node.attrs.source as string).then((source) => {
@@ -133,7 +134,7 @@ export function separatorNodeView(node: PMNode): NodeView {
             ? ' 1.'
             : ' ⋯')
     : '→';
-  dom.title = `${spec?.label ?? 'Flashcard'} (${node.attrs.token as string}) - Backspace turns it back into text`;
+  dom.title = `${spec?.label ?? t('Flashcard')} (${node.attrs.token as string}) - Backspace turns it back into text`;
   return { dom, ignoreMutation: () => true };
 }
 
@@ -164,7 +165,7 @@ export function BlockEditor({
       window.location.hash = `#/rem/${id}`;
     };
     const editLatex = (source: string): Promise<string | null> =>
-      dialogs.prompt({ title: 'Edit LaTeX', initial: source, confirmLabel: 'Save' });
+      dialogs.prompt({ title: t('Edit LaTeX'), initial: source, confirmLabel: t('Save') });
 
     const view: EditorView = new EditorView(host, {
       state: EditorState.create({ doc: remToDoc(initial) }),

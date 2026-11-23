@@ -18,6 +18,7 @@ import { answerChildren, effectiveAnswerMode, generateCards } from '../cards/gen
 import type { RemGraph } from '../model/graph';
 import type { Rem, RemId } from '../model/types';
 import { removeCloze } from '../richtext/ops';
+import { t } from '@core/i18n';
 
 /** The parts of a subtree included in a share. */
 export interface ShareScope {
@@ -36,28 +37,28 @@ export const SHARE_PRESETS: Record<
   { label: string; hint: string; scope: ShareScope }
 > = {
   all: {
-    label: 'Alles',
-    hint: 'Folien, Notizen, Karten und Annotationen',
+    label: t('Everything'),
+    hint: t('Slides, notes, cards and annotations'),
     scope: { slides: true, notes: true, cards: true, annotations: true },
   },
   'slides-notes': {
-    label: 'Folien + Notizen',
-    hint: 'ohne Karteikarten',
+    label: t('Slides + notes'),
+    hint: t('without flashcards'),
     scope: { slides: true, notes: true, cards: false, annotations: true },
   },
   notes: {
-    label: 'Nur Notizen',
-    hint: 'Notizen ohne Folien-PDF; Karten werden zu normalen Notizen',
+    label: t('Notes only'),
+    hint: t('Notes without slide PDF; cards become normal notes'),
     scope: { slides: false, notes: true, cards: false, annotations: false },
   },
   cards: {
-    label: 'Nur Karteikarten',
-    hint: 'nur Karten (mit ihrer Gliederung als Kontext)',
+    label: t('Flashcards only'),
+    hint: t('cards only (with their outline as context)'),
     scope: { slides: false, notes: false, cards: true, annotations: false },
   },
   slides: {
-    label: 'Nur Folien',
-    hint: 'Foliensatz ohne eigene Notizen',
+    label: t('Slides only'),
+    hint: t('Slide deck without own notes'),
     scope: { slides: true, notes: false, cards: false, annotations: true },
   },
 };
@@ -80,12 +81,12 @@ export function describeScope(scope: ShareScope): string {
   const preset = presetOf(scope);
   if (preset) return SHARE_PRESETS[preset].label;
   const parts = [
-    scope.slides && 'Folien',
-    scope.notes && 'Notizen',
-    scope.cards && 'Karten',
-    scope.annotations && 'Annotationen',
+    scope.slides && t('Slides'),
+    scope.notes && t('Notes'),
+    scope.cards && t('Cards'),
+    scope.annotations && t('Annotations'),
   ].filter(Boolean);
-  return parts.join(' + ') || 'leer';
+  return parts.join(' + ') || t('empty');
 }
 
 /** True for Rems that only structure content (folders, documents, decks, slides). */

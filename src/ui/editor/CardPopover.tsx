@@ -13,6 +13,7 @@ import { newId } from '@core/util/ids';
 import { formatInterval } from '@core/util/time';
 import { useApp, useChildren, useSelector } from '../app/context';
 import { useToast } from '../components/Toast';
+import { t } from '@core/i18n';
 
 /** Props of {@link CardPopover}. */
 export interface CardPopoverProps {
@@ -64,9 +65,9 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
         style={pos}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="popover-title">Flashcards</div>
+        <div className="popover-title">{t('Flashcards')}</div>
         {rem.direction !== 'none' && (
-          <div className="segmented" role="group" aria-label="Direction">
+          <div className="segmented" role="group" aria-label={t('Direction')}>
             {(['forward', 'backward', 'both', 'disabled'] as CardDirection[])
               .filter((d) => rem.answerMode !== 'mc' || d === 'forward' || d === 'disabled')
               .map((d) => (
@@ -76,12 +77,12 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
                   onClick={() => setDirection(d)}
                 >
                   {d === 'forward'
-                    ? '→ Forward'
+                    ? t('→ Forward')
                     : d === 'backward'
-                      ? '← Backward'
+                      ? t('← Backward')
                       : d === 'both'
-                        ? '↔ Both'
-                        : '⇸ Off'}
+                        ? t('↔ Both')
+                        : t('⇸ Off')}
                 </button>
               ))}
           </div>
@@ -95,10 +96,13 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
                   <td>{cardTypeLabel(rem, c, children)}</td>
                   <td className="muted">
                     {!st || st.phase === 'new'
-                      ? 'new'
+                      ? t('new')
                       : st.disabled
-                        ? 'disabled'
-                        : `${st.phase} · next ${st.due <= Date.now() ? 'now' : formatInterval(st.due - Date.now())}`}
+                        ? t('disabled')
+                        : t('{phase} · next {1}', {
+                            phase: st.phase,
+                            '1': st.due <= Date.now() ? 'now' : formatInterval(st.due - Date.now()),
+                          })}
                   </td>
                   <td className="muted">{st ? `${st.reps}×` : ''}</td>
                 </tr>
@@ -109,7 +113,7 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
 
         {ids.length > 0 && (
           <div className="col">
-            <div className="popover-subtitle">Clozes</div>
+            <div className="popover-subtitle">{t('Clozes')}</div>
             {ids.map((id) => {
               const text = toPlainText(rem.text.filter((s) => s.marks?.cloze === id));
               const runs = rem.text.reduce(
@@ -127,7 +131,7 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
                         e.target.checked ? [...m, id] : m.filter((x) => x !== id),
                       )
                     }
-                    aria-label="Select for merge"
+                    aria-label={t('Select for merge')}
                   />
                   <span className="cloze ellipsis" style={{ maxWidth: 120 }}>
                     {text}
@@ -135,7 +139,7 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
                   <input
                     className="input"
                     style={{ height: 28 }}
-                    placeholder="hint"
+                    placeholder={t('hint')}
                     defaultValue={rem.clozeHints?.[id] ?? ''}
                     onBlur={(e) => {
                       const hints = { ...rem.clozeHints };
@@ -153,7 +157,7 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
                         app.rems.update(rem.id, { text: splitCloze(rem.text, id, () => newId(8)) })
                       }
                     >
-                      Split
+                      {t('Split')}
                     </button>
                   )}
                 </div>
@@ -167,7 +171,7 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
                   setMergeSel([]);
                 }}
               >
-                Merge {mergeSel.length} clozes into one card
+                {t('Merge')} {mergeSel.length} {t('clozes into one card')}
               </button>
             )}
           </div>
@@ -178,16 +182,16 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
             className="btn btn-sm"
             onClick={() => navigate(`/practice?scope=${rem.id}&mode=all-in-order`)}
           >
-            Practice
+            {t('Practice')}
           </button>
           <button
             className="btn btn-sm"
             onClick={() => {
               app.practice.reset(cards.map((c) => c.id));
-              toast('Progress reset');
+              toast(t('Progress reset'));
             }}
           >
-            Reset
+            {t('Reset')}
           </button>
           <button
             className="btn btn-sm"
@@ -199,7 +203,7 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
               );
             }}
           >
-            {states.every((s) => s?.disabled) ? 'Enable' : 'Disable'}
+            {states.every((s) => s?.disabled) ? t('Enable') : t('Disable')}
           </button>
           <label className="row" style={{ fontSize: 13 }}>
             <input
@@ -209,7 +213,7 @@ export function CardPopover({ rem, anchor, onClose }: CardPopoverProps): ReactNo
                 app.rems.update(rem.id, { typeInAnswer: e.target.checked || undefined })
               }
             />
-            Type answer
+            {t('Type answer')}
           </label>
         </div>
       </div>

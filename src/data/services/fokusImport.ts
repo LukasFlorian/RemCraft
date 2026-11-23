@@ -42,6 +42,7 @@ import { slideTitle } from './lectures';
 import type { PracticeService } from './practice';
 import type { RemService } from './rems';
 import type { SettingsService } from './settings';
+import { t } from '@core/i18n';
 
 /** Read access to a Fokus data directory (paths relative to `data/`). */
 export interface FokusArchive {
@@ -70,7 +71,7 @@ export interface FokusImportSummary {
 export type FokusImportProgress = (message: string, done: number, total: number) => void;
 
 /** Folder for decks and lectures without a course. */
-const NO_COURSE_NAME = 'Ohne Kurs (Fokus)';
+const NO_COURSE_NAME = t('No course (Fokus)');
 
 /**
  * Wraps the files of a selected folder (`<input webkitdirectory>`).
@@ -82,7 +83,9 @@ export function archiveFromFiles(files: readonly File[]): FokusArchive {
   const root = findDataRoot(files.map(rel));
   if (root === null)
     throw new Error(
-      'Keine Fokus-Daten gefunden. Wähle den Ordner „data“ von Fokus (mit den Unterordnern decks, sessions, courses).',
+      t(
+        'No Fokus data found. Choose the “data” folder of Fokus (with the subfolders decks, sessions, courses).',
+      ),
     );
   const byPath = new Map<string, File>();
   for (const f of files) {
@@ -91,7 +94,7 @@ export function archiveFromFiles(files: readonly File[]): FokusArchive {
   }
   const get = (path: string): File => {
     const f = byPath.get(path);
-    if (!f) throw new Error(`Datei fehlt: ${path}`);
+    if (!f) throw new Error(t('File missing: {path}', { path }));
     return f;
   };
   return { paths: () => [...byPath.keys()], text: (p) => get(p).text(), blob: async (p) => get(p) };
@@ -288,7 +291,7 @@ export class FokusImportService {
     }
 
     this.settings.update({ externalIds: ids });
-    onProgress('Fertig', total, total);
+    onProgress(t('Done'), total, total);
     return summary;
   }
 

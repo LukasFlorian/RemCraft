@@ -19,6 +19,7 @@ import { useToast } from '../components/Toast';
 import type { PdfDoc } from '@data/lecture/pdf';
 import { pdfJsEngine } from '@data/lecture/pdf';
 import { annotatedSlideImage } from '../lecture/handoutImage';
+import { t } from '@core/i18n';
 
 /** Loads a file of the snapshot (`null` when unavailable). */
 export type SnapshotFileLoader = (fileId: string) => Promise<Blob | null>;
@@ -84,7 +85,7 @@ function SharedSlideImage({
         pdf = loadFile(fileId).then((blob) => {
           if (!blob) throw new Error(MISSING);
           return pdfJsEngine.open(blob).catch(() => {
-            throw new Error('PDF konnte nicht geöffnet werden');
+            throw new Error(t('PDF could not be opened'));
           });
         });
         pdf.catch(() => sharedPdfs.delete(fileId));
@@ -108,8 +109,8 @@ function SharedSlideImage({
         alive &&
         setFailed(
           e instanceof Error && e.message === MISSING
-            ? 'Folien-Datei fehlt im Link'
-            : 'Folie konnte nicht dargestellt werden',
+            ? t('Slide file missing in the link')
+            : t('Slide could not be displayed'),
         ),
     );
     return () => {
@@ -123,7 +124,7 @@ function SharedSlideImage({
         <img src={url} alt={alt} loading="lazy" />
       ) : (
         <span className="faint" data-testid="slide-status">
-          {failed ?? 'Folie wird geladen …'}
+          {failed ?? t('Loading slide …')}
         </span>
       )}
     </div>
@@ -232,8 +233,12 @@ export function SnapshotView({
         {showHeading && (
           <Heading className="snap-heading">
             {icon}
-            <span>{text(rem.text) || 'Ohne Titel'}</span>
-            {rem.deck && <span className="badge">{slides.length} Folien</span>}
+            <span>{text(rem.text) || t('Untitled')}</span>
+            {rem.deck && (
+              <span className="badge">
+                {slides.length} {t('Slides')}
+              </span>
+            )}
           </Heading>
         )}
         {notes.length > 0 && <ul className="snap-list">{notes.map(outline)}</ul>}
@@ -283,7 +288,7 @@ export function SharedSnapshotPage(): ReactNode {
     setBusy(true);
     try {
       const root = await app.sharing.clonePublished(token, null);
-      toast('In deine Wissensbasis kopiert');
+      toast(t('Copied into your knowledge base'));
       navigate(`/rem/${root}`);
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e), 'error');
@@ -298,7 +303,7 @@ export function SharedSnapshotPage(): ReactNode {
         {error ? (
           <p className="muted">{error}</p>
         ) : !snapshot ? (
-          <p className="muted">Lade Freigabe …</p>
+          <p className="muted">{t('Loading share …')}</p>
         ) : (
           <>
             <header className="snap-hero">
@@ -306,12 +311,20 @@ export function SharedSnapshotPage(): ReactNode {
                 <h1>{snapshot.title}</h1>
                 <div className="snap-meta">
                   <span className="badge">
-                    <Eye size={12} /> nur lesen
+                    <Eye size={12} /> {t('read only')}
                   </span>
                   <span>{describeScope(snapshot.scope)}</span>
-                  <span>{stats.rems} Einträge</span>
-                  {stats.slides > 0 && <span>{stats.slides} Folien</span>}
-                  <span>Stand {new Date(snapshot.createdAt).toLocaleDateString()}</span>
+                  <span>
+                    {stats.rems} {t('entries')}
+                  </span>
+                  {stats.slides > 0 && (
+                    <span>
+                      {stats.slides} {t('Slides')}
+                    </span>
+                  )}
+                  <span>
+                    {t('Version')} {new Date(snapshot.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
               <button
@@ -319,12 +332,12 @@ export function SharedSnapshotPage(): ReactNode {
                 disabled={busy}
                 onClick={() => void clone()}
               >
-                <Copy size={14} /> In meine Wissensbasis klonen
+                <Copy size={14} /> {t('Clone into my knowledge base')}
               </button>
             </header>
             <SnapshotView snapshot={snapshot} loadFile={loadFile} />
             <p className="faint snap-legal">
-              Geteilt mit RemCraft · <Link to="/legal">Impressum &amp; Datenschutz</Link>
+              {t('Shared with RemCraft ·')} <Link to="/legal">{t('Legal notice & privacy')}</Link>
             </p>
           </>
         )}
@@ -346,7 +359,7 @@ export function JoinSpacePage(): ReactNode {
     setBusy(true);
     try {
       const space = await app.sharing.join(token);
-      toast(`Beigetreten: ${space.name} (${ROLE_LABELS[space.role]})`);
+      toast(t('Joined: {name} ({1})', { name: space.name, '1': ROLE_LABELS[space.role] }));
       navigate(app.store.get(space.rootId) ? `/rem/${space.rootId}` : '/');
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e), 'error');
@@ -359,20 +372,20 @@ export function JoinSpacePage(): ReactNode {
     <div className="main-scroll">
       <div className="page">
         <h1>
-          <Users size={22} /> Einladung zur Zusammenarbeit
+          <Users size={22} /> {t('Invitation to collaborate')}
         </h1>
         <p>
-          Du wurdest eingeladen, einen Bereich (z. B. eine Vorlesungsmappe) gemeinsam zu nutzen. Er
-          erscheint danach in deiner Seitenleiste und wird live synchronisiert; dein Lernfortschritt
-          bleibt privat.
+          {t(
+            'You have been invited to use a space (e.g. a lecture folder) together. It then appears in your sidebar and is synchronised live; your learning progress stays private.',
+          )}
         </p>
         {account.user ? (
           <button className="btn btn-primary" disabled={busy} onClick={() => void join()}>
-            Beitreten
+            {t('Join')}
           </button>
         ) : (
           <button className="btn btn-primary" onClick={() => navigate('/settings/account')}>
-            Erst anmelden
+            {t('Sign in first')}
           </button>
         )}
       </div>

@@ -25,6 +25,7 @@ import type { MenuEntry } from '../components/Menu';
 import { COMMAND_GROUPS, COMMANDS } from './commands';
 import { useController, useControllerState } from './controller';
 import { useCommandContextFactory } from './useCommandContext';
+import { t } from '@core/i18n';
 
 /** The editing toolbar (visible while a Rem is being edited, never in practice). */
 export function EditToolbar(): ReactNode {
@@ -97,44 +98,44 @@ export function EditToolbar(): ReactNode {
   );
 
   return (
-    <div className="edit-toolbar" role="toolbar" aria-label="Editing tools">
+    <div className="edit-toolbar" role="toolbar" aria-label={t('Editing tools')}>
       {button(
-        'Flashcard',
+        t('Flashcard'),
         <Layers size={17} />,
         () =>
           setMenu({
             anchor: cardRef.current!,
-            entries: entries(['Insert Flashcard', 'Flashcard Configuration']),
+            entries: entries([t('Insert Flashcard'), t('Flashcard Configuration')]),
           }),
         cardRef,
       )}
-      {button('Heading', <Heading size={17} />, () =>
+      {button(t('Heading'), <Heading size={17} />, () =>
         app.rems.update(rem.id, {
           heading:
             rem.heading === 1 ? 2 : rem.heading === 2 ? 3 : rem.heading === 3 ? undefined : 1,
         }),
       )}
-      {button('Todo', <CheckSquare size={17} />, () => run('todo'))}
-      {button('Image', <Image size={17} />, () => run('image-upload'))}
-      {button('Table', <Table size={17} />, () => run('table'))}
-      {button('Indent', <IndentIncrease size={17} />, () => run('indent'))}
-      {button('Outdent', <IndentDecrease size={17} />, () => run('outdent'))}
+      {button(t('Todo'), <CheckSquare size={17} />, () => run('todo'))}
+      {button(t('Image'), <Image size={17} />, () => run('image-upload'))}
+      {button(t('Table'), <Table size={17} />, () => run('table'))}
+      {button(t('Indent'), <IndentIncrease size={17} />, () => run('indent'))}
+      {button(t('Outdent'), <IndentDecrease size={17} />, () => run('outdent'))}
       {/* Moving lines (and images) without drag and drop, e.g. on touch screens. */}
       {button('Up', <ArrowUp size={17} />, () => {
         run('move-up');
         controller.focus(focus.instance, focus.remId, 'end');
       })}
-      {button('Down', <ArrowDown size={17} />, () => {
+      {button(t('Down'), <ArrowDown size={17} />, () => {
         run('move-down');
         controller.focus(focus.instance, focus.remId, 'end');
       })}
       {button(
-        'More',
+        t('More'),
         <MoreHorizontal size={17} />,
         () => setMenu({ anchor: moreRef.current!, entries: entries(COMMAND_GROUPS) }),
         moreRef,
       )}
-      {button('Undo', <Undo2 size={17} />, () => {
+      {button(t('Undo'), <Undo2 size={17} />, () => {
         app.store.undo();
         controller.focus(focus.instance, focus.remId, 'end');
       })}

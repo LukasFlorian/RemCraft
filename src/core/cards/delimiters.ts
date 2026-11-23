@@ -8,6 +8,7 @@
  */
 import type { AnswerMode, CardDirection, RemKind } from '../model/types';
 import { protectedRegionEnd } from '../richtext/scan';
+import { t } from '@core/i18n';
 
 /** Semantics of one delimiter token. */
 export interface DelimiterSpec {
@@ -42,42 +43,42 @@ function d(
  */
 export const DELIMITERS: readonly DelimiterSpec[] = Object.freeze([
   // Basic cards
-  d('>>', 'plain', 'forward', 'inline', 'Basic card (forward)'),
-  d('==', 'plain', 'forward', 'inline', 'Basic card (forward)'),
-  d('<<', 'plain', 'backward', 'inline', 'Basic card (backward)'),
-  d('<>', 'plain', 'both', 'inline', 'Basic card (both directions)'),
-  d('><', 'plain', 'both', 'inline', 'Basic card (both directions)'),
-  d('>-', 'plain', 'disabled', 'inline', 'Disabled card'),
-  d('=-', 'plain', 'disabled', 'inline', 'Disabled card'),
+  d('>>', 'plain', 'forward', 'inline', t('Basic card (forward)')),
+  d('==', 'plain', 'forward', 'inline', t('Basic card (forward)')),
+  d('<<', 'plain', 'backward', 'inline', t('Basic card (backward)')),
+  d('<>', 'plain', 'both', 'inline', t('Basic card (both directions)')),
+  d('><', 'plain', 'both', 'inline', t('Basic card (both directions)')),
+  d('>-', 'plain', 'disabled', 'inline', t('Disabled card')),
+  d('=-', 'plain', 'disabled', 'inline', t('Disabled card')),
   // Multi-line (set) cards
-  d('>>>', 'plain', 'forward', 'set', 'Multi-line card'),
-  d('<<<', 'plain', 'backward', 'set', 'Multi-line card (backward)'),
-  d('<><', 'plain', 'both', 'set', 'Multi-line card (both directions)'),
-  d('>->', 'plain', 'disabled', 'set', 'Disabled multi-line card'),
+  d('>>>', 'plain', 'forward', 'set', t('Multi-line card')),
+  d('<<<', 'plain', 'backward', 'set', t('Multi-line card (backward)')),
+  d('<><', 'plain', 'both', 'set', t('Multi-line card (both directions)')),
+  d('>->', 'plain', 'disabled', 'set', t('Disabled multi-line card')),
   // List-answer cards
-  d('>>1.', 'plain', 'forward', 'list', 'List-answer card'),
-  d('<<1.', 'plain', 'backward', 'list', 'List-answer card (backward)'),
-  d('<>1.', 'plain', 'both', 'list', 'List-answer card (both directions)'),
-  d('>-1.', 'plain', 'disabled', 'list', 'Disabled list-answer card'),
+  d('>>1.', 'plain', 'forward', 'list', t('List-answer card')),
+  d('<<1.', 'plain', 'backward', 'list', t('List-answer card (backward)')),
+  d('<>1.', 'plain', 'both', 'list', t('List-answer card (both directions)')),
+  d('>-1.', 'plain', 'disabled', 'list', t('Disabled list-answer card')),
   // Multiple choice
-  d('>>A)', 'plain', 'forward', 'mc', 'Multiple-choice card'),
-  d('==A)', 'plain', 'forward', 'mc', 'Multiple-choice card'),
-  d('>-A)', 'plain', 'disabled', 'mc', 'Disabled multiple-choice card'),
+  d('>>A)', 'plain', 'forward', 'mc', t('Multiple-choice card')),
+  d('==A)', 'plain', 'forward', 'mc', t('Multiple-choice card')),
+  d('>-A)', 'plain', 'disabled', 'mc', t('Disabled multiple-choice card')),
   // Concepts (two-way by default)
-  d('::', 'concept', 'both', 'inline', 'Concept (both directions)'),
+  d('::', 'concept', 'both', 'inline', t('Concept (both directions)')),
   d(':>', 'concept', 'forward', 'inline', 'Concept (forward)'),
   d(':<', 'concept', 'backward', 'inline', 'Concept (backward)'),
   d(':-', 'concept', 'disabled', 'inline', 'Concept (disabled)'),
-  d(':::', 'concept', 'both', 'set', 'Multi-line concept'),
-  d('::1.', 'concept', 'both', 'list', 'List-answer concept'),
+  d(':::', 'concept', 'both', 'set', t('Multi-line concept')),
+  d('::1.', 'concept', 'both', 'list', t('List-answer concept')),
   // Descriptors (forward by default)
   d(';;', 'descriptor', 'forward', 'inline', 'Descriptor (forward)'),
   d(';<', 'descriptor', 'backward', 'inline', 'Descriptor (backward)'),
-  d(';;<', 'descriptor', 'both', 'inline', 'Descriptor (both directions)'),
-  d(';<>', 'descriptor', 'both', 'inline', 'Descriptor (both directions)'),
+  d(';;<', 'descriptor', 'both', 'inline', t('Descriptor (both directions)')),
+  d(';<>', 'descriptor', 'both', 'inline', t('Descriptor (both directions)')),
   d(';-', 'descriptor', 'disabled', 'inline', 'Descriptor (disabled)'),
-  d(';;;', 'descriptor', 'forward', 'set', 'Multi-line descriptor'),
-  d(';;1.', 'descriptor', 'forward', 'list', 'List-answer descriptor'),
+  d(';;;', 'descriptor', 'forward', 'set', t('Multi-line descriptor')),
+  d(';;1.', 'descriptor', 'forward', 'list', t('List-answer descriptor')),
 ]);
 
 /** Delimiters sorted by token length (longest first) for greedy matching. */

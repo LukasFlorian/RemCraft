@@ -16,6 +16,7 @@
  */
 import type { LectureSettings, SlideFlag } from '../model/types';
 import type { SlideStats } from './analytics';
+import { t, tn } from '@core/i18n';
 
 /** One review reason. */
 export interface ReviewReason {
@@ -49,29 +50,43 @@ export function reasons(
 ): ReviewReason[] {
   const out: ReviewReason[] = [];
   if (input.flags.includes('unclear'))
-    out.push({ key: 'unclear', label: 'als unklar markiert', weight: 3 });
+    out.push({ key: 'unclear', label: t('marked as unclear'), weight: 3 });
   const q = input.openQuestions.length;
-  if (q) out.push({ key: 'question', label: `${q} offene Frage${q > 1 ? 'n' : ''}`, weight: 2 });
+  if (q)
+    out.push({
+      key: 'question',
+      label: tn('{n} open question', '{n} open questions', q),
+      weight: 2,
+    });
   const missed =
     s.awayMs >= cfg.missedMinSeconds * 1000 ||
     (s.dwellMs >= cfg.minDwellSeconds * 1000 &&
       s.awayMs >= 10_000 &&
       s.awayMs >= cfg.missedRatio * s.dwellMs);
   if (missed)
-    out.push({ key: 'missed', label: `${fmtDuration(s.awayMs)} nicht in der App`, weight: 2 });
+    out.push({
+      key: 'missed',
+      label: t('{0} not in the app', { '0': fmtDuration(s.awayMs) }),
+      weight: 2,
+    });
   if (input.flags.includes('important'))
-    out.push({ key: 'important', label: 'als wichtig markiert', weight: 1.5 });
-  if (s.drifts) out.push({ key: 'drift', label: `hier abgeschweift (${s.drifts}×)`, weight: 1 });
+    out.push({ key: 'important', label: t('marked as important'), weight: 1.5 });
+  if (s.drifts)
+    out.push({
+      key: 'drift',
+      label: t('drifted here ({drifts}×)', { drifts: s.drifts }),
+      weight: 1,
+    });
   if (s.dwellMs >= longMs && !input.hasNote)
     out.push({
       key: 'no_note',
-      label: `${fmtDuration(s.dwellMs)} erklärt, keine Notiz`,
+      label: t('{0} explained, no note', { '0': fmtDuration(s.dwellMs) }),
       weight: 1,
     });
   if (input.forgottenCards)
     out.push({
       key: 'cards',
-      label: `${input.forgottenCards} Karte${input.forgottenCards > 1 ? 'n' : ''} nicht gewusst`,
+      label: tn('{n} card not known', '{n} cards not known', input.forgottenCards),
       weight: 1.5,
     });
   return out;

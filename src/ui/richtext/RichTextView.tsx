@@ -8,6 +8,7 @@ import type { RemId, RichText, Segment, TextMarks } from '@core/model/types';
 import { toPlainText } from '@core/richtext/ops';
 import { useSelector } from '../app/context';
 import { Latex } from './Latex';
+import { t } from '@core/i18n';
 
 /** How clozes are displayed. */
 export type ClozeMode =
@@ -32,7 +33,7 @@ export function RefTitle({ remId }: { remId: RemId }): ReactNode {
     const rem = s.get(remId);
     return rem ? toPlainText(rem.text, (r) => toPlainText(s.get(r)?.text ?? [])) : null;
   });
-  return title ?? <span className="ref-missing">deleted reference</span>;
+  return title ?? <span className="ref-missing">{t('deleted reference')}</span>;
 }
 
 /** A reference chip. */

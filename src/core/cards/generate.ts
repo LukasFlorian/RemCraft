@@ -8,6 +8,7 @@
  */
 import type { AnswerMode, CardId, CardKind, Rem, RemId } from '../model/types';
 import { clozeIds, isEmpty } from '../richtext/ops';
+import { t } from '@core/i18n';
 
 /** Description of one derived card. */
 export interface CardSpec {
@@ -113,21 +114,21 @@ export function generateCards(rem: Rem, children: readonly Rem[]): CardSpec[] {
  * Human-readable card type label (used in the card browser).
  */
 export function cardTypeLabel(rem: Rem, spec: CardSpec, children: readonly Rem[]): string {
-  if (spec.kind === 'cloze') return 'Cloze';
-  if (spec.kind === 'occlusion') return 'Image occlusion';
+  if (spec.kind === 'cloze') return t('Cloze');
+  if (spec.kind === 'occlusion') return t('Image occlusion');
   const mode = effectiveAnswerMode(rem, children);
   const dir = spec.kind === 'backward' ? ' (backward)' : '';
   const base =
     mode === 'mc'
-      ? 'Multiple choice'
+      ? t('Multiple choice')
       : mode === 'list'
-        ? 'List answer'
+        ? t('List answer')
         : mode === 'set'
           ? 'Multi-line'
           : rem.kind === 'concept'
-            ? 'Concept'
+            ? t('Concept')
             : rem.kind === 'descriptor'
-              ? 'Descriptor'
-              : 'Basic';
+              ? t('Descriptor')
+              : t('Basic');
   return base + dir;
 }

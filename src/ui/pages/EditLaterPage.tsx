@@ -7,6 +7,7 @@ import { Check } from 'lucide-react';
 import { useApp, useSelector } from '../app/context';
 import { RemContent } from '../editor/RemBlock';
 import { useRemTitle } from '../hooks/useRemTitle';
+import { t } from '@core/i18n';
 
 /** Lists Rems marked "edit later". */
 export function EditLaterPage(): ReactNode {
@@ -24,11 +25,11 @@ export function EditLaterPage(): ReactNode {
     <div className="main-scroll">
       <div className="page">
         <div className="page-header">
-          <h1>Edit Later</h1>
+          <h1>{t('Edit Later')}</h1>
         </div>
         {rems.length === 0 && (
           <div className="empty">
-            Nothing to edit later. Use “/Edit later” on any Rem to collect it here.
+            {t('Nothing to edit later. Use “/Edit later” on any Rem to collect it here.')}
           </div>
         )}
         {rems.map((r) => (
@@ -48,7 +49,7 @@ export function EditLaterPage(): ReactNode {
                 app.rems.update(r.id, { editLater: undefined });
               }}
             >
-              <Check size={14} /> Done
+              <Check size={14} /> {t('Done')}
             </button>
           </div>
         ))}

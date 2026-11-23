@@ -15,27 +15,35 @@ import { Field } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { HABIT_ICONS } from './habitIcons';
+import { t as tr } from '@core/i18n';
+import { locale } from '@core/i18n';
 
 /** Weekday labels, Monday first. */
-export const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+export const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
+  // 2026-11-16 is a Monday.
+  new Date(2026, 10, 16 + i)
+    .toLocaleDateString(locale(), { weekday: 'short' })
+    .replace('.', '')
+    .slice(0, 2),
+);
 
 /** Labels of the recording modes. */
 const TRACKING: { id: HabitTracking; label: string; hint: string }[] = [
-  { id: 'check', label: 'Ja / Nein', hint: 'Markiere jeden Tag, an dem du es erledigst.' },
+  { id: 'check', label: tr('Yes / No'), hint: tr('Mark every day you do it.') },
   {
     id: 'count',
-    label: 'Zähler',
-    hint: 'Jedes Tippen zählt eins hoch, bis das Tagesziel erreicht ist.',
+    label: tr('Counter'),
+    hint: tr('Every tap counts one up until the daily target is reached.'),
   },
   {
     id: 'measure',
-    label: 'Messwert',
-    hint: 'Trage pro Tag einen Wert ein, z. B. 5 km oder 20 Seiten.',
+    label: tr('Measurement'),
+    hint: tr('Enter a value per day, e.g. 5 km or 20 pages.'),
   },
   {
     id: 'flashcards',
-    label: 'Karteikarten',
-    hint: 'Automatisch erledigt, wenn du an dem Tag so viele Karten wiederholst.',
+    label: tr('Flashcards'),
+    hint: tr('Done automatically when you review that many cards on the day.'),
   },
 ];
 
@@ -64,7 +72,7 @@ export function HabitEditor({
 
   const save = (): void => {
     if (!h.name.trim()) {
-      toast('Gib der Gewohnheit einen Namen.', 'error');
+      toast(tr('Give the habit a name.'), 'error');
       return;
     }
     const clean: HabitInput = {
@@ -86,21 +94,21 @@ export function HabitEditor({
 
   return (
     <Modal
-      title={habit ? 'Gewohnheit bearbeiten' : 'Neue Gewohnheit'}
+      title={habit ? tr('Edit habit') : tr('New habit')}
       onClose={() => onClose()}
       footer={
         <>
           <button className="btn" onClick={() => onClose()}>
-            Abbrechen
+            {tr('Cancel')}
           </button>
           <button className="btn btn-primary" onClick={save}>
-            Speichern
+            {tr('Save')}
           </button>
         </>
       }
     >
       <div className="col habit-editor" style={{ gap: 14 }}>
-        <div className="habit-icon-grid" role="listbox" aria-label="Icon">
+        <div className="habit-icon-grid" role="listbox" aria-label={tr('Icon')}>
           {Object.entries(HABIT_ICONS).map(([name, Icon]) => (
             <button
               key={name}
@@ -115,24 +123,24 @@ export function HabitEditor({
             </button>
           ))}
         </div>
-        <Field label="Name">
+        <Field label={tr('Name')}>
           <input
             className="input"
             value={h.name}
-            placeholder="z. B. Sport"
+            placeholder={tr('e.g. Sport')}
             onChange={(e) => set({ name: e.target.value })}
           />
         </Field>
-        <Field label="Beschreibung">
+        <Field label={tr('Description')}>
           <input
             className="input"
             value={h.description}
-            placeholder="z. B. Laufen, Krafttraining oder Ähnliches"
+            placeholder={tr('e.g. running, strength training or similar')}
             onChange={(e) => set({ description: e.target.value })}
           />
         </Field>
-        <Field group label="Farbe">
-          <div className="habit-colors" role="listbox" aria-label="Farbe">
+        <Field group label={tr('Colour')}>
+          <div className="habit-colors" role="listbox" aria-label={tr('Colour')}>
             {HABIT_COLORS.map((c) => (
               <button
                 key={c}
@@ -146,23 +154,23 @@ export function HabitEditor({
             ))}
           </div>
         </Field>
-        <Field group label="Art der Gewohnheit">
+        <Field group label={tr('Habit type')}>
           <div className="segmented">
             <button className={!quit ? 'active' : ''} onClick={() => set({ kind: 'build' })}>
-              Aufbauen
+              {tr('Build')}
             </button>
             <button className={quit ? 'active' : ''} onClick={() => set({ kind: 'quit' })}>
-              Abgewöhnen
+              {tr('Quit')}
             </button>
           </div>
           <p className="faint habit-hint">
             {quit
-              ? 'Jeder Tag ohne Rückfall zählt. Tippe nur, wenn du rückfällig wurdest.'
-              : 'Markiere jeden Tag, an dem du sie erfüllst.'}
+              ? tr('Every day without a relapse counts. Only tap when you relapsed.')
+              : tr('Mark every day you complete it.')}
           </p>
         </Field>
         {!quit && (
-          <Field group label="Erfassung">
+          <Field group label={tr('Tracking')}>
             <div className="segmented habit-tracking">
               {TRACKING.map((t) => (
                 <button
@@ -192,7 +200,7 @@ export function HabitEditor({
             {tracking !== 'check' && (
               <div className="row" style={{ flexWrap: 'wrap' }}>
                 <label className="row" style={{ gap: 6 }}>
-                  Tagesziel
+                  {tr('Daily target')}
                   <input
                     className="input"
                     type="number"
@@ -207,25 +215,25 @@ export function HabitEditor({
                   <input
                     className="input"
                     style={{ width: 120 }}
-                    placeholder="Einheit (km)"
+                    placeholder={tr('Unit (km)')}
                     value={h.unit ?? ''}
                     onChange={(e) => set({ unit: e.target.value })}
                   />
                 )}
-                {tracking === 'count' && <span className="muted">mal</span>}
-                {tracking === 'flashcards' && <span className="muted">Karten</span>}
+                {tracking === 'count' && <span className="muted">{tr('times')}</span>}
+                {tracking === 'flashcards' && <span className="muted">{tr('Cards')}</span>}
               </div>
             )}
           </Field>
         )}
-        <Field group label="Ziel">
+        <Field group label={tr('Goal')}>
           <div className="row" style={{ flexWrap: 'wrap' }}>
             <div className="segmented">
               {(
                 [
-                  ['day', 'Täglich'],
-                  ['week', 'Pro Woche'],
-                  ['month', 'Pro Monat'],
+                  ['day', tr('Daily')],
+                  ['week', tr('Per week')],
+                  ['month', tr('Per month')],
                 ] as [HabitPeriod, string][]
               ).map(([p, label]) => (
                 <button
@@ -247,23 +255,25 @@ export function HabitEditor({
                   min={1}
                   max={h.goal.period === 'week' ? 7 : 31}
                   style={{ width: 70 }}
-                  aria-label="Tage pro Zeitraum"
+                  aria-label={tr('Days per period')}
                   value={h.goal.times}
                   onChange={(e) => set({ goal: { ...h.goal, times: Number(e.target.value) } })}
                 />
-                Tage
+                {tr('Days')}
               </label>
             )}
           </div>
           <p className="faint habit-hint">
-            Serien zählen in{' '}
-            {h.goal.period === 'day' ? 'Tagen' : h.goal.period === 'week' ? 'Wochen' : 'Monaten'}
-            {h.goal.period !== 'day' &&
-              ' – ein ausgelassener Tag ist okay, solange der Zeitraum aufgeht'}
-            .
+            {h.goal.period === 'day'
+              ? tr('Streaks count in days.')
+              : h.goal.period === 'week'
+                ? tr('Streaks count in weeks – a missed day is fine as long as the week adds up.')
+                : tr(
+                    'Streaks count in months – a missed day is fine as long as the month adds up.',
+                  )}
           </p>
         </Field>
-        <Field label="Beginn">
+        <Field label={tr('Start')}>
           <input
             className="input"
             type="date"
@@ -272,7 +282,7 @@ export function HabitEditor({
             onChange={(e) => e.target.value && set({ startDay: e.target.value })}
           />
         </Field>
-        <Field group label="Erinnerungen">
+        <Field group label={tr('Reminders')}>
           <div className="col" style={{ gap: 10 }}>
             {h.reminders.map((r, i) => (
               <div key={r.id} className="habit-reminder">
@@ -298,13 +308,13 @@ export function HabitEditor({
                 <input
                   className="input"
                   type="time"
-                  aria-label="Uhrzeit"
+                  aria-label={tr('Time')}
                   value={r.time}
                   onChange={(e) => setReminder(r.id, { time: e.target.value })}
                 />
                 <button
                   className="icon-btn"
-                  aria-label="Erinnerung entfernen"
+                  aria-label={tr('Remove reminder')}
                   onClick={() => set({ reminders: h.reminders.filter((x) => x.id !== r.id) })}
                 >
                   <Trash2 size={15} />
@@ -326,11 +336,12 @@ export function HabitEditor({
                   void Notification.requestPermission();
               }}
             >
-              <Plus size={14} /> Erinnerung hinzufügen
+              <Plus size={14} /> {tr('Add reminder')}
             </button>
             <p className="faint habit-hint">
-              Erinnerungen kommen, solange RemCraft auf dem Gerät geöffnet ist (auch im Hintergrund
-              als installierte App), und nur wenn du an dem Tag noch nicht fertig bist.
+              {tr(
+                'Reminders arrive while RemCraft is open on the device (also in the background as an installed app), and only when you are not done for the day yet.',
+              )}
             </p>
           </div>
         </Field>

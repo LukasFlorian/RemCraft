@@ -9,6 +9,7 @@ import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { useLocalState } from '../hooks/useLocalState';
+import { t } from '@core/i18n';
 
 /** Grid cells in each direction. */
 const GRID = 24;
@@ -223,9 +224,7 @@ export function WidgetBoard({
     <div className={`widget-board${active ? ' dragging' : ''}`} ref={boardRef}>
       {editing && (
         <div className="board-bar">
-          <span>
-            Kopfzeile ziehen = verschieben, Grenze zwischen Widgets ziehen = Größe ändern.
-          </span>
+          <span>{t('Drag the header to move, drag the border between widgets to resize.')}</span>
           {hidden.map((w) => (
             <button
               key={w.id}
@@ -236,10 +235,10 @@ export function WidgetBoard({
             </button>
           ))}
           <button className="btn btn-sm" onClick={() => setLayout(defaults)}>
-            Standard-Layout
+            {t('Default layout')}
           </button>
           <button className="btn btn-sm btn-primary" onClick={() => onEditingChange(false)}>
-            Fertig
+            {t('Done')}
           </button>
         </div>
       )}
@@ -264,15 +263,15 @@ export function WidgetBoard({
               <header
                 className="widget-head"
                 onPointerDown={(e) => startMove(w.id, e)}
-                title="Ziehen zum Verschieben"
+                title={t('Drag to move')}
               >
                 <span className="widget-title">{w.title}</span>
                 <span className="spacer" />
                 {w.actions}
                 <button
                   className="icon-btn widget-hide"
-                  aria-label="Ausblenden"
-                  title="Ausblenden (über das Layout-Symbol wieder einblenden)"
+                  aria-label={t('Hide')}
+                  title={t('Hide (show again via the layout icon)')}
                   onClick={() => setRect(w.id, { hidden: true })}
                 >
                   <X size={13} />

@@ -9,6 +9,7 @@ import { useApp, useRem } from '../app/context';
 import { isMod } from '../hooks/useHotkeys';
 import { Latex } from '../richtext/Latex';
 import { useController } from './controller';
+import { t as tr } from '@core/i18n';
 
 /** Props of {@link PlainBlockEditor}. */
 export interface PlainBlockEditorProps {
@@ -60,7 +61,7 @@ export function PlainBlockEditor({ remId, instance, nonce }: PlainBlockEditorPro
       {rem.code && (
         <input
           className="code-language"
-          placeholder="language"
+          placeholder={tr('language')}
           value={rem.code.language}
           onChange={(e) => app.rems.update(remId, { code: { language: e.target.value } })}
         />
@@ -70,7 +71,7 @@ export function PlainBlockEditor({ remId, instance, nonce }: PlainBlockEditorPro
         className="plain-editor"
         spellCheck={false}
         value={value}
-        placeholder={rem.code ? 'Code…' : 'LaTeX, e.g. \\int_0^1 x^2 dx'}
+        placeholder={rem.code ? tr('Code…') : tr('LaTeX, e.g. \\int_0^1 x^2 dx')}
         onChange={(e) => commit(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Escape' || (e.key === 'Enter' && isMod(e))) {

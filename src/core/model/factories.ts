@@ -17,6 +17,7 @@ import type {
   Sm2Params,
   Timestamp,
 } from './types';
+import { t } from '@core/i18n';
 
 /**
  * Default parameters of RemNote's Anki-SM-2 variant.
@@ -76,7 +77,7 @@ export function createSchedulerConfig(
 ): SchedulerConfig {
   return {
     id: partial.id ?? newId(),
-    name: partial.name ?? 'Custom scheduler',
+    name: partial.name ?? t('Custom scheduler'),
     algorithm: partial.algorithm ?? 'sm2',
     sm2: { ...DEFAULT_SM2_PARAMS, ...partial.sm2 },
     fsrs: { ...DEFAULT_FSRS_PARAMS, weights: [...DEFAULT_FSRS_WEIGHTS], ...partial.fsrs },
@@ -87,7 +88,7 @@ export function createSchedulerConfig(
 
 /** The built-in global default scheduler (Anki SM-2, like RemNote). */
 export function createDefaultScheduler(now: Timestamp = Date.now()): SchedulerConfig {
-  return createSchedulerConfig({ id: DEFAULT_SCHEDULER_ID, name: 'Default (Anki SM-2)' }, now);
+  return createSchedulerConfig({ id: DEFAULT_SCHEDULER_ID, name: t('Default (Anki SM-2)') }, now);
 }
 
 /** Default user settings. */
@@ -194,7 +195,7 @@ export function createCardState(id: CardId, remId: RemId, now: Timestamp = Date.
 export function createExam(partial: Partial<Exam> = {}, now: Timestamp = Date.now()): Exam {
   return {
     id: partial.id ?? newId(),
-    name: partial.name ?? 'Exam',
+    name: partial.name ?? t('Exam'),
     date: partial.date ?? now + 14 * 24 * 3600 * 1000,
     scope: partial.scope ?? [],
     newCardMode: partial.newCardMode ?? 'spread',

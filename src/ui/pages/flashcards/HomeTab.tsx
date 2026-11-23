@@ -35,6 +35,7 @@ import type { MenuEntry } from '../../components/Menu';
 import { useRemTitle } from '../../hooks/useRemTitle';
 import { PRIORITY_LABELS, useRemMenu } from '../remMenu';
 import { PriorityIcon } from '../../components/PriorityIcon';
+import { t, tn } from '@core/i18n';
 
 /** Number of cards in every subtree. */
 function selectCardCounts(store: Store): Map<RemId, number> {
@@ -82,16 +83,16 @@ export function HomeTab(): ReactNode {
     <div className="col" style={{ gap: 28 }}>
       <section>
         <h2 className="section-title">
-          <Target size={20} className="accent-icon" /> Today&apos;s Goal
+          <Target size={20} className="accent-icon" /> {t("Today's Goal")}
         </h2>
         <div className="grid-2">
           <div className="card goal-card">
             <div className="goal-number">
-              <strong>{goal.remaining}</strong> cards due for today
+              <strong>{goal.remaining}</strong> {t('cards due for today')}
             </div>
             <ProgressBar value={goal.target ? goal.done / goal.target : 1} />
             <div className="faint" style={{ fontSize: 13 }}>
-              {goal.done} of {goal.target} done today
+              {goal.done} {t('of')} {goal.target} {t('done today')}
             </div>
             <button
               className="btn btn-primary btn-lg"
@@ -99,36 +100,40 @@ export function HomeTab(): ReactNode {
               onClick={() => navigate('/practice?scope=global')}
             >
               {queue.length === 0
-                ? 'All done for today 🎉'
-                : `Practice ${queue.length} Cards · ${minutes} min`}
+                ? t('All done for today 🎉')
+                : t('Practice {length} Cards · {minutes} min', { length: queue.length, minutes })}
             </button>
           </div>
           <div className="card streak-card">
             <div className="row" style={{ alignItems: 'flex-start' }}>
               <div className="col" style={{ gap: 6 }}>
                 <div className="goal-number">
-                  <strong>{streak.current}</strong> day streak
+                  <strong>{streak.current}</strong> {t('day streak')}
                 </div>
                 {!streak.hitToday ? (
                   <span className="badge badge-warning">
-                    <AlertTriangle size={12} /> Practice{' '}
-                    {Math.max(0, settings.streakGoal - streak.today)} cards
+                    <AlertTriangle size={12} /> {t('Practice')}{' '}
+                    {Math.max(0, settings.streakGoal - streak.today)} {t('cards')}
                   </span>
                 ) : (
-                  <span className="badge badge-success">Streak goal reached</span>
+                  <span className="badge badge-success">{t('Streak goal reached')}</span>
                 )}
                 <span className="faint" style={{ fontSize: 12 }}>
-                  Longest: {streak.longest} days
+                  {t('Longest:')} {streak.longest} {t('days')}
                 </span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <BarChart
-                  ariaLabel="Reviews in the last 7 days"
+                  ariaLabel={t('Reviews in the last 7 days')}
                   labels={week.map((d) =>
                     new Date(d.day).toLocaleDateString(undefined, { weekday: 'narrow' }),
                   )}
                   series={[
-                    { name: 'Reviews', color: 'var(--series-1)', values: week.map((d) => d.count) },
+                    {
+                      name: t('Reviews'),
+                      color: 'var(--series-1)',
+                      values: week.map((d) => d.count),
+                    },
                   ]}
                   goal={settings.streakGoal}
                   height={120}
@@ -142,7 +147,7 @@ export function HomeTab(): ReactNode {
       {plans.length > 0 && (
         <section>
           <h2 className="section-title">
-            <GraduationCap size={20} className="accent-icon" /> Exams
+            <GraduationCap size={20} className="accent-icon" /> {t('Exams')}
           </h2>
           <div className="grid-2">
             {plans.map((p) => (
@@ -156,16 +161,16 @@ export function HomeTab(): ReactNode {
                     {p.exam.name}
                   </strong>
                   <span className={`badge ${p.onTrack ? 'badge-success' : 'badge-warning'}`}>
-                    {p.onTrack ? 'On track' : 'Behind'}
+                    {p.onTrack ? t('On track') : t('Behind')}
                   </span>
                 </div>
                 <div className="muted" style={{ fontSize: 13 }}>
-                  {p.daysLeft === 0 ? 'Today' : `in ${p.daysLeft} day${p.daysLeft > 1 ? 's' : ''}`}{' '}
-                  · {p.totalCards} cards · {p.newRemaining} new left
+                  {p.daysLeft === 0 ? t('Today') : tn('in {n} day', 'in {n} days', p.daysLeft)} ·{' '}
+                  {p.totalCards} {t('cards ·')} {p.newRemaining} {t('new left')}
                 </div>
                 <ProgressBar value={p.todayTarget ? p.todayDone / p.todayTarget : 1} />
                 <div className="faint" style={{ fontSize: 12 }}>
-                  Today: {p.todayDone} / {p.todayTarget}
+                  {t('Today:')} {p.todayDone} / {p.todayTarget}
                 </div>
               </button>
             ))}
@@ -265,7 +270,7 @@ function PriorityItem({
           <button
             className={`tree-toggle${open ? ' open' : ''}`}
             onClick={() => setOpen(!open)}
-            aria-label="Expand"
+            aria-label={t('Expand')}
           >
             <ChevronRight size={13} />
           </button>
@@ -285,13 +290,13 @@ function PriorityItem({
             className="btn btn-sm due-btn"
             onClick={() => navigate(`/practice?scope=${remId}&mode=srs`)}
           >
-            {due} Due
+            {due} {t('Due')}
           </button>
         )}
-        {priority === 'paused' && <span className="badge">Paused</span>}
+        {priority === 'paused' && <span className="badge">{t('Paused')}</span>}
         <button
           className="icon-btn"
-          aria-label="More"
+          aria-label={t('More')}
           onClick={(e) =>
             setMenu({ anchor: e.currentTarget, entries: remMenu(remId, { includeOpen: true }) })
           }

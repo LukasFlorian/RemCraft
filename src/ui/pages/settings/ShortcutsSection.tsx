@@ -4,46 +4,47 @@
 import type { ReactNode } from 'react';
 import { Kbd } from '../../components/Controls';
 import { MOD_LABEL } from '../../hooks/useHotkeys';
+import { t } from '@core/i18n';
 
 const M = MOD_LABEL;
 const GROUPS: { title: string; items: [string, string][] }[] = [
   {
-    title: 'Global',
+    title: t('Global'),
     items: [
-      [`${M} K`, 'Search'],
-      [`${M} \\`, 'Toggle sidebar'],
-      ['Alt N', 'New document'],
-      ['Alt F', 'Practice flashcards'],
+      [`${M} K`, t('Search')],
+      [`${M} \\`, t('Toggle sidebar')],
+      ['Alt N', t('New document')],
+      ['Alt F', t('Practice flashcards')],
       [`${M} Z / ${M} ⇧ Z`, 'Undo / redo'],
     ],
   },
   {
-    title: 'Editing',
+    title: t('Editing'),
     items: [
-      ['Enter', 'New Rem (split)'],
-      ['⇧ Enter', 'Line break'],
+      ['Enter', t('New Rem (split)')],
+      ['⇧ Enter', t('Line break')],
       ['Tab / ⇧ Tab', 'Indent / outdent'],
-      [`${M} ⇧ ↑ / ↓`, 'Move Rem up / down'],
+      [`${M} ⇧ ↑ / ↓`, t('Move Rem up / down')],
       [`${M} ↑ / ↓`, 'Collapse / expand'],
-      [`${M} Enter`, 'Toggle todo'],
+      [`${M} Enter`, t('Toggle todo')],
       [`${M} B / I / U / E`, 'Bold / italic / underline / code'],
       [`${M} ⇧ S / H / C`, 'Strikethrough / highlight / cloze'],
-      [`${M} ⇧ D`, 'Duplicate'],
-      ['Esc', 'Select block (then ↑↓, ⇧↑↓, Tab, ⌫, ⌘C)'],
-      ['/', 'Command menu'],
+      [`${M} ⇧ D`, t('Duplicate')],
+      ['Esc', t('Select block (then ↑↓, ⇧↑↓, Tab, ⌫, ⌘C)')],
+      ['/', t('Command menu')],
       ['[[ · # · ((', 'Reference · tag · portal'],
-      ['>> == :: ;; {{', 'Create flashcards (see docs)'],
+      ['>> == :: ;; {{', t('Create flashcards (see docs)')],
     ],
   },
   {
-    title: 'Practice',
+    title: t('Practice'),
     items: [
-      ['Space / Enter', 'Show answer · accept suggestion'],
-      ['1 2 3 4', 'Forgot · Partially · With effort · Easily'],
-      ['S', 'Skip'],
-      ['U', 'Undo'],
-      ['E', 'Edit card'],
-      ['Esc', 'Exit'],
+      ['Space / Enter', t('Show answer · accept suggestion')],
+      ['1 2 3 4', t('Forgot · Partially · With effort · Easily')],
+      ['S', t('Skip')],
+      ['U', t('Undo')],
+      ['E', t('Edit card')],
+      ['Esc', t('Exit')],
     ],
   },
 ];

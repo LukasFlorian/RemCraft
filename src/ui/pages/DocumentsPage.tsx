@@ -28,14 +28,16 @@ import type { MenuEntry } from '../components/Menu';
 import { useLocalState } from '../hooks/useLocalState';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { useRemMenu } from './remMenu';
+import { fileDropAttr } from '../import/fileDrop';
+import { t as tr } from '@core/i18n';
 
 type Filter = 'all' | 'documents' | 'folders' | 'pdfs' | 'tags' | 'daily';
 type Sort = 'newest' | 'oldest' | 'updated' | 'az';
 
 const SORT_LABELS: Record<Sort, string> = {
-  newest: 'Newest first',
-  oldest: 'Oldest first',
-  updated: 'Recently edited',
+  newest: tr('Newest first'),
+  oldest: tr('Oldest first'),
+  updated: tr('Recently edited'),
   az: 'A → Z',
 };
 
@@ -118,7 +120,7 @@ export function DocumentsPage(): ReactNode {
   const pills: { id: Filter; label: string; icon: ReactNode; count: number }[] = [
     {
       id: 'all',
-      label: 'All',
+      label: tr('All'),
       icon: <span className="pill-dot" />,
       count: new Set(
         [...data.docs, ...data.folders, ...data.pdfs, ...data.tags, ...data.daily].map((r) => r.id),
@@ -126,42 +128,42 @@ export function DocumentsPage(): ReactNode {
     },
     {
       id: 'documents',
-      label: 'Documents',
+      label: tr('Documents'),
       icon: <FileText size={14} className="icon-doc" />,
       count: data.docs.length,
     },
     {
       id: 'folders',
-      label: 'Folders',
+      label: tr('Folders'),
       icon: <Folder size={14} className="icon-folder" />,
       count: data.folders.length,
     },
-    { id: 'pdfs', label: 'PDFs', icon: <FileType size={14} />, count: data.pdfs.length },
-    { id: 'tags', label: 'Tags', icon: <Tag size={14} />, count: data.tags.length },
+    { id: 'pdfs', label: tr('PDFs'), icon: <FileType size={14} />, count: data.pdfs.length },
+    { id: 'tags', label: tr('Tags'), icon: <Tag size={14} />, count: data.tags.length },
     {
       id: 'daily',
-      label: 'Daily Notes',
+      label: tr('Daily Notes'),
       icon: <CalendarDays size={14} />,
       count: data.daily.length,
     },
   ];
 
   return (
-    <div className="main-scroll">
+    <div className="main-scroll" data-file-drop-page="root">
       <div className="page page-wide">
         <div className="page-header">
-          <h1>Documents &amp; Folders</h1>
+          <h1>{tr('Documents & Folders')}</h1>
           <button className="btn" onClick={() => modals.open({ kind: 'import' })}>
-            <Upload size={15} /> Import
+            <Upload size={15} /> {tr('Import')}
           </button>
           <button
             className="btn"
             onClick={() => {
-              const f = app.rems.createFolder(null, 'New Folder');
+              const f = app.rems.createFolder(null, tr('New Folder'));
               navigate(`/rem/${f.id}`);
             }}
           >
-            <FolderPlus size={15} /> Folder
+            <FolderPlus size={15} /> {tr('Folder')}
           </button>
           <button
             className="btn btn-primary"
@@ -170,17 +172,17 @@ export function DocumentsPage(): ReactNode {
               navigate(`/rem/${d.id}`);
             }}
           >
-            <Plus size={15} /> Create
+            <Plus size={15} /> {tr('Create')}
           </button>
         </div>
         <div className="row" style={{ flexWrap: 'wrap', marginBottom: 18 }}>
           <input
             className="input"
             style={{ maxWidth: 280 }}
-            placeholder="Search"
+            placeholder={tr('Search')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Filter documents"
+            aria-label={tr('Filter documents')}
           />
           {pills.map((p) => (
             <button
@@ -197,7 +199,7 @@ export function DocumentsPage(): ReactNode {
             style={{ width: 170 }}
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
-            aria-label="Sort"
+            aria-label={tr('Sort')}
           >
             {(Object.keys(SORT_LABELS) as Sort[]).map((s) => (
               <option key={s} value={s}>
@@ -206,7 +208,7 @@ export function DocumentsPage(): ReactNode {
             ))}
           </select>
         </div>
-        {list.length === 0 && <div className="empty">Nothing here yet.</div>}
+        {list.length === 0 && <div className="empty">{tr('Nothing here yet.')}</div>}
         {groups.map((g) => (
           <section key={g.label || 'all'} className="doc-group">
             {g.label && <h3 className="doc-group-label">{g.label}</h3>}
@@ -257,6 +259,9 @@ function DocRow({
   return (
     <div
       className="doc-row"
+      data-file-drop={
+        rem.isFolder || rem.isDocument ? fileDropAttr(rem.id, Boolean(rem.deck)) : undefined
+      }
       onClick={onOpen}
       role="link"
       tabIndex={0}
@@ -275,7 +280,7 @@ function DocRow({
       </span>
       <button
         className="icon-btn"
-        aria-label="More"
+        aria-label={tr('More')}
         onClick={(e) => {
           e.stopPropagation();
           onMenu(e.currentTarget);

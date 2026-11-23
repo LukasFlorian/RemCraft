@@ -8,6 +8,7 @@ import type { RemId } from '@core/model/types';
 import { useApp, useRem } from '../app/context';
 import { Modal } from './Modal';
 import { REM_COLORS, REM_ICONS, RemIcon, isEmojiIcon } from './RemIcon';
+import { t } from '@core/i18n';
 
 /** The icon & colour dialog. */
 export function IconPicker({ remId, onClose }: { remId: RemId; onClose: () => void }): ReactNode {
@@ -19,21 +20,21 @@ export function IconPicker({ remId, onClose }: { remId: RemId; onClose: () => vo
     app.rems.update(remId, patch);
 
   return (
-    <Modal title="Icon und Farbe" onClose={onClose}>
+    <Modal title={t('Icon and colour')} onClose={onClose}>
       <div className="row" style={{ gap: 12 }}>
         <span className="icon-preview">
           <RemIcon rem={rem} size={34} />
         </span>
-        <span className="muted">Vorschau</span>
+        <span className="muted">{t('Preview')}</span>
         <span className="spacer" />
         <button
           className="btn btn-sm"
           onClick={() => (set({ icon: undefined, color: undefined }), setEmoji(''))}
         >
-          Standard
+          {t('Default')}
         </button>
       </div>
-      <div className="icon-grid" role="listbox" aria-label="Icon">
+      <div className="icon-grid" role="listbox" aria-label={t('Icon')}>
         {Object.entries(REM_ICONS).map(([name, Icon]) => (
           <button
             key={name}
@@ -51,7 +52,7 @@ export function IconPicker({ remId, onClose }: { remId: RemId; onClose: () => vo
         <input
           className="input"
           style={{ width: 120 }}
-          placeholder="Emoji 📚"
+          placeholder={t('Emoji 📚')}
           value={emoji}
           maxLength={8}
           onChange={(e) => {
@@ -61,10 +62,10 @@ export function IconPicker({ remId, onClose }: { remId: RemId; onClose: () => vo
           }}
         />
         <span className="faint" style={{ fontSize: 12 }}>
-          oder ein Emoji eingeben
+          {t('or enter an emoji')}
         </span>
       </div>
-      <div className="row" role="listbox" aria-label="Farbe" style={{ gap: 8 }}>
+      <div className="row" role="listbox" aria-label={t('Colour')} style={{ gap: 8 }}>
         {Object.entries(REM_COLORS).map(([key, color]) => (
           <button
             key={key}

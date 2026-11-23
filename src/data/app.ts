@@ -35,6 +35,7 @@ import type { AuthUser } from './sync/supabase';
 import { AuthService, createSupabase, SupabaseBackend } from './sync/supabase';
 import { TabSync } from './sync/tabs';
 import { parseChannel } from '@core/release/features';
+import { t } from '@core/i18n';
 
 /**
  * Local storage namespace of this build: the beta app (served below the
@@ -282,7 +283,7 @@ export class RemCraftApp {
    * right away anyway.
    */
   async deleteAccount(): Promise<void> {
-    if (!this.auth) throw new Error('Kein Server konfiguriert.');
+    if (!this.auth) throw new Error(t('No server configured.'));
     this.stopSync();
     try {
       await this.auth.deleteAccount();

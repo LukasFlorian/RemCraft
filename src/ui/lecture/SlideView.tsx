@@ -17,6 +17,7 @@ import type { Rem, RemId, Stroke, TextBox, TextMark } from '@core/model/types';
 import { newId } from '@core/util/ids';
 import { useApp, useSelector } from '../app/context';
 import { useSlideImage, useSlideText } from './useSlides';
+import { t as tr } from '@core/i18n';
 
 /** Drawing / editing tools. */
 export type SlideTool = 'select' | 'pen' | 'marker' | 'eraser' | 'text';
@@ -105,7 +106,7 @@ export function SlideView({
       ref={hostRef}
       className={`slide-view${fluid ? ' fluid' : ''}${className ? ` ${className}` : ''}`}
     >
-      {!slide && <div className="slide-empty faint">Keine Folie</div>}
+      {!slide && <div className="slide-empty faint">{tr('No slide')}</div>}
       {slide && (
         <div
           className="slide-stage"
@@ -114,14 +115,14 @@ export function SlideView({
           {url ? (
             <img
               src={url}
-              alt={`Folie ${(slide.slide?.index ?? 0) + 1}`}
+              alt={tr('Slide {0}', { '0': (slide.slide?.index ?? 0) + 1 })}
               draggable={false}
               onLoad={(e) =>
                 setRatio(e.currentTarget.naturalWidth / Math.max(1, e.currentTarget.naturalHeight))
               }
             />
           ) : (
-            <div className="slide-loading faint">Folie wird geladen…</div>
+            <div className="slide-loading faint">{tr('Loading slide…')}</div>
           )}
           <MarksLayer
             marks={ann?.marks ?? []}
@@ -346,7 +347,7 @@ function TextLayer({
               key={c}
               className="mark-swatch"
               style={{ background: c }}
-              aria-label="Markieren"
+              aria-label={tr('Highlight')}
               onClick={() => {
                 onHighlight({ id: newId(8), c, text: sel.text, rects: sel.rects });
                 window.getSelection()?.removeAllRanges();
@@ -356,21 +357,21 @@ function TextLayer({
           ))}
           <button
             className="icon-btn"
-            title="In die Notizen"
+            title={tr('To notes')}
             onClick={() => (onTextAction?.('note', sel.text), setSel(null))}
           >
             <MessageSquareText size={15} />
           </button>
           <button
             className="icon-btn"
-            title="KI fragen"
+            title={tr('Ask AI')}
             onClick={() => (onTextAction?.('ai', sel.text), setSel(null))}
           >
             <Sparkles size={15} />
           </button>
           <button
             className="icon-btn"
-            title="Kopieren"
+            title={tr('Copy')}
             onClick={() => (void navigator.clipboard?.writeText(sel.text), setSel(null))}
           >
             <Copy size={15} />
@@ -427,7 +428,7 @@ function MarksLayer({
                   key={c}
                   className="mark-swatch"
                   style={{ background: c }}
-                  aria-label="Farbe"
+                  aria-label={tr('Colour')}
                   onClick={() => (
                     onChange(marks.map((k) => (k.id === active ? { ...k, c } : k))),
                     setActive(null)
@@ -436,7 +437,7 @@ function MarksLayer({
               ))}
               <button
                 className="icon-btn"
-                title="Markierung löschen"
+                title={tr('Delete highlight')}
                 onClick={() => (onChange(marks.filter((k) => k.id !== active)), setActive(null))}
               >
                 <Trash2 size={15} />
@@ -617,27 +618,27 @@ function TextBoxesLayer({
                     key={c}
                     className="mark-swatch"
                     style={{ background: c }}
-                    aria-label="Textfarbe"
+                    aria-label={tr('Text colour')}
                     onClick={() => update(b.id, { c })}
                   />
                 ))}
                 <button
                   className="icon-btn"
-                  title="Kleiner"
+                  title={tr('Smaller')}
                   onClick={() => update(b.id, { s: Math.max(0.008, b.s - 0.003) })}
                 >
                   −
                 </button>
                 <button
                   className="icon-btn"
-                  title="Größer"
+                  title={tr('Larger')}
                   onClick={() => update(b.id, { s: Math.min(0.08, b.s + 0.003) })}
                 >
                   +
                 </button>
                 <button
                   className="icon-btn"
-                  title="Hintergrund"
+                  title={tr('Background')}
                   onClick={() =>
                     update(b.id, {
                       bg: b.bg === 'note' ? 'white' : b.bg === 'white' ? 'none' : 'note',
@@ -648,7 +649,7 @@ function TextBoxesLayer({
                 </button>
                 <button
                   className="icon-btn"
-                  title="Löschen"
+                  title={tr('Delete')}
                   onClick={() => {
                     setSelected(null);
                     onChange((all) => all.filter((x) => x.id !== b.id));

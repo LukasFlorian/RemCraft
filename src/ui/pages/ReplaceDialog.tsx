@@ -13,6 +13,7 @@ import { useModals } from '../app/modals';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
+import { t } from '@core/i18n';
 
 /** Changes shown in the preview at most (all are applied). */
 const PREVIEW_LIMIT = 300;
@@ -36,7 +37,7 @@ export function ReplaceDialog({
   const toast = useToast();
   const navigate = useNavigate();
   const modals = useModals();
-  const scopeTitle = useRemTitle(rootId, 'Ohne Titel');
+  const scopeTitle = useRemTitle(rootId, t('Untitled'));
   const [scope, setScope] = useState<'doc' | 'all'>(rootId ? 'doc' : 'all');
   const [opts, setOpts] = useState<FindOptions>({
     query: initialQuery,
@@ -65,7 +66,9 @@ export function ReplaceDialog({
   };
   const apply = (): void => {
     const n = app.rems.applyReplace(chosen);
-    toast(`${occurrences} Stelle(n) in ${n} Rem(s) ersetzt – Rückgängig mit ⌘Z`);
+    toast(
+      t('Replaced {occurrences} occurrence(s) in {n} Rem(s) – undo with ⌘Z', { occurrences, n }),
+    );
     onClose();
   };
   const toggle = (c: ReplaceChange): void =>
@@ -77,23 +80,23 @@ export function ReplaceDialog({
     });
 
   return (
-    <Modal title="Suchen & Ersetzen" onClose={onClose} wide>
+    <Modal title={t('Find & replace')} onClose={onClose} wide>
       <div className="replace-dialog">
         <div className="replace-fields">
           <input
             className="input"
             autoFocus
-            placeholder="Suchen"
+            placeholder={t('Find')}
             value={opts.query}
             onChange={(e) => set({ query: e.target.value })}
-            aria-label="Suchen"
+            aria-label={t('Find')}
           />
           <input
             className="input"
-            placeholder="Ersetzen durch"
+            placeholder={t('Replace with')}
             value={opts.replacement}
             onChange={(e) => set({ replacement: e.target.value })}
-            aria-label="Ersetzen durch"
+            aria-label={t('Replace with')}
           />
         </div>
         <div className="replace-options">
@@ -103,7 +106,7 @@ export function ReplaceDialog({
               checked={Boolean(opts.caseSensitive)}
               onChange={(e) => set({ caseSensitive: e.target.checked })}
             />{' '}
-            Groß/klein beachten
+            {t('Match case')}
           </label>
           <label>
             <input
@@ -111,25 +114,28 @@ export function ReplaceDialog({
               checked={Boolean(opts.wholeWord)}
               onChange={(e) => set({ wholeWord: e.target.checked })}
             />{' '}
-            Ganzes Wort
+            {t('Whole word')}
           </label>
-          <label title="Reguläre Ausdrücke; im Ersatz verweisen $1, $2 … auf Gruppen">
+          <label title={t('Regular expressions; in the replacement $1, $2 … refer to groups')}>
             <input
               type="checkbox"
               checked={Boolean(opts.regex)}
               onChange={(e) => set({ regex: e.target.checked })}
             />{' '}
-            Regex
+            {t('Regex')}
           </label>
           {rootId && (
             <select
               className="select"
               value={scope}
               onChange={(e) => (setScope(e.target.value as 'doc' | 'all'), setSkipped(new Set()))}
-              aria-label="Bereich"
+              aria-label={t('Applies to')}
             >
-              <option value="doc">In „{scopeTitle}“</option>
-              <option value="all">Überall</option>
+              <option value="doc">
+                {t('In “')}
+                {scopeTitle}“
+              </option>
+              <option value="all">{t('Everywhere')}</option>
             </select>
           )}
         </div>
@@ -137,8 +143,11 @@ export function ReplaceDialog({
         {opts.query && typeof plan !== 'string' && (
           <div className="muted replace-summary">
             {changes.length === 0
-              ? 'Keine Treffer.'
-              : `${occurrences} Treffer in ${chosen.length} von ${changes.length} Feldern ausgewählt (Vorder- und Rückseiten; Formatierung bleibt erhalten).`}
+              ? t('No matches.')
+              : t(
+                  '{occurrences} matches selected in {length} of {2} fields (fronts and backs; formatting is kept).',
+                  { occurrences, length: chosen.length, '2': changes.length },
+                )}
           </div>
         )}
         {changes.length > 0 && (
@@ -149,11 +158,11 @@ export function ReplaceDialog({
                   type="checkbox"
                   checked={!skipped.has(keyOf(c))}
                   onChange={() => toggle(c)}
-                  aria-label="Diese Änderung übernehmen"
+                  aria-label={t('Apply this change')}
                 />
                 <button
                   className="replace-preview"
-                  title="Im Dokument öffnen"
+                  title={t('Open in document')}
                   onClick={() => {
                     onClose();
                     const doc = [...app.rems.path(c.remId)].reverse().find((r) => r.isDocument);
@@ -166,12 +175,14 @@ export function ReplaceDialog({
                 >
                   <span className="replace-before">{c.beforeText}</span>
                   <span className="replace-after">{c.afterText}</span>
-                  {c.field === 'back' && <span className="badge">Rückseite</span>}
+                  {c.field === 'back' && <span className="badge">{t('Back side')}</span>}
                 </button>
               </li>
             ))}
             {changes.length > PREVIEW_LIMIT && (
-              <li className="faint">… und {changes.length - PREVIEW_LIMIT} weitere</li>
+              <li className="faint">
+                {t('… and')} {changes.length - PREVIEW_LIMIT} {t('more')}
+              </li>
             )}
           </ul>
         )}
@@ -179,21 +190,21 @@ export function ReplaceDialog({
           {rootId && (
             <button
               className="btn btn-ghost"
-              title="Für Änderungen, die sich nicht als Suchen & Ersetzen ausdrücken lassen"
+              title={t('For changes that cannot be expressed as find & replace')}
               onClick={() => {
                 onClose();
                 modals.open({ kind: 'ai-edit', rootId });
               }}
             >
-              Mit KI überarbeiten…
+              {t('Revise with AI…')}
             </button>
           )}
           <span className="spacer" />
           <button className="btn" onClick={onClose}>
-            Abbrechen
+            {t('Cancel')}
           </button>
           <button className="btn btn-primary" disabled={chosen.length === 0} onClick={apply}>
-            {occurrences > 0 ? `${occurrences} ersetzen` : 'Ersetzen'}
+            {occurrences > 0 ? t('Replace {occurrences}', { occurrences }) : t('Replace')}
           </button>
         </div>
       </div>

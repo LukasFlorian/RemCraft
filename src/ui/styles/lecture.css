@@ -57,6 +57,9 @@
   flex: 1;
   min-width: 0;
   margin: 6px;
+  /* Own stacking context: the z-indexes inside (edges, bars) only order the
+     board's own parts and never rise above dialogs, menus or toolbars. */
+  isolation: isolate;
 }
 
 .widget-board .board-bar {
@@ -139,7 +142,7 @@
 /* Resize handles on the borders between widgets (like split panes). */
 .widget-edge {
   position: absolute;
-  z-index: 1000;
+  z-index: 50;
 }
 
 .widget-edge::after {

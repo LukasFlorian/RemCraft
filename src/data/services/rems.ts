@@ -15,6 +15,7 @@ import { fold } from '@core/search/search';
 import { newId } from '@core/util/ids';
 import { formatLongDate, isoDate, parseIsoDate } from '@core/util/time';
 import type { Store, Transaction } from '../store/store';
+import { t as tr } from '@core/i18n';
 
 /** Where to insert a new Rem. */
 export interface InsertPosition {
@@ -133,12 +134,12 @@ export class RemService {
   }
 
   /** Creates a document (optionally inside a folder or document). */
-  createDocument(parentId: RemId | null, title = 'Untitled'): Rem {
+  createDocument(parentId: RemId | null, title = tr('Untitled')): Rem {
     return this.create({ parentId }, { text: rt(title), isDocument: true });
   }
 
   /** Creates a folder. */
-  createFolder(parentId: RemId | null, title = 'New Folder'): Rem {
+  createFolder(parentId: RemId | null, title = tr('New Folder')): Rem {
     return this.create({ parentId }, { text: rt(title), isFolder: true, isDocument: true });
   }
 

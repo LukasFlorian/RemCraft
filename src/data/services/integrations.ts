@@ -28,6 +28,7 @@ import {
   selectTodayLogs,
 } from '../selectors';
 import type { Store } from '../store/store';
+import { t as tr } from '@core/i18n';
 
 /** Days planned ahead (covers a week of not opening the app). */
 export const PLAN_DAYS = 14;
@@ -331,7 +332,7 @@ export class IntegrationService {
   }
 
   private require(): IntegrationBackend {
-    if (!this.backend) throw new Error('Integrationen brauchen ein Konto (Einstellungen → Konto).');
+    if (!this.backend) throw new Error(tr('Integrations need an account (Settings → Account).'));
     return this.backend;
   }
 

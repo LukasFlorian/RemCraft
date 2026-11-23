@@ -6,6 +6,7 @@
  * which then lands on disk as a broken `.zip`.
  */
 import { downloadBlob } from '../hooks/useFilePicker';
+import { t } from '@core/i18n';
 
 /** Download URL of the skill (built by `scripts/build-skill.mjs`). */
 export const SKILL_URL = `${import.meta.env.BASE_URL}remcraft-flashcards.zip`;
@@ -30,9 +31,10 @@ export function isZip(bytes: Uint8Array): boolean {
 export async function downloadSkill(): Promise<void> {
   // `no-store`: never reuse a cached (possibly wrong) response.
   const res = await fetch(SKILL_URL, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Skill konnte nicht geladen werden (HTTP ${res.status})`);
+  if (!res.ok)
+    throw new Error(t('Skill could not be loaded (HTTP {status})', { status: res.status }));
   const buf = new Uint8Array(await res.arrayBuffer());
   if (!isZip(buf))
-    throw new Error('Skill-Download ist kein ZIP – bitte Seite neu laden und erneut versuchen');
+    throw new Error(t('Skill download is not a ZIP – please reload the page and try again'));
   downloadBlob(SKILL_FILE, new Blob([buf], { type: 'application/zip' }));
 }

@@ -9,6 +9,7 @@ import { selectSettings } from '@data/selectors';
 import { useApp, useSelector } from '../../app/context';
 import { CHANNEL, otherChannelUrl } from '../../app/channel';
 import { Switch } from '../../components/Controls';
+import { t } from '@core/i18n';
 
 /** Where beta testers report problems. */
 export const FEEDBACK_URL =
@@ -22,18 +23,19 @@ export function BetaSection(): ReactNode {
   return (
     <div className="card col" style={{ gap: 14 }}>
       <h2 className="card-title row" style={{ gap: 8 }}>
-        <FlaskConical size={18} /> Beta-Version
-        {CHANNEL === 'beta' && <span className="badge badge-beta">Du nutzt die Beta</span>}
+        <FlaskConical size={18} /> {t('Beta version')}
+        {CHANNEL === 'beta' && (
+          <span className="badge badge-beta">{t('You are using the beta')}</span>
+        )}
       </h2>
       <p className="muted" style={{ margin: 0 }}>
-        Die Beta-Version enthält neue Funktionen, sobald die automatischen Tests bestanden sind –
-        noch bevor Menschen sie ausprobiert haben. Sie kann Fehler enthalten. Deine Daten sind
-        dieselben (gleiches Konto, gleiche Synchronisierung); ohne Konto hat die Beta einen eigenen,
-        leeren Speicher auf diesem Gerät.
+        {t(
+          'The beta version contains new features as soon as the automated tests pass – before people have tried them. It may contain bugs. Your data is the same (same account, same sync); without an account the beta has its own, empty storage on this device.',
+        )}
       </p>
       {features.length > 0 ? (
         <div className="col" style={{ gap: 6 }}>
-          <strong>Gerade in der Beta:</strong>
+          <strong>{t('Currently in beta:')}</strong>
           <ul className="beta-features">
             {features.map((f) => (
               <li key={f.name}>
@@ -44,21 +46,21 @@ export function BetaSection(): ReactNode {
         </div>
       ) : (
         <p className="faint" style={{ margin: 0 }}>
-          Gerade gibt es keine Funktionen, die nur in der Beta sind.
+          {t('There are no beta-only features right now.')}
         </p>
       )}
       <Switch
         checked={Boolean(settings.betaTester)}
         onChange={(v) => app.settings.update({ betaTester: v })}
-        label="Ich teste Beta-Funktionen (Link zur Beta in der Seitenleiste)"
+        label={t('I test beta features (link to the beta in the sidebar)')}
       />
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <a className="btn btn-primary" href={otherChannelUrl()}>
-          {CHANNEL === 'beta' ? 'Zur stabilen Version' : 'Beta öffnen'}
+          {CHANNEL === 'beta' ? t('Switch to the stable version') : t('Open beta')}
         </a>
         {CHANNEL === 'beta' && (
           <a className="btn" href={FEEDBACK_URL} target="_blank" rel="noreferrer">
-            Fehler melden
+            {t('Report a bug')}
           </a>
         )}
       </div>

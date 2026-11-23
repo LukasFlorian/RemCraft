@@ -45,6 +45,9 @@ import { pickFiles } from '../hooks/useFilePicker';
 import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { PriorityBadge, useRemMenu } from './remMenu';
+import { fileDropAttr } from '../import/fileDrop';
+import { feature } from '../app/channel';
+import { t, tn } from '@core/i18n';
 
 /** The document page. */
 export function DocumentPage(): ReactNode {
@@ -56,10 +59,10 @@ export function DocumentPage(): ReactNode {
       <div className="main-scroll">
         <div className="page">
           <div className="empty">
-            This Rem does not exist (anymore).
+            {t('This Rem does not exist (anymore).')}
             <div style={{ marginTop: 12 }}>
               <button className="btn" onClick={() => navigate('/')}>
-                Go to Documents
+                {t('Go to Documents')}
               </button>
             </div>
           </div>
@@ -126,8 +129,8 @@ function Breadcrumbs({ remId }: { remId: RemId }): ReactNode {
   );
   const title = useRemTitle(remId);
   return (
-    <nav className="breadcrumbs" aria-label="Breadcrumbs">
-      <button onClick={() => navigate('/')}>Documents</button>
+    <nav className="breadcrumbs" aria-label={t('Breadcrumbs')}>
+      <button onClick={() => navigate('/')}>{t('Documents')}</button>
       {path.map((a) => (
         <Crumb key={a.id} remId={a.id} />
       ))}
@@ -180,39 +183,39 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
   };
 
   const practiceEntries = (): MenuEntry[] => [
-    { heading: 'Practice' },
+    { heading: t('Practice') },
     {
-      label: 'Practice with spaced repetition',
+      label: t('Practice with spaced repetition'),
       onSelect: () => navigate(`/practice?scope=${remId}&mode=srs`),
     },
     {
-      label: 'Practice all flashcards',
+      label: t('Practice all flashcards'),
       onSelect: () => navigate(`/practice?scope=${remId}&mode=all`),
     },
     {
-      label: 'Practice all in order',
+      label: t('Practice all in order'),
       onSelect: () => navigate(`/practice?scope=${remId}&mode=all-in-order`),
     },
     {
-      label: 'Cram (no scheduling)',
+      label: t('Cram (no scheduling)'),
       onSelect: () => navigate(`/practice?scope=${remId}&mode=cram`),
     },
-    { heading: 'Exam' },
+    { heading: t('Exam') },
     ...examIds.map((id): MenuEntry => {
       const exam = app.store.getRecord('exams', id);
       return {
-        label: exam?.name ?? 'Exam',
+        label: exam?.name ?? t('Exam'),
         icon: <PriorityIcon priority="exam" />,
         hint: exam ? new Date(exam.date).toLocaleDateString() : undefined,
         onSelect: () => navigate(`/flashcards/exams/${id}`),
       };
     }),
     {
-      label: 'Create exam for this…',
+      label: t('Create exam for this…'),
       icon: <GraduationCap size={15} />,
       onSelect: () => modals.open({ kind: 'exam', scope: [remId] }),
     },
-    { heading: 'Status' },
+    { heading: t('Status') },
     ...(['active', 'maintaining', 'none', 'paused'] as const).map((p): MenuEntry => {
       const own = rem.priority ?? 'none';
       const inherited = !rem.priority && priority === p && p !== 'none';
@@ -231,7 +234,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
         <Breadcrumbs remId={remId} />
         <button
           className="priority-badge-btn"
-          title="Exam & status"
+          title={t('Exam & status')}
           onClick={(e) => setMenu({ anchor: e.currentTarget, entries: practiceEntries() })}
         >
           <PriorityBadge priority={priority} />
@@ -241,13 +244,13 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
             <button
               className="btn btn-sm"
               onClick={() => navigate(`/practice?scope=${remId}&mode=srs`)}
-              title="Practice due cards"
+              title={t('Practice due cards')}
             >
-              <Layers size={14} /> {due > 0 ? `${due} Due` : 'Practice'}
+              <Layers size={14} /> {due > 0 ? t('{due} Due', { due }) : t('Practice')}
             </button>
             <button
               className="btn btn-sm"
-              aria-label="Practice options"
+              aria-label={t('Practice options')}
               onClick={(e) => setMenu({ anchor: e.currentTarget, entries: practiceEntries() })}
             >
               <ChevronDown size={14} />
@@ -256,39 +259,43 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
         }
         <button
           className="icon-btn"
-          title="Undo (⌘Z)"
-          aria-label="Undo"
+          title={t('Undo (⌘Z)')}
+          aria-label={t('Undo')}
           onClick={() => app.store.undo()}
         >
           <Undo2 size={17} />
         </button>
         <button
           className="icon-btn"
-          title="Redo (⌘⇧Z)"
-          aria-label="Redo"
+          title={t('Redo (⌘⇧Z)')}
+          aria-label={t('Redo')}
           onClick={() => app.store.redo()}
         >
           <Redo2 size={17} />
         </button>
         <button
           className={`icon-btn${rem.spaceId ? ' active' : ''}`}
-          title={space ? `Geteilt: ${space.name} (${ROLE_LABELS[space.role]})` : 'Teilen'}
-          aria-label="Teilen"
+          title={
+            space
+              ? t('Shared: {name} ({1})', { name: space.name, '1': ROLE_LABELS[space.role] })
+              : t('Share')
+          }
+          aria-label={t('Share')}
           onClick={() => setSharing(true)}
         >
           <Share2 size={17} />
         </button>
         <button
           className={`icon-btn${rem.pinned ? ' active' : ''}`}
-          title={rem.pinned ? 'Unpin' : 'Pin to sidebar'}
-          aria-label="Pin"
+          title={rem.pinned ? t('Unpin') : t('Pin to sidebar')}
+          aria-label={t('Pin')}
           onClick={() => app.rems.update(remId, { pinned: rem.pinned ? undefined : true })}
         >
           <Star size={17} fill={rem.pinned ? 'currentColor' : 'none'} />
         </button>
         <button
           className="icon-btn"
-          aria-label="More"
+          aria-label={t('More')}
           onClick={(e) => setMenu({ anchor: e.currentTarget, entries: remMenu(remId) })}
         >
           <MoreHorizontal size={18} />
@@ -296,13 +303,15 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
       </div>
       <div
         className="main-scroll"
+        data-file-drop-page={fileDropAttr(remId, Boolean(rem.deck))}
         onMouseDown={(e) => e.target === e.currentTarget && controller.clearSelection()}
       >
         <div className="page doc-page">
           {space?.role === 'reader' && (
             <div className="readonly-banner">
-              Nur lesen: geteilt von einer anderen Person. Deine Änderungen werden nicht
-              synchronisiert - klone den Bereich, um ihn zu bearbeiten.
+              {t(
+                'Read only: shared by someone else. Your changes are not synchronised – clone the space to edit it.',
+              )}
             </div>
           )}
           {rem.dailyDate && <DailyNav date={rem.dailyDate} />}
@@ -310,7 +319,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
             {(rem.isFolder || rem.icon) && (
               <button
                 className="title-icon"
-                title="Icon und Farbe ändern"
+                title={t('Change icon and colour')}
                 onClick={() => modals.open({ kind: 'icon', remId })}
               >
                 <RemIcon rem={rem} size={26} />
@@ -320,7 +329,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
               remId={remId}
               onExit={enterBody}
               autoFocus={isNew}
-              placeholder={rem.isFolder ? 'Folder name' : 'Untitled'}
+              placeholder={rem.isFolder ? t('Folder name') : t('Untitled')}
             />
           </div>
           {rem.back !== null && rem.direction !== 'none' && (
@@ -360,13 +369,13 @@ function DailyNav({ date }: { date: string }): ReactNode {
   return (
     <div className="row" style={{ marginBottom: 8 }}>
       <button className="btn btn-sm" onClick={() => go(-1)}>
-        <ChevronLeft size={14} /> Previous day
+        <ChevronLeft size={14} /> {t('Previous day')}
       </button>
       <button className="btn btn-sm" onClick={() => navigate(`/rem/${app.rems.ensureDaily()}`)}>
-        Today
+        {t('Today')}
       </button>
       <button className="btn btn-sm" onClick={() => go(1)}>
-        Next day <ChevronRight size={14} />
+        {t('Next day')} <ChevronRight size={14} />
       </button>
     </div>
   );
@@ -389,23 +398,23 @@ function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
             navigate(`/rem/${d.id}`);
           }}
         >
-          <FilePlus size={14} /> New document
+          <FilePlus size={14} /> {t('New document')}
         </button>
         <button
           className="btn btn-sm"
           onClick={() => {
-            const f = app.rems.createFolder(folderId, 'New Folder');
+            const f = app.rems.createFolder(folderId, t('New Folder'));
             navigate(`/rem/${f.id}`);
           }}
         >
-          <FolderPlus size={14} /> New folder
+          <FolderPlus size={14} /> {t('New folder')}
         </button>
         <button
           className="btn btn-sm"
           onClick={() =>
             void pickFiles('.pdf,application/pdf').then(async ([file]) => {
               if (!file) return;
-              toast('Foliensatz wird analysiert…');
+              toast(t('Analysing slide deck…'));
               try {
                 const id = await app.lectures.importPdf(file, folderId);
                 navigate(`/rem/${id}`);
@@ -415,10 +424,15 @@ function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
             })
           }
         >
-          <Presentation size={14} /> Foliensatz (PDF)
+          <Presentation size={14} /> {t('Slide deck (PDF)')}
         </button>
       </div>
-      {children.length === 0 && <div className="empty">This folder is empty.</div>}
+      {children.length === 0 && (
+        <div className="empty">
+          {t('This folder is empty.')}
+          {feature('fileDrop') && <> {t('Drag PDFs, cards or notes here to import them.')}</>}
+        </div>
+      )}
       <div className="folder-grid">
         {children.map((c) => (
           <FolderItem
@@ -476,6 +490,7 @@ function FolderItem({
   return (
     <button
       className={`folder-item${zone ? ` tile-drop-${zone}` : ''}${dragging === remId ? ' dragging' : ''}`}
+      data-file-drop={fileDropAttr(remId, Boolean(rem.deck))}
       onClick={() => navigate(`/rem/${remId}`)}
       draggable
       onDragStart={(e) => {
@@ -502,7 +517,7 @@ function FolderItem({
       <RemIcon rem={rem} size={20} />
       <span className="ellipsis">{title}</span>
       <span className="faint" style={{ fontSize: 12 }}>
-        {count} {rem.isFolder ? 'items' : 'Rems'}
+        {count} {rem.isFolder ? t('items') : t('Rems')}
       </span>
     </button>
   );
@@ -520,8 +535,8 @@ function ReferencesPanel({ remId }: { remId: RemId }): ReactNode {
   return (
     <section className="references">
       <button className="references-header" onClick={() => setOpen(!open)}>
-        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />} {ids.length} Reference
-        {ids.length > 1 ? 's' : ''}
+        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}{' '}
+        {tn('{n} reference', '{n} references', ids.length)}
       </button>
       {open && ids.map((id) => <ReferenceItem key={id} remId={id} />)}
     </section>

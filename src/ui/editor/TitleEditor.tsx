@@ -15,6 +15,7 @@ import { latexNodeView, refNodeView, separatorNodeView } from './BlockEditor';
 import { useController } from './controller';
 import { docToPatch, patchEquals, remToDoc } from './convert';
 import { handleTextInput } from './inputRules';
+import { t } from '@core/i18n';
 
 /** Props of {@link TitleEditor}. */
 export interface TitleEditorProps {
@@ -28,7 +29,7 @@ export interface TitleEditorProps {
 /** Editable page title. */
 export function TitleEditor({
   remId,
-  placeholder = 'Untitled',
+  placeholder = t('Untitled'),
   onExit,
   autoFocus,
 }: TitleEditorProps): ReactNode {
@@ -49,12 +50,14 @@ export function TitleEditor({
       state: EditorState.create({ doc: remToDoc(initial) }),
       nodeViews: {
         ref: refNodeView(app, (id) => (window.location.hash = `#/rem/${id}`)),
-        latex: latexNodeView((source) => dialogs.prompt({ title: 'Edit LaTeX', initial: source })),
+        latex: latexNodeView((source) =>
+          dialogs.prompt({ title: t('Edit LaTeX'), initial: source }),
+        ),
         separator: separatorNodeView,
       },
       attributes: {
         class: 'pm-editor title-editor',
-        'aria-label': 'Title',
+        'aria-label': t('Title'),
         'data-placeholder': placeholder,
       },
       dispatchTransaction(tr) {

@@ -16,6 +16,7 @@ import type { EditorEnv } from './actions';
 import { useController } from './controller';
 import { RemBlock } from './RemBlock';
 import type { ChildMode } from './RemBlock';
+import { t } from '@core/i18n';
 
 /** Props of {@link Outliner}. */
 export interface OutlinerProps {
@@ -140,7 +141,7 @@ export function Outliner({ rootId, embedded, only }: OutlinerProps): ReactNode {
           }}
         >
           {children.length === 0 && (
-            <span className="faint">Click here or press Enter to start writing…</span>
+            <span className="faint">{t('Click here or press Enter to start writing…')}</span>
           )}
         </div>
       )}
@@ -149,7 +150,7 @@ export function Outliner({ rootId, embedded, only }: OutlinerProps): ReactNode {
           className="outliner-tail is-small"
           onMouseDown={(e) => (e.preventDefault(), appendRem({ app, controller, instance }))}
         >
-          <span className="faint">Empty - click to add</span>
+          <span className="faint">{t('Empty - click to add')}</span>
         </div>
       )}
     </div>

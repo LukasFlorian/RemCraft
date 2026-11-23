@@ -477,3 +477,34 @@
 a.sidebar-legal {
   text-decoration: none;
 }
+
+/* Files dragged in from the computer: the target under the pointer and a hint. */
+.file-drop-over {
+  outline: 2px dashed var(--accent) !important;
+  outline-offset: -2px;
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent) !important;
+  border-radius: var(--radius);
+}
+.file-drop-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 1000;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--accent);
+  background: var(--bg-elevated);
+  color: var(--text);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  font-size: 13.5px;
+}
+.file-drop-hint svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}

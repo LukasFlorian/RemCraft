@@ -32,6 +32,7 @@ import { pickFiles, pickFolder } from '../hooks/useFilePicker';
 import { archiveFromFiles } from '@data/services/fokusImport';
 import { importCardFile } from '../lecture/DeckPanel';
 import { SkillDownloadLink } from '../lecture/SkillDownloadLink';
+import { t, tn } from '@core/i18n';
 
 /** An import source. */
 interface Source {
@@ -49,139 +50,154 @@ interface Source {
 const SOURCES: Source[] = [
   {
     id: 'fokus-data',
-    label: 'Fokus: alles übernehmen',
+    label: t('Fokus: import everything'),
     icon: <FolderInput size={22} color="#2ec4a6" />,
     accept: '',
     format: 'fokus-data',
     hidden: true,
-    help: 'Wähle den Ordner „data“ deiner Fokus-Installation (darin liegen decks, sessions und courses). Übernommen werden Kurse, Foliensätze mit Layout, Notizen, Markierungen, Zeichnungen, Textfelder, Hervorhebungen, importierte Karten und alle Vorlesungen mit Auswertung. Mehrfaches Importieren erzeugt keine Duplikate.',
+    help: t(
+      'Choose the “data” folder of your Fokus installation (it contains decks, sessions and courses). Imported are courses, slide decks with layout, notes, highlights, drawings, text boxes, marks, imported cards and all lectures with analysis. Importing again creates no duplicates.',
+    ),
   },
   {
     id: 'deck',
-    label: 'Foliensatz (PDF)',
+    label: t('Slide deck (PDF)'),
     icon: <Presentation size={22} color="#5b8cff" />,
     accept: '.pdf,application/pdf',
     format: 'deck',
-    help: 'Vorlesungsfolien: jede Folie wird ein Rem für deine Notizen. Handouts mit mehreren Folien pro Seite werden automatisch aufgeteilt.',
+    help: t(
+      'Lecture slides: every slide becomes a Rem for your notes. Handouts with several slides per page are split automatically.',
+    ),
   },
   {
     id: 'fokus',
-    label: 'Karten mit Folien (.cards.json)',
+    label: t('Cards with slides (.cards.json)'),
     icon: <FileJson size={22} color="#f2a33a" />,
     accept: '.json',
     format: 'fokus',
     help: (
       <>
-        Karteikarten mit Folienzuordnung: jede Karte landet über PDF-Seite und ein wörtliches Zitat
-        auf ihrer Folie; der passende Foliensatz wird am PDF-Namen erkannt. Solche Dateien erstellt
-        Claude mit dem <SkillDownloadLink>RemCraft-Skill (herunterladen)</SkillDownloadLink> aus
-        deinen Folien.
+        {t(
+          'Flashcards mapped to slides: every card lands on its slide via PDF page and a verbatim quote; the matching slide deck is recognised by the PDF name. Claude creates such files with the',
+        )}{' '}
+        <SkillDownloadLink>{t('RemCraft skill (download)')}</SkillDownloadLink>{' '}
+        {t('from your slides.')}
       </>
     ),
   },
   {
     id: 'share',
-    label: 'Freigabe (.remcraft.json)',
+    label: t('Share (.remcraft.json)'),
     icon: <FileJson size={22} color="#3fb37f" />,
     accept: '.json',
     format: 'share',
-    help: 'Von jemandem als Datei geteilte Mappe, Notizen oder Karten: wird als eigene Kopie (mit neuen IDs, ohne fremden Lernfortschritt) eingefügt.',
+    help: t(
+      "A folder, notes or cards someone shared as a file: inserted as your own copy (with new IDs, without the other person's learning progress).",
+    ),
   },
   {
     id: 'remnote',
-    label: 'RemNote',
+    label: t('RemNote'),
     icon: <Star size={22} color="#6f7eff" />,
     accept: '.md,.txt',
     format: 'markdown',
-    help: 'In RemNote: ⋯ menu of a document → Export → Markdown. Card syntax (>>, ::, {{cloze}}, >>A)) is preserved.',
+    help: t(
+      'In RemNote: ⋯ menu of a document → Export → Markdown. Card syntax (>>, ::, {{cloze}}, >>A)) is preserved.',
+    ),
   },
   {
     id: 'anki',
-    label: 'Anki',
+    label: t('Anki'),
     icon: <Layers size={22} color="#5aa0ff" />,
     accept: '.txt,.tsv,.csv',
     format: 'csv',
-    help: 'In Anki: File → Export → "Notes in Plain Text (.txt)". Front/back become basic cards; {{c1::cloze}} notes become cloze cards.',
+    help: t(
+      'In Anki: File → Export → "Notes in Plain Text (.txt)". Front/back become basic cards; {{c1::cloze}} notes become cloze cards.',
+    ),
   },
   {
     id: 'notion',
-    label: 'Notion',
+    label: t('Notion'),
     icon: <NotebookPen size={22} />,
     accept: '.md',
     format: 'markdown',
-    help: 'In Notion: ⋯ → Export → Markdown & CSV. Select the .md files (unzip first).',
+    help: t('In Notion: ⋯ → Export → Markdown & CSV. Select the .md files (unzip first).'),
   },
   {
     id: 'quizlet',
-    label: 'Quizlet',
+    label: t('Quizlet'),
     icon: <Sparkle size={22} color="#4255ff" />,
     accept: '.txt,.tsv,.csv',
     format: 'csv',
-    help: 'In Quizlet: ⋯ → Export, separate term/definition with Tab and rows with new lines; save as .txt.',
+    help: t(
+      'In Quizlet: ⋯ → Export, separate term/definition with Tab and rows with new lines; save as .txt.',
+    ),
   },
   {
     id: 'opml',
-    label: 'Workflowy / Dynalist',
+    label: t('Workflowy / Dynalist'),
     icon: <ListTree size={22} color="#4fb3d9" />,
     accept: '.opml,.xml',
     format: 'opml',
-    help: 'Export your outline as OPML.',
+    help: t('Export your outline as OPML.'),
   },
   {
     id: 'obsidian',
-    label: 'Obsidian',
+    label: t('Obsidian'),
     icon: <FileText size={22} color="#a368ff" />,
     accept: '.md',
     format: 'markdown',
-    help: 'Select one or more notes (.md). Headings structure the document; [[links]] become references.',
+    help: t(
+      'Select one or more notes (.md). Headings structure the document; [[links]] become references.',
+    ),
   },
   {
     id: 'roam',
-    label: 'Roam / Logseq',
+    label: t('Roam / Logseq'),
     icon: <ListTree size={22} />,
     accept: '.md',
     format: 'markdown',
-    help: 'Export pages as Markdown.',
+    help: t('Export pages as Markdown.'),
   },
   {
     id: 'markdown',
-    label: 'Markdown files',
+    label: t('Markdown files'),
     icon: <FileText size={22} />,
     accept: '.md,.markdown,.txt',
     format: 'markdown',
-    help: 'Any Markdown or indented text. Lines containing == or >> become flashcards.',
+    help: t('Any Markdown or indented text. Lines containing == or >> become flashcards.'),
   },
   {
     id: 'csv',
-    label: 'CSV / Excel',
+    label: t('CSV / Excel'),
     icon: <FileSpreadsheet size={22} color="#3fbf7f" />,
     accept: '.csv,.tsv,.txt',
     format: 'csv',
-    help: 'Excel: File → Save as → CSV. Choose which columns hold front and back.',
+    help: t('Excel: File → Save as → CSV. Choose which columns hold front and back.'),
   },
   {
     id: 'file',
-    label: 'PDF or File',
+    label: t('PDF or File'),
     icon: <FileUp size={22} />,
     accept: '*/*',
     format: 'file',
-    help: 'The file is stored in a new document (PDFs can be viewed inline).',
+    help: t('The file is stored in a new document (PDFs can be viewed inline).'),
   },
   {
     id: 'backup',
-    label: 'RemCraft backup',
+    label: t('RemCraft backup'),
     icon: <Database size={22} />,
     accept: '.json',
     format: 'backup',
-    help: 'Restore a full backup (Settings → Import & Export). Newer local records are kept.',
+    help: t('Restore a full backup (Settings → Import & Export). Newer local records are kept.'),
   },
   {
     id: 'paste',
-    label: 'Paste text',
+    label: t('Paste text'),
     icon: <ClipboardPaste size={22} />,
     accept: '',
     format: 'paste',
-    help: 'Paste notes in RemNote/Markdown syntax.',
+    help: t('Paste notes in RemNote/Markdown syntax.'),
   },
 ];
 
@@ -193,7 +209,7 @@ function useFolders(): { id: RemId; title: string }[] {
       s
         .all('rems')
         .filter((r) => r.isFolder)
-        .map((r) => ({ id: r.id, title: app.rems.title(r.id) || 'Untitled' })),
+        .map((r) => ({ id: r.id, title: app.rems.title(r.id) || t('Untitled') })),
     ),
   );
 }
@@ -219,7 +235,7 @@ export function ImportDialog({
   const [target, setTarget] = useState<RemId | ''>(parentId ?? '');
   const [files, setFiles] = useState<File[]>([]);
   const [paste, setPaste] = useState('');
-  const [title, setTitle] = useState('Imported notes');
+  const [title, setTitle] = useState(t('Imported notes'));
   const [csv, setCsv] = useState({
     hasHeader: false,
     frontColumn: 0,
@@ -237,7 +253,7 @@ export function ImportDialog({
       const parent = target || null;
       if (source.format === 'backup') {
         const n = app.io.importBackup(await files[0]!.text(), 'merge');
-        toast(`Restored ${n} records`);
+        toast(t('Restored {n} records', { n }));
         onClose();
         return;
       }
@@ -254,7 +270,10 @@ export function ImportDialog({
           `${s.files} Dateien`,
         ];
         toast(
-          `Fokus übernommen: ${parts.join(', ')}${s.skipped ? ` (${s.skipped} schon vorhanden)` : ''}`,
+          t('Fokus imported: {0}{1}', {
+            '0': parts.join(', '),
+            '1': s.skipped ? ` (${s.skipped} schon vorhanden)` : '',
+          }),
         );
         for (const w of s.warnings.slice(0, 3)) toast(w, 'error');
         navigate('/lectures');
@@ -303,12 +322,12 @@ export function ImportDialog({
       }
       if (source.format === 'paste') {
         const { docId, count } = app.io.importAsDocument(
-          title || 'Imported notes',
+          title || t('Imported notes'),
           paste,
           'markdown',
           parent,
         );
-        toast(`Imported ${count} Rems`);
+        toast(t('Imported {count} Rems', { count }));
         navigate(`/rem/${docId}`);
         onClose();
         return;
@@ -327,7 +346,14 @@ export function ImportDialog({
         last = docId;
         total += count;
       }
-      toast(`Imported ${total} Rems from ${files.length} file${files.length > 1 ? 's' : ''}`);
+      toast(
+        tn(
+          'Imported {total} Rems from {n} file',
+          'Imported {total} Rems from {n} files',
+          files.length,
+          { total },
+        ),
+      );
       if (last) navigate(`/rem/${last}`);
       onClose();
     } catch (err) {
@@ -339,7 +365,7 @@ export function ImportDialog({
 
   if (!source) {
     return (
-      <Modal title="Import to RemCraft" onClose={onClose} wide>
+      <Modal title={t('Import to RemCraft')} onClose={onClose} wide>
         <div className="import-grid">
           {SOURCES.filter((s) => !s.hidden).map((s) => (
             <button key={s.id} className="import-source" onClick={() => setSource(s)}>
@@ -350,20 +376,22 @@ export function ImportDialog({
         </div>
         <div className="import-tip">
           <div>
-            <strong>Not finding your app? No worries!</strong>
+            <strong>{t('Not finding your app? No worries!')}</strong>
             <ol>
-              <li>Select the text you want to import in your other app.</li>
-              <li>Copy it with ⌘C.</li>
-              <li>Paste it into any document with ⌘V.</li>
+              <li>{t('Select the text you want to import in your other app.')}</li>
+              <li>{t('Copy it with ⌘C.')}</li>
+              <li>{t('Paste it into any document with ⌘V.')}</li>
             </ol>
           </div>
           <div>
-            <strong>💡 Import tip</strong>
+            <strong>{t('💡 Import tip')}</strong>
             <p>
-              Lines containing <span className="kbd">==</span> or{' '}
-              <span className="kbd">&gt;&gt;</span> become flashcards, e.g.{' '}
-              <span className="mono">What is the mitochondria? == The powerhouse of the cell.</span>{' '}
-              See the flashcard syntax guide in the docs.
+              {t('Lines containing')} <span className="kbd">==</span> {t('or')}{' '}
+              <span className="kbd">&gt;&gt;</span> {t('become flashcards, e.g.')}{' '}
+              <span className="mono">
+                {t('What is the mitochondria? == The powerhouse of the cell.')}
+              </span>{' '}
+              {t('See the flashcard syntax guide in the docs.')}
             </p>
           </div>
         </div>
@@ -374,20 +402,20 @@ export function ImportDialog({
   const ready = source.format === 'paste' ? paste.trim() !== '' : files.length > 0;
   return (
     <Modal
-      title={`Import from ${source.label}`}
+      title={t('Import from {label}', { label: source.label })}
       onClose={onClose}
       headerExtra={
         <button className="btn btn-sm btn-ghost" onClick={() => setSource(null)}>
-          <ArrowLeft size={14} /> Sources
+          <ArrowLeft size={14} /> {t('Sources')}
         </button>
       }
       footer={
         <>
           <button className="btn" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button className="btn btn-primary" disabled={!ready || busy} onClick={() => void run()}>
-            {busy ? 'Importing…' : 'Import'}
+            {busy ? t('Importing…') : t('Import')}
           </button>
         </>
       }
@@ -397,10 +425,10 @@ export function ImportDialog({
       </p>
       {source.format === 'paste' ? (
         <>
-          <Field label="Document title">
+          <Field label={t('Document title')}>
             <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
           </Field>
-          <Field label="Text">
+          <Field label={t('Text')}>
             <textarea
               className="textarea mono"
               rows={10}
@@ -411,20 +439,20 @@ export function ImportDialog({
           </Field>
         </>
       ) : (
-        <Field group label="Files">
+        <Field group label={t('Files')}>
           <div className="row">
             {source.format === 'fokus-data' ? (
               <button
                 className="btn"
                 onClick={() => {
-                  setProgress('Ordner wird eingelesen …');
+                  setProgress(t('Reading folder …'));
                   void pickFolder().then((f) => {
                     setProgress('');
                     if (f.length) setFiles(f);
                   });
                 }}
               >
-                <FolderInput size={15} /> Ordner „data“ wählen
+                <FolderInput size={15} /> {t('Choose the “data” folder')}
               </button>
             ) : (
               <button
@@ -435,7 +463,8 @@ export function ImportDialog({
                   )
                 }
               >
-                <FileUp size={15} /> Choose file{source.format !== 'backup' ? 's' : ''}
+                <FileUp size={15} />{' '}
+                {source.format !== 'backup' ? t('Choose files') : t('Choose file')}
               </button>
             )}
             <span className="muted ellipsis">
@@ -443,16 +472,16 @@ export function ImportDialog({
                 ? progress
                 : files.length
                   ? source.format === 'fokus-data'
-                    ? `${files.length} Dateien`
+                    ? t('{length} files', { length: files.length })
                     : files.map((f) => f.name).join(', ')
-                  : 'No file selected'}
+                  : t('No file selected')}
             </span>
           </div>
         </Field>
       )}
       {source.format === 'csv' && (
         <div className="grid-2">
-          <Field label="Front column">
+          <Field label={t('Front column')}>
             <input
               className="input"
               type="number"
@@ -463,7 +492,7 @@ export function ImportDialog({
               }
             />
           </Field>
-          <Field label="Back column">
+          <Field label={t('Back column')}>
             <input
               className="input"
               type="number"
@@ -477,19 +506,19 @@ export function ImportDialog({
           <Switch
             checked={csv.hasHeader}
             onChange={(v) => setCsv({ ...csv, hasHeader: v })}
-            label="First row is a header"
+            label={t('First row is a header')}
           />
           <Switch
             checked={csv.bothDirections}
             onChange={(v) => setCsv({ ...csv, bothDirections: v })}
-            label="Practice both directions"
+            label={t('Practice both directions')}
           />
         </div>
       )}
       {source.format !== 'backup' && source.format !== 'fokus-data' && (
-        <Field label="Import into">
+        <Field label={t('Import into')}>
           <select className="select" value={target} onChange={(e) => setTarget(e.target.value)}>
-            <option value="">Top level</option>
+            <option value="">{t('Top level')}</option>
             {folders.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.title}

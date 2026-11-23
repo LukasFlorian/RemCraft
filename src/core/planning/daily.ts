@@ -13,6 +13,7 @@ import type { CardId, RemId, ReviewLog } from '../model/types';
 import type { QueuedCard } from '../scheduling/queue';
 import { toPlainText } from '../richtext/ops';
 import { DAY } from '../util/time';
+import { t } from '@core/i18n';
 
 /** How long practice takes, learned from the review history. */
 export interface TimeEstimate {
@@ -127,7 +128,7 @@ export function courseOf(graph: RemGraph, remId: RemId): TaskGroup | undefined {
   const chain = [...ancestors(graph, remId), rem];
   const folder = [...chain].reverse().find((r) => r.isFolder);
   const group = folder ?? chain.find((r) => r.isDocument) ?? chain[0]!;
-  return { id: group.id, title: toPlainText(group.text) || 'Ohne Titel' };
+  return { id: group.id, title: toPlainText(group.text) || t('Untitled') };
 }
 
 /** Options of {@link buildDailyTasks}. */

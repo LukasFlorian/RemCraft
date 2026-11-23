@@ -8,6 +8,7 @@
 import type { MouseEvent, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { isLegalInfoComplete, legalInfo, PRIVACY_VERSION } from './legalInfo';
+import { t } from '@core/i18n';
 
 /** Repository URL (source code, license). */
 const REPO_URL = 'https://github.com/LukasFlorian/RemCraft';
@@ -16,10 +17,9 @@ const REPO_URL = 'https://github.com/LukasFlorian/RemCraft';
 export function RemNoteNotice(): ReactNode {
   return (
     <>
-      RemCraft ist ein unabhängiges, nicht-kommerzielles Projekt und steht in keiner Verbindung zu
-      RemNote oder der RemNote Inc. und wird von diesen weder unterstützt noch geprüft. „RemNote“
-      ist eine Marke ihrer jeweiligen Inhaberin; der Name wird nur verwendet, um die Kompatibilität
-      (z. B. Import von RemNote-Dateien) zu beschreiben.
+      {t(
+        'RemCraft is an independent, non-commercial project. It is not affiliated with, endorsed or reviewed by RemNote or RemNote Inc. “RemNote” is a trademark of its owner; the name is only used to describe compatibility (e.g. importing RemNote files).',
+      )}
     </>
   );
 }
@@ -39,190 +39,180 @@ export function LegalPage(): ReactNode {
         </span>
       ))}
       <br />
-      E-Mail: <a href={`mailto:${info.email}`}>{info.email}</a>
+      {t('Email:')} <a href={`mailto:${info.email}`}>{info.email}</a>
     </p>
   ) : (
     <p className="badge badge-danger legal-missing" data-testid="legal-missing">
-      Die Angaben zum Betreiber wurden in dieser Installation noch nicht hinterlegt.
+      {t('The operator details have not been entered for this installation yet.')}
     </p>
   );
-  const region = info.dataRegion || 'der beim Einrichten des Projekts gewählten Region';
+  const region = info.dataRegion || t('the region chosen when the project was set up');
 
   return (
     <div className="main-scroll">
       <div className="page legal-page">
         <div className="page-header">
-          <h1>Impressum &amp; Datenschutz</h1>
+          <h1>{t('Legal notice & privacy')}</h1>
         </div>
 
         <nav className="legal-toc">
           <a href="#impressum" onClick={(e) => jump(e, 'impressum')}>
-            Impressum
+            {t('Legal notice')}
           </a>
           <a href="#datenschutz" onClick={(e) => jump(e, 'datenschutz')}>
-            Datenschutzerklärung
+            {t('Privacy policy')}
           </a>
           <a href="#hinweise" onClick={(e) => jump(e, 'hinweise')}>
-            Hinweise &amp; Lizenz
+            {t('Notices & license')}
           </a>
         </nav>
 
         <section id="impressum" className="card legal-section">
-          <h2>Impressum</h2>
-          <p className="muted">Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)</p>
+          <h2>{t('Legal notice')}</h2>
+          <p className="muted">{t('Information according to § 5 Digitale-Dienste-Gesetz (DDG)')}</p>
           {operator}
           <p>
-            RemCraft ist ein privates, nicht-kommerzielles Projekt. Es gibt keine Werbung, keine
-            Bezahlfunktionen und kein Tracking.
+            {t(
+              'RemCraft is a private, non-commercial project. There are no ads, no payments and no tracking.',
+            )}
           </p>
         </section>
 
         <section id="datenschutz" className="card legal-section">
-          <h2>Datenschutzerklärung</h2>
-          <p className="muted">Stand: {PRIVACY_VERSION}</p>
+          <h2>{t('Privacy policy')}</h2>
+          <p className="muted">
+            {t('Last updated:')} {PRIVACY_VERSION}
+          </p>
 
-          <h3>1. Verantwortlicher</h3>
+          <h3>{t('1. Controller')}</h3>
           <p>
-            Verantwortlich für die Datenverarbeitung im Sinne der Datenschutz-Grundverordnung
-            (DSGVO) ist:
+            {t(
+              'The controller responsible for data processing under the General Data Protection Regulation (GDPR) is:',
+            )}
           </p>
           {operator}
 
-          <h3>2. Kurz zusammengefasst</h3>
+          <h3>{t('2. In short')}</h3>
           <ul>
-            <li>Ohne Konto bleiben alle Inhalte ausschließlich in deinem Browser.</li>
+            <li>{t('Without an account, all content stays in your browser only.')}</li>
             <li>
-              Mit Konto werden deine Inhalte zur Synchronisierung bei Supabase gespeichert und sind
-              nur für dich (und Personen, mit denen du sie teilst) abrufbar.
+              {t(
+                'With an account, your content is stored at Supabase for synchronisation and can only be accessed by you (and people you share it with).',
+              )}
             </li>
-            <li>Es gibt keine Analyse-, Tracking- oder Werbedienste und keine Cookies.</li>
+            <li>{t('There are no analytics, tracking or advertising services and no cookies.')}</li>
             <li>
-              Du kannst alles jederzeit exportieren und dein Konto mit allen Daten selbst löschen
-              (Einstellungen → Account &amp; Sync).
+              {t(
+                'You can export everything at any time and delete your account with all data yourself (Settings → Account & Sync).',
+              )}
             </li>
           </ul>
 
-          <h3>3. Bereitstellung der Web-App (Hosting)</h3>
+          <h3>{t('3. Hosting of the web app')}</h3>
           <p>
-            Die App wird über GitHub Pages (GitHub B.V., Niederlande / GitHub Inc., USA)
-            ausgeliefert. Beim Aufruf verarbeitet GitHub technisch notwendige Daten wie IP-Adresse,
-            Zeitpunkt und Browserkennung, um die Seite auszuliefern und vor Missbrauch zu schützen.
-            Rechtsgrundlage ist unser berechtigtes Interesse an einer sicheren Bereitstellung (Art.
-            6 Abs. 1 lit. f DSGVO). GitHub ist unter dem EU-US Data Privacy Framework zertifiziert.
-            Details:{' '}
+            {t(
+              'The app is served via GitHub Pages (GitHub B.V., Netherlands / GitHub Inc., USA). When you open it, GitHub processes technically necessary data such as IP address, time and browser identifier to deliver the page and protect it against abuse. The legal basis is our legitimate interest in secure delivery (Art. 6(1)(f) GDPR). GitHub is certified under the EU-US Data Privacy Framework. Details:',
+            )}{' '}
             <a
               href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement"
               target="_blank"
               rel="noreferrer"
             >
-              Datenschutzerklärung von GitHub
+              {t('GitHub privacy statement')}
             </a>
             .
           </p>
 
-          <h3>4. Speicherung auf deinem Gerät</h3>
+          <h3>{t('4. Storage on your device')}</h3>
           <p>
-            Notizen, Karteikarten, Lernstand und Einstellungen werden in deinem Browser (IndexedDB,
-            localStorage) gespeichert, damit die App offline funktioniert; ein Service Worker hält
-            die App-Dateien vor. Diese Speicherung ist für den von dir gewünschten Dienst unbedingt
-            erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Du kannst sie jederzeit über die
-            Browser-Einstellungen oder „Abmelden &amp; lokale Daten löschen“ entfernen.
+            {t(
+              'Notes, flashcards, learning progress and settings are stored in your browser (IndexedDB, localStorage) so the app works offline; a service worker keeps the app files. This storage is strictly necessary for the service you requested (§ 25(2) no. 2 TDDDG). You can remove it at any time via the browser settings or “Sign out & clear local data”.',
+            )}
           </p>
 
-          <h3>5. Konto und Synchronisierung (optional)</h3>
+          <h3>{t('5. Account and synchronisation (optional)')}</h3>
           <p>
-            Wenn du ein Konto anlegst, verarbeiten wir deine E-Mail-Adresse, ein Passwort (nur als
-            Hash gespeichert) bzw. bei Anmeldung mit GitHub die von GitHub übermittelte Kontokennung
-            und E-Mail-Adresse, sowie die Inhalte, die du in RemCraft anlegst (Notizen, Dateien wie
-            PDFs und Bilder, Karteikarten, Lernverlauf, Einstellungen). Zweck ist die
-            Synchronisierung zwischen deinen Geräten und die Sicherung deiner Inhalte;
-            Rechtsgrundlage ist die Erfüllung des Nutzungsverhältnisses (Art. 6 Abs. 1 lit. b
-            DSGVO).
+            {t(
+              'When you create an account, we process your email address, a password (stored only as a hash) or, when signing in with GitHub, the account ID and email address provided by GitHub, as well as the content you create in RemCraft (notes, files such as PDFs and images, flashcards, learning history, settings). The purpose is synchronisation between your devices and backing up your content; the legal basis is the performance of the user agreement (Art. 6(1)(b) GDPR).',
+            )}
           </p>
           <p>
-            Die Daten werden bei Supabase Inc. (USA) als Auftragsverarbeiter in {region}{' '}
-            gespeichert. Supabase verschlüsselt die Daten bei der Übertragung und auf den
-            Datenträgern; der Zugriff ist durch Zugriffsregeln auf dein Konto beschränkt. Für
-            etwaige Übermittlungen in die USA gelten die Standardvertragsklauseln der EU-Kommission.
-            Details:{' '}
+            {t('The data is stored by Supabase Inc. (USA) as a processor in')} {region}{' '}
+            {t(
+              ". Supabase encrypts the data in transit and at rest; access is restricted to your account by access rules. Any transfers to the USA are covered by the European Commission's standard contractual clauses. Details:",
+            )}{' '}
             <a href="https://supabase.com/privacy" target="_blank" rel="noreferrer">
-              Datenschutzerklärung von Supabase
+              {t('Supabase privacy policy')}
             </a>
             .
           </p>
 
-          <h3>6. Teilen</h3>
+          <h3>{t('6. Sharing')}</h3>
           <p>
-            Wenn du einen Leselink erstellst, sind die gewählten Inhalte für jede Person abrufbar,
-            die den Link kennt (auch ohne Konto), bis du den Link löschst. Bei „Live
-            zusammenarbeiten“ sehen die eingeladenen Mitglieder die geteilten Inhalte und deine
-            E-Mail-Adresse. Lernfortschritt wird nie geteilt.
+            {t(
+              'When you create a read-only link, the selected content can be accessed by anyone who knows the link (even without an account) until you delete the link. With “Collaborate live”, invited members see the shared content and your email address. Learning progress is never shared.',
+            )}
           </p>
 
-          <h3>7. KI-Funktionen (optional)</h3>
+          <h3>{t('7. AI features (optional)')}</h3>
           <p>
-            Die KI-Funktionen nutzen einen API-Schlüssel, den du selbst einträgst. Er wird nur in
-            deinem Browser gespeichert. Wenn du eine KI-Funktion verwendest, sendet dein Browser die
-            betroffenen Inhalte direkt an den von dir gewählten Anbieter (z. B. Anthropic oder
-            OpenAI); RemCraft erhält diese Daten nicht. Es gilt die Datenschutzerklärung des
-            jeweiligen Anbieters.
+            {t(
+              "The AI features use an API key that you enter yourself. It is only stored in your browser. When you use an AI feature, your browser sends the relevant content directly to the provider you chose (e.g. Anthropic or OpenAI); RemCraft does not receive this data. The provider's privacy policy applies.",
+            )}
           </p>
 
-          <h3>8. Todoist (optional)</h3>
+          <h3>{t('8. Todoist (optional)')}</h3>
           <p>
-            Wenn du die Todoist-Integration einrichtest, wird dein Todoist-Token in der Datenbank
-            gespeichert (für Clients nicht auslesbar). Eine Server-Funktion legt damit täglich
-            Lernaufgaben (Kursname, Anzahl Karten, geschätzte Dauer) in deinem Todoist-Konto an
-            (Doist Inc.). Du kannst die Integration jederzeit entfernen.
+            {t(
+              'If you set up the Todoist integration, your Todoist token is stored in the database (not readable by clients). A server function uses it to create daily study tasks (course name, number of cards, estimated duration) in your Todoist account (Doist Inc.). You can remove the integration at any time.',
+            )}
           </p>
 
-          <h3>9. Eingebettete Videos</h3>
+          <h3>{t('9. Embedded videos')}</h3>
           <p>
-            Bettest du ein Video von YouTube (im erweiterten Datenschutzmodus) oder Vimeo ein, lädt
-            dein Browser beim Anzeigen Inhalte von diesen Anbietern; dabei werden ihnen u. a. deine
-            IP-Adresse und die aufgerufene Seite übermittelt.
+            {t(
+              'If you embed a video from YouTube (in privacy-enhanced mode) or Vimeo, your browser loads content from these providers when it is shown; among other things, your IP address and the page you are viewing are transmitted to them.',
+            )}
           </p>
 
-          <h3>10. Speicherdauer</h3>
+          <h3>{t('10. Retention')}</h3>
           <p>
-            Inhalte werden gespeichert, bis du sie bzw. dein Konto löschst. Beim Löschen des Kontos
-            werden deine synchronisierten Inhalte, Dateien, Leselinks und Integrationen vom Server
-            entfernt; Kopien, die andere über deine Links geklont oder in gemeinsamen Bereichen
-            erhalten haben, gehören diesen Personen.
+            {t(
+              'Content is stored until you delete it or your account. When the account is deleted, your synchronised content, files, read-only links and integrations are removed from the server; copies that others cloned from your links or received in shared spaces belong to those people.',
+            )}
           </p>
 
-          <h3>11. Deine Rechte</h3>
+          <h3>{t('11. Your rights')}</h3>
           <p>
-            Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art.
-            17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20, z. B. über
-            den Export) und Widerspruch gegen Verarbeitungen auf Grundlage berechtigter Interessen
-            (Art. 21). Wende dich dazu an die oben genannte Adresse. Außerdem kannst du dich bei
-            einer Datenschutz-Aufsichtsbehörde beschweren (Art. 77 DSGVO).
+            {t(
+              'You have the right of access (Art. 15 GDPR), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20, e.g. via the export) and to object to processing based on legitimate interests (Art. 21). Please contact the address above. You can also lodge a complaint with a data protection supervisory authority (Art. 77 GDPR).',
+            )}
           </p>
         </section>
 
         <section id="hinweise" className="card legal-section">
-          <h2>Hinweise &amp; Lizenz</h2>
+          <h2>{t('Notices & license')}</h2>
           <p data-testid="remnote-notice">
             <RemNoteNotice />
           </p>
           <p>
-            Die App wird ohne Gewähr bereitgestellt. Bitte exportiere wichtige Inhalte regelmäßig
-            (Einstellungen → Import, Export &amp; Data).
+            {t(
+              'The app is provided without warranty. Please export important content regularly (Settings → Import, Export & Data).',
+            )}
           </p>
           <p>
-            Der Quellcode steht unter der{' '}
+            {t('The source code is available under the')}{' '}
             <a href={`${REPO_URL}/blob/main/LICENSE`} target="_blank" rel="noreferrer">
-              MIT-Lizenz
+              {t('MIT license')}
             </a>{' '}
-            auf{' '}
+            {t('on')}{' '}
             <a href={REPO_URL} target="_blank" rel="noreferrer">
-              GitHub
+              {t('GitHub')}
             </a>
-            . Verwendete Open-Source-Bibliotheken stehen unter ihren eigenen Lizenzen.
+            {t('. Open-source libraries used are under their own licenses.')}
           </p>
           <p>
-            <Link to="/">Zurück zur App</Link>
+            <Link to="/">{t('Back to the app')}</Link>
           </p>
         </section>
       </div>

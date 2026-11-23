@@ -9,6 +9,7 @@ import { Field, Kbd } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { SlideView } from './SlideView';
 import { useDeckSlides } from './useSlides';
+import { t } from '@core/i18n';
 
 /** Start a lecture: name, goal and a short distraction checklist. */
 export function StartLectureDialog({
@@ -24,46 +25,46 @@ export function StartLectureDialog({
   const [goal, setGoal] = useState('');
   return (
     <Modal
-      title="Vorlesung starten"
+      title={t('Start lecture')}
       onClose={onClose}
       footer={
         <>
           <button className="btn" onClick={onClose}>
-            Abbrechen
+            {t('Cancel')}
           </button>
           <button
             className="btn btn-primary"
             onClick={() => onStart(name.trim() || defaultName, goal)}
           >
-            ▶ Starten
+            {t('▶ Start')}
           </button>
         </>
       }
     >
-      <Field label="Name">
+      <Field label={t('Name')}>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
       <Field
-        label="Ziel (optional)"
-        hint="Was willst du aus dieser Vorlesung mitnehmen? Ein Ziel richtet die Aufmerksamkeit aus."
+        label={t('Goal (optional)')}
+        hint={t('What do you want to take away from this lecture? A goal focuses your attention.')}
       >
         <input
           className="input"
           value={goal}
-          placeholder="z. B. Backpropagation so verstehen, dass ich sie erklären kann"
+          placeholder={t('e.g. understand backpropagation well enough to explain it')}
           onChange={(e) => setGoal(e.target.value)}
         />
       </Field>
       <div className="checklist">
-        <strong>Checkliste</strong>
+        <strong>{t('Checklist')}</strong>
         <label>
-          <input type="checkbox" /> Handy weg
+          <input type="checkbox" /> {t('Phone away')}
         </label>
         <label>
-          <input type="checkbox" /> Mitteilungen aus („Nicht stören“)
+          <input type="checkbox" /> {t('Notifications off (“Do not disturb”)')}
         </label>
         <label>
-          <input type="checkbox" /> Andere Tabs zu
+          <input type="checkbox" /> {t('Other tabs closed')}
         </label>
       </div>
     </Modal>
@@ -83,22 +84,23 @@ export function SummaryDialog({
   const [text, setText] = useState(initial || '1. \n2. \n3. ');
   return (
     <Modal
-      title="Abschließen: die 3 wichtigsten Punkte"
+      title={t('Wrap up: the 3 most important points')}
       onClose={onClose}
       footer={
         <>
           <button className="btn" onClick={onClose}>
-            Später
+            {t('Later')}
           </button>
           <button className="btn btn-primary" onClick={() => onSave(text)}>
-            Speichern
+            {t('Save')}
           </button>
         </>
       }
     >
       <p className="muted" style={{ margin: 0 }}>
-        Schreib aus dem Gedächtnis auf, was hängen geblieben ist - ohne nachzusehen. Das ist selbst
-        schon Abruf-Übung.
+        {t(
+          'Write down from memory what stuck – without looking. That alone is retrieval practice.',
+        )}
       </p>
       <textarea
         className="textarea"
@@ -122,7 +124,7 @@ export function CheckinDialog({
   const [text, setText] = useState('');
   const [focus, setFocus] = useState<number | null>(null);
   return (
-    <Modal title="Kurz-Check" onClose={() => onAnswer('', null, true)}>
+    <Modal title={t('Quick check')} onClose={() => onAnswer('', null, true)}>
       <p style={{ margin: 0, fontSize: 17 }}>{checkin.prompt}</p>
       <textarea
         className="textarea"
@@ -138,7 +140,7 @@ export function CheckinDialog({
         }}
       />
       <div className="row">
-        <span className="muted">Wie fokussiert warst du?</span>
+        <span className="muted">{t('How focused were you?')}</span>
         {[1, 2, 3, 4, 5].map((f) => (
           <button
             key={f}
@@ -151,10 +153,10 @@ export function CheckinDialog({
       </div>
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         <button className="btn" onClick={() => onAnswer('', null, true)}>
-          Überspringen
+          {t('Skip')}
         </button>
         <button className="btn btn-primary" onClick={() => onAnswer(text, focus, false)}>
-          Antworten <Kbd>Enter</Kbd>
+          {t('Answer')} <Kbd>{t('Enter')}</Kbd>
         </button>
       </div>
     </Modal>
@@ -175,7 +177,7 @@ export function SlideOverview({
 }): ReactNode {
   const slides = useDeckSlides(deckId);
   return (
-    <Modal title="Folienübersicht" onClose={onClose} wide>
+    <Modal title={t('Slide overview')} onClose={onClose} wide>
       <div className="slide-grid">
         {slides.map((s, i) => (
           <button
@@ -199,20 +201,20 @@ export function SlideOverview({
 /** Keyboard help. */
 export function LectureHelp({ onClose }: { onClose: () => void }): ReactNode {
   const rows: [string, string][] = [
-    ['← → / PageUp PageDown', 'Folie zurück / vor (auch Presenter-Clicker)'],
-    ['G', 'Folienübersicht'],
-    ['W / U', 'Folie als wichtig / unklar markieren'],
-    ['F', 'Frage notieren (neue Zeile „? “)'],
-    ['A', '„Ich war gerade abgelenkt“'],
+    ['← → / PageUp PageDown', t('Previous / next slide (also presenter clicker)')],
+    ['G', t('Slide overview')],
+    ['W / U', t('Mark slide as important / unclear')],
+    ['F', t('Note a question (new line “? ”)')],
+    ['A', t('“I was just distracted”')],
     ['B', 'Pause / weiter'],
-    ['N / Esc', 'ins Notizfeld / heraus'],
-    ['V', 'Fokusmodus (nur Folie und Notizen)'],
-    ['P / M / E / T', 'Stift / Marker / Radierer / Textfeld; Esc = Auswählen'],
+    ['N / Esc', t('into the notes field / out')],
+    ['V', t('Focus mode (only slide and notes)')],
+    ['P / M / E / T', t('Pen / marker / eraser / text box; Esc = select')],
     ['K', 'Assistent (KI)'],
-    ['?', 'Diese Hilfe'],
+    ['?', t('This help')],
   ];
   return (
-    <Modal title="Tastenkürzel (Vorlesung)" onClose={onClose}>
+    <Modal title={t('Keyboard shortcuts (lecture)')} onClose={onClose}>
       <table className="table compact">
         <tbody>
           {rows.map(([k, d]) => (

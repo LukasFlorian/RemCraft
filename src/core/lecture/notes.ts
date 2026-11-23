@@ -4,6 +4,7 @@
  * (`→`, `->`, `=>`); `a >> b` lines are flashcards (handled by the normal
  * RemCraft card syntax).
  */
+import { t } from '../i18n';
 
 const ARROW = /→|->|=>/;
 
@@ -31,6 +32,6 @@ export function openQuestions(text: string): string[] {
 }
 
 /** Labels of the slide markers. */
-export const FLAG_LABELS = { important: 'Wichtig', unclear: 'Unklar' } as const;
+export const FLAG_LABELS = { important: t('Important'), unclear: t('Unclear') } as const;
 /** Icons of the slide markers. */
 export const FLAG_ICONS = { important: '★', unclear: '?' } as const;

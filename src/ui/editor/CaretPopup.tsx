@@ -19,6 +19,7 @@ import type { PopupState } from './controller';
 import { useController, useControllerState } from './controller';
 import { schema } from './schema';
 import { useCommandContextFactory } from './useCommandContext';
+import { t } from '@core/i18n';
 
 /** Renders the open caret popup, if any. */
 export function CaretPopup(): ReactNode {
@@ -168,7 +169,7 @@ function SlashMenu({ popup }: { popup: PopupState }): ReactNode {
       )}
       <div className="slash-items">
         {!popup.query && <div className="menu-label">{groups[groupIndex]}</div>}
-        {items.length === 0 && <div className="menu-item faint">No matching command</div>}
+        {items.length === 0 && <div className="menu-item faint">{t('No matching command')}</div>}
         {items.map((cmd, i) => (
           <button
             key={cmd.id}
@@ -271,7 +272,7 @@ function Autocomplete({ popup }: { popup: PopupState }): ReactNode {
   };
   useEffect(() => () => void (controller.popupKeys = null), [controller]);
 
-  const label = popup.kind === 'ref' ? 'Reference' : popup.kind === 'tag' ? 'Tag' : 'Portal';
+  const label = popup.kind === 'ref' ? t('Reference') : popup.kind === 'tag' ? 'Tag' : t('Portal');
   return createPortal(
     <div
       ref={ref}
@@ -281,9 +282,9 @@ function Autocomplete({ popup }: { popup: PopupState }): ReactNode {
     >
       <div className="menu-label">
         {label}
-        {popup.query ? `: ${popup.query}` : ' - recent documents'}
+        {popup.query ? `: ${popup.query}` : t(' - recent documents')}
       </div>
-      {options.length === 0 && <div className="menu-item faint">Type to search…</div>}
+      {options.length === 0 && <div className="menu-item faint">{t('Type to search…')}</div>}
       {options.map((opt, i) => (
         <button
           key={opt.kind === 'rem' ? opt.remId : 'create'}
@@ -296,7 +297,10 @@ function Autocomplete({ popup }: { popup: PopupState }): ReactNode {
           ) : (
             <>
               <Plus size={16} />
-              <span className="ellipsis">Create “{opt.name}”</span>
+              <span className="ellipsis">
+                {t('Create “')}
+                {opt.name}”
+              </span>
             </>
           )}
         </button>

@@ -106,6 +106,17 @@ menu, Flashcards home/Cards/Stats/Exams, import dialog).
 | PDF or any file                            | ✅              |
 | RemCraft JSON backup / restore             | ✅              |
 | Export Markdown (RemNote syntax)           | ✅              |
+| Drag files in (beta, see below)            | ✅              |
+
+**Dragging files in** (beta, `src/ui/import/fileDrop.tsx`): drop files from the computer on the
+sidebar (top level or a folder/document row), a folder tile, an open folder or document page, or
+an open lecture. A hint shows the target while dragging. Each file is imported by its kind
+(`src/core/io/fileKinds.ts`): PDFs become slide decks, `.cards.json`/`.fokus.json` go onto the
+slides of the target deck (or the matching deck, preferring decks inside the target folder),
+`.remcraft.json` shares are cloned, backups are merged after a confirmation, Markdown/TXT/CSV/OPML
+become documents (tab separated `.txt` exports from Anki/Quizlet are read as CSV), images and other
+files are attached to the target document or stored as new documents. Elements opt in with
+`data-file-drop` (`root`, `rem:<id>`, `deck:<id>`); pages set a fallback with `data-file-drop-page`.
 
 ## Platform
 

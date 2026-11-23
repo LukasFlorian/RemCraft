@@ -28,6 +28,7 @@ import { useToast } from '../components/Toast';
 import { downloadText, pickFiles } from '../hooks/useFilePicker';
 import { useDeckSlides, useUpToDateTitles } from './useSlides';
 import { SlideView } from './SlideView';
+import { t } from '@core/i18n';
 
 /** Imports a card file into a deck and reports the result. */
 export async function importCardFile(
@@ -35,13 +36,16 @@ export async function importCardFile(
   file: File,
   deckId: RemId | undefined,
   toast: (m: string, k?: 'info' | 'error') => void,
+  within?: RemId | null,
 ): Promise<RemId | undefined> {
   try {
     const doc = JSON.parse(await file.text()) as CardFileDoc;
-    const target = deckId ?? app.lectures.suggestDeck(doc);
+    const target = deckId ?? app.lectures.suggestDeck(doc, within);
     if (!target) {
       toast(
-        `Kein passender Foliensatz für ${doc.source?.pdf ?? file.name} gefunden - importiere zuerst das PDF.`,
+        t('No matching slide deck found for {name} – import the PDF first.', {
+          name: doc.source?.pdf ?? file.name,
+        }),
         'error',
       );
       return undefined;
@@ -51,7 +55,12 @@ export async function importCardFile(
       .map(([k, v]) => `${v}× ${k}`)
       .join(', ');
     toast(
-      `${res.cards} Karten, ${res.notes} Erklärungen importiert (${how}${res.unmapped ? `, ${res.unmapped} ohne Folie` : ''})`,
+      t('{cards} cards, {notes} explanations imported ({how}{unmapped})', {
+        cards: res.cards,
+        notes: res.notes,
+        how,
+        unmapped: res.unmapped ? t(', {n} without slide', { n: res.unmapped }) : '',
+      }),
     );
     return target;
   } catch (e) {
@@ -73,13 +82,13 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
     <div className="deck-panel">
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <Presentation size={18} className="accent-icon" />
-        <strong>Foliensatz</strong>
+        <strong>{t('Slide deck')}</strong>
         <span className="muted">
-          {slides.length} Folien · {deck?.deck?.pdfName}
+          {slides.length} {t('slides ·')} {deck?.deck?.pdfName}
         </span>
         <span className="spacer" />
         <button className="btn btn-primary btn-sm" onClick={() => navigate(`/lecture/${deckId}`)}>
-          <Play size={14} /> Folien öffnen / Vorlesung
+          <Play size={14} /> {t('Open slides / lecture')}
         </button>
         <button
           className="btn btn-sm"
@@ -87,7 +96,7 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
             void pickFiles('.json').then(([f]) => f && importCardFile(app, f, deckId, toast))
           }
         >
-          <Upload size={14} /> Karten importieren
+          <Upload size={14} /> {t('Import cards')}
         </button>
         <button
           className="btn btn-sm"
@@ -101,13 +110,15 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
             downloadText(`${base}.remnote.md`, remnote, 'text/markdown');
           }}
         >
-          <FileJson size={14} /> Karten exportieren
+          <FileJson size={14} /> {t('Export cards')}
         </button>
         <SkillDownloadLink
           className="btn btn-sm"
-          title="Claude-Skill, der aus Folien Karten mit Folienzuordnung erstellt (Datei in Claude unter Einstellungen → Skills hochladen)"
+          title={t(
+            'Claude skill that creates cards mapped to slides from your slides (upload the file in Claude under Settings → Skills)',
+          )}
         >
-          <Sparkles size={14} /> Claude-Skill
+          <Sparkles size={14} /> {t('Claude skill')}
         </SkillDownloadLink>
         <button
           className="btn btn-sm"
@@ -115,23 +126,27 @@ export function DeckPanel({ deckId }: { deckId: RemId }): ReactNode {
             downloadText(`${base}-ki.md`, exportForAi(app.store, deckId, null), 'text/markdown')
           }
         >
-          <Download size={14} /> Export für KI
+          <Download size={14} /> {t('Export for AI')}
         </button>
         <button
           className="icon-btn"
-          title="Nacharbeiten"
+          title={t('Follow-up')}
           onClick={() => navigate(`/review/${deckId}`)}
         >
           <ListChecks size={17} />
         </button>
         <button
           className="icon-btn"
-          title="Auswertung"
+          title={t('Analysis')}
           onClick={() => navigate(`/lectures?deck=${deckId}`)}
         >
           <BarChart3 size={17} />
         </button>
-        <button className="icon-btn" title="Handout" onClick={() => navigate(`/handout/${deckId}`)}>
+        <button
+          className="icon-btn"
+          title={t('Handout')}
+          onClick={() => navigate(`/handout/${deckId}`)}
+        >
           <Printer size={17} />
         </button>
       </div>

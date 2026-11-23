@@ -13,6 +13,7 @@ import { useApp, useSelector } from '../app/context';
 import { BarChart, StatTile } from '../components/Charts';
 import { MONTHS, YearGrid } from './HabitGrid';
 import { HabitBadge, useHabitData, useToday } from './common';
+import { t as tr } from '@core/i18n';
 
 /** The statistics page. */
 export function HabitStatsPage(): ReactNode {
@@ -61,24 +62,24 @@ export function HabitStatsPage(): ReactNode {
     <div className="main-scroll">
       <div className="page habits-page">
         <div className="page-header habits-header">
-          <button className="icon-btn" aria-label="Zurück" onClick={() => navigate('/habits')}>
+          <button className="icon-btn" aria-label={tr('Back')} onClick={() => navigate('/habits')}>
             <ChevronLeft size={18} />
           </button>
-          <h1>Statistik</h1>
+          <h1>{tr('Statistics')}</h1>
           <span className="spacer" />
-          <button className="btn btn-sm" onClick={exportCsv} title="Alle Tage als CSV">
+          <button className="btn btn-sm" onClick={exportCsv} title={tr('All days as CSV')}>
             <Download size={14} /> CSV
           </button>
         </div>
 
-        <div className="habit-picker" role="tablist" aria-label="Gewohnheit">
+        <div className="habit-picker" role="tablist" aria-label={tr('Habit')}>
           <button
             role="tab"
             aria-selected={!habit}
             className={!habit ? 'active' : ''}
             onClick={() => setSelected(null)}
           >
-            Alle
+            {tr('All')}
           </button>
           {habits.map((h) => (
             <button
@@ -98,13 +99,17 @@ export function HabitStatsPage(): ReactNode {
         <div className="row habit-year-nav">
           <button
             className="icon-btn"
-            aria-label="Vorheriges Jahr"
+            aria-label={tr('Previous year')}
             onClick={() => setYear(year - 1)}
           >
             <ChevronLeft size={16} />
           </button>
           <strong>{year}</strong>
-          <button className="icon-btn" aria-label="Nächstes Jahr" onClick={() => setYear(year + 1)}>
+          <button
+            className="icon-btn"
+            aria-label={tr('Next year')}
+            onClick={() => setYear(year + 1)}
+          >
             <ChevronRight size={16} />
           </button>
         </div>
@@ -114,10 +119,10 @@ export function HabitStatsPage(): ReactNode {
         ) : (
           <>
             <div className="card">
-              <h2 className="card-title">Erledigungen pro Monat – alle Gewohnheiten</h2>
+              <h2 className="card-title">{tr('Completions per month – all habits')}</h2>
               <BarChart
                 labels={MONTHS}
-                series={[{ name: 'Erledigt', color: 'var(--accent)', values: sum }]}
+                series={[{ name: tr('Completed'), color: 'var(--accent)', values: sum }]}
                 height={160}
                 ariaLabel={`Erledigungen pro Monat ${year}`}
               />
@@ -126,10 +131,10 @@ export function HabitStatsPage(): ReactNode {
               <table className="table compact habit-table">
                 <thead>
                   <tr>
-                    <th>Gewohnheit</th>
-                    <th>Rate</th>
-                    <th>Serie</th>
-                    <th>Beste</th>
+                    <th>{tr('Habit')}</th>
+                    <th>{tr('Rate')}</th>
+                    <th>{tr('Streak')}</th>
+                    <th>{tr('Best')}</th>
                     <th>{year}</th>
                   </tr>
                 </thead>
@@ -174,16 +179,16 @@ function SingleHabitStats({ habit, year }: { habit: Habit; year: number }): Reac
         <YearGrid data={data} color={habit.color} year={year} />
       </div>
       <div className="habit-stats">
-        <StatTile label="Erledigungen" value={t.completions} />
-        <StatTile label="Erfüllungsrate" value={`${completionRate(data)} %`} />
-        <StatTile label="Aktuelle Serie" value={s.current} />
-        <StatTile label="Beste Serie" value={s.best} />
+        <StatTile label={tr('Completions')} value={t.completions} />
+        <StatTile label={tr('Completion rate')} value={`${completionRate(data)} %`} />
+        <StatTile label={tr('Current streak')} value={s.current} />
+        <StatTile label={tr('Best streak')} value={s.best} />
       </div>
       <div className="card">
-        <h2 className="card-title">Erledigungen pro Monat</h2>
+        <h2 className="card-title">{tr('Completions per month')}</h2>
         <BarChart
           labels={MONTHS}
-          series={[{ name: 'Erledigt', color: habit.color, values: months }]}
+          series={[{ name: tr('Completed'), color: habit.color, values: months }]}
           height={150}
           ariaLabel={`Erledigungen pro Monat ${year}`}
         />

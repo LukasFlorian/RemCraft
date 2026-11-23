@@ -6,6 +6,7 @@
  * between `start` and `stop` events.
  */
 import type { LectureEvent, Timestamp } from '../model/types';
+import { t as tr } from '@core/i18n';
 
 /** A recall check-in: the prompt and (if given) the answer. */
 export interface Checkin {
@@ -238,11 +239,11 @@ export function summarize(st: LectureState, now: Timestamp): LectureSummary {
 
 /** Recall questions, rotated so they do not become routine (Fokus). */
 export const CHECKIN_PROMPTS: readonly string[] = [
-  'Was war der Kernpunkt der letzten Minuten? Ein Satz, ohne nachzusehen.',
-  'Erklär die letzte Folie in eigenen Worten, als würdest du sie einer Kommilitonin erklären.',
-  'Welche Klausurfrage könnte der Prof zu den letzten Minuten stellen?',
-  'Wie hängt das gerade mit dem vorherigen Thema zusammen?',
-  'Was davon ist dir noch nicht ganz klar?',
+  tr('What was the key point of the last few minutes? One sentence, without looking.'),
+  tr('Explain the last slide in your own words, as if you were explaining it to a fellow student.'),
+  tr('Which exam question could the lecturer ask about the last few minutes?'),
+  tr('How does this connect to the previous topic?'),
+  tr('What of this is not quite clear to you yet?'),
 ];
 
 /**

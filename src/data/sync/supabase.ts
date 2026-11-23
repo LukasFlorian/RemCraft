@@ -14,6 +14,7 @@ import type { BackendConfig } from '../config';
 import { getChunked, putChunked } from './chunkedFiles';
 import type { ObjectStore } from './chunkedFiles';
 import type { PulledRow, RemoteBackend, RemoteRow } from './remote';
+import { t } from '@core/i18n';
 
 /** Storage bucket for images and PDFs. */
 export const FILE_BUCKET = 'files';
@@ -38,7 +39,7 @@ export class SupabaseBackend implements RemoteBackend {
     // `pull_changes` returns the user's own rows plus the rows of every space
     // they are a member of, ordered by the global change sequence.
     const { data, error } = await this.client.rpc('pull_changes', { since: sinceSeq, lim: limit });
-    if (error) throw new Error(`Pull failed: ${error.message}`);
+    if (error) throw new Error(t('Pull failed: {message}', { message: error.message }));
     return ((data ?? []) as PulledRow[]).map((r) => ({
       ...r,
       updated_at: Number(r.updated_at),
@@ -58,13 +59,13 @@ export class SupabaseBackend implements RemoteBackend {
       const { error } = await this.client
         .from('records')
         .upsert(personal, { onConflict: 'user_id,collection,id' });
-      if (error) throw new Error(`Push failed: ${error.message}`);
+      if (error) throw new Error(t('Push failed: {message}', { message: error.message }));
     }
     if (shared.length > 0) {
       const { error } = await this.client
         .from('space_records')
         .upsert(shared, { onConflict: 'space_id,collection,id' });
-      if (error) throw new Error(`Push failed (shared): ${error.message}`);
+      if (error) throw new Error(t('Push failed (shared): {message}', { message: error.message }));
     }
   }
 
@@ -111,7 +112,7 @@ export class SupabaseBackend implements RemoteBackend {
       const blob = await getChunked(store, `spaces/${space_id}/${id}`);
       if (blob) return blob;
     }
-    throw new Error('Download failed: file not found');
+    throw new Error(t('Download failed: file not found'));
   }
 }
 
@@ -129,7 +130,12 @@ export function bucketStore(client: SupabaseClient, bucket: string): ObjectStore
         .from(bucket)
         .upload(path, blob, { contentType: mimeType, upsert: true });
       if (error)
-        throw new Error(`Upload fehlgeschlagen (${path.split('/').pop()}): ${error.message}`);
+        throw new Error(
+          t('Upload failed ({0}): {message}', {
+            '0': path.split('/').pop(),
+            message: error.message,
+          }),
+        );
     },
     get: async (path) => (await client.storage.from(bucket).download(path)).data ?? null,
   };
@@ -227,7 +233,7 @@ export class AuthService {
    */
   async deleteAccount(): Promise<void> {
     const user = await this.currentUser();
-    if (!user) throw new Error('Nicht angemeldet.');
+    if (!user) throw new Error(t('Not signed in.'));
     // 1. Own files: `files/<user id>/<file id>`.
     await this.removeFolder(FILE_BUCKET, user.id);
     // 2. Files of read-only links: `shares/<token>/<file id>`.
@@ -235,13 +241,13 @@ export class AuthService {
       .from('shares')
       .select('token')
       .eq('owner_id', user.id);
-    if (error) throw new Error(`Leselinks laden: ${error.message}`);
+    if (error) throw new Error(t('Loading read-only links: {message}', { message: error.message }));
     for (const { token } of (shares ?? []) as { token: string }[]) {
       await this.removeFolder(SHARE_BUCKET_NAME, token);
     }
     // 3. The account itself (cascades to all tables).
     const { error: rpcError } = await this.client.rpc('delete_my_account');
-    if (rpcError) throw new Error(`Konto löschen: ${rpcError.message}`);
+    if (rpcError) throw new Error(t('Deleting account: {message}', { message: rpcError.message }));
     // 4. The session belongs to a deleted user: drop it locally only.
     await this.client.auth.signOut({ scope: 'local' });
   }
@@ -258,11 +264,12 @@ export class AuthService {
     // Removing shifts the listing, so always read the first page again.
     for (;;) {
       const { data, error } = await storage.list(folder, { limit: 1000 });
-      if (error) throw new Error(`Dateien laden: ${error.message}`);
+      if (error) throw new Error(t('Loading files: {message}', { message: error.message }));
       const names = (data ?? []).filter((f) => f.id !== null).map((f) => `${folder}/${f.name}`);
       if (names.length === 0) return;
       const { error: removeError } = await storage.remove(names);
-      if (removeError) throw new Error(`Dateien löschen: ${removeError.message}`);
+      if (removeError)
+        throw new Error(t('Deleting files: {message}', { message: removeError.message }));
     }
   }
 }
