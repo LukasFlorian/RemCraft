@@ -738,6 +738,8 @@ export const DE: Record<string, string> = {
     'Vorlesungsansicht auf dem Handy: aktuelle Folie groß oben, darunter Notizen und Karten.',
   'Lecture: cards in the cards widget can be edited right there (pencil icon).':
     'Vorlesung: Karten im Karten-Widget lassen sich direkt dort bearbeiten (Stift-Symbol).',
+  'Lecture: the dividers between widgets no longer show through dialogs such as the quick check.':
+    'Vorlesung: Die Trennlinien zwischen den Widgets scheinen nicht mehr durch Dialoge wie den Kurz-Check.',
   Lectures: 'Vorlesungen',
   'Lectures are mixed in the daily queue; clozes of one sentence come on different days.':
     'Vorlesungen werden in der täglichen Warteschlange gemischt; Clozes eines Satzes kommen an verschiedenen Tagen.',

@@ -178,7 +178,6 @@ test('looking at a card’s slide does not restart the practice session', async 
 
 test('a card can be edited right in the lecture cards widget', async ({ page }) => {
   const widget = page.locator('.slide-cards');
-  await widget.getByRole('button', { name: 'All slides' }).click();
   await widget.getByRole('button', { name: 'Edit card' }).click();
   const editor = page.getByTestId('slide-card-editor');
   await expect(editor).toBeVisible();
@@ -190,6 +189,23 @@ test('a card can be edited right in the lecture cards widget', async ({ page }) 
   await page.keyboard.type(' (bearbeitet)');
   await editor.getByRole('button', { name: 'Done' }).click();
   // The edited text is on the card (front or back, so reveal it).
-  await widget.getByRole('button', { name: 'Reveal' }).click();
+  // Some card types have their own reveal button; the widget's own is the last one.
+  await widget.getByRole('button', { name: 'Reveal', exact: true }).last().click();
   await expect(widget.locator('.mini-card')).toContainText('(bearbeitet)');
+});
+
+test('dialogs cover the resize edges of the lecture widgets', async ({ page }) => {
+  await page.getByRole('button', { name: 'Start lecture' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  // At the centre of every widget edge, the topmost element belongs to the dialog layer.
+  const onTop = await page.evaluate<
+    boolean[]
+  >(`[...document.querySelectorAll('.widget-edge')].map((edge) => {
+    const r = edge.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return true;
+    const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return Boolean(top && top.closest('.modal-backdrop'));
+  })`);
+  expect(onTop.length).toBeGreaterThan(0);
+  expect(onTop.every(Boolean)).toBe(true);
 });

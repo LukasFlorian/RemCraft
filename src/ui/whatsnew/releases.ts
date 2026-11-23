@@ -32,6 +32,9 @@ export const RELEASES: Release[] = [
         'The link to the beta version now really opens the beta, also in the installed app on phones (previously the normal version sometimes appeared again).',
       ),
       t('Lecture: cards in the cards widget can be edited right there (pencil icon).'),
+      t(
+        'Lecture: the dividers between widgets no longer show through dialogs such as the quick check.',
+      ),
     ],
   },
   {
