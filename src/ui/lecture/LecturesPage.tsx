@@ -31,7 +31,7 @@ export function LecturesPage(): ReactNode {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   return (
-    <div className="main-scroll">
+    <div className="main-scroll" data-file-drop-page="root">
       <div className="page page-wide">
         {lectureId ? (
           <LectureAnalysis lectureId={lectureId} onBack={() => navigate('/lectures')} />

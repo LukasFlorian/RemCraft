@@ -32,6 +32,12 @@ export const FEATURES = {
     description:
       'Gewohnheiten mit Jahres-Raster, Zielen pro Tag/Woche/Monat, Serien, Statistiken, Notizen, Erinnerungen und Teilen-Karten.',
   },
+  fileDrop: {
+    status: 'beta',
+    title: 'Dateien hineinziehen',
+    description:
+      'PDFs, Karten (.cards.json), Markdown, CSV, Freigaben, Bilder und andere Dateien einfach in die Seitenleiste, auf Ordner, Dokumente oder eine geöffnete Vorlesung ziehen.',
+  },
 } satisfies Record<string, FeatureInfo>;
 
 /** Name of a flagged feature. */

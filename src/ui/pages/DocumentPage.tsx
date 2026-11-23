@@ -45,6 +45,8 @@ import { pickFiles } from '../hooks/useFilePicker';
 import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { PriorityBadge, useRemMenu } from './remMenu';
+import { fileDropAttr } from '../import/fileDrop';
+import { feature } from '../app/channel';
 
 /** The document page. */
 export function DocumentPage(): ReactNode {
@@ -296,6 +298,7 @@ function DocumentView({ remId }: { remId: RemId }): ReactNode {
       </div>
       <div
         className="main-scroll"
+        data-file-drop-page={fileDropAttr(remId, Boolean(rem.deck))}
         onMouseDown={(e) => e.target === e.currentTarget && controller.clearSelection()}
       >
         <div className="page doc-page">
@@ -418,7 +421,14 @@ function FolderContents({ folderId }: { folderId: RemId }): ReactNode {
           <Presentation size={14} /> Foliensatz (PDF)
         </button>
       </div>
-      {children.length === 0 && <div className="empty">This folder is empty.</div>}
+      {children.length === 0 && (
+        <div className="empty">
+          This folder is empty.
+          {feature('fileDrop') && (
+            <> Zieh PDFs, Karten oder Notizen hierher, um sie zu importieren.</>
+          )}
+        </div>
+      )}
       <div className="folder-grid">
         {children.map((c) => (
           <FolderItem
@@ -476,6 +486,7 @@ function FolderItem({
   return (
     <button
       className={`folder-item${zone ? ` tile-drop-${zone}` : ''}${dragging === remId ? ' dragging' : ''}`}
+      data-file-drop={fileDropAttr(remId, Boolean(rem.deck))}
       onClick={() => navigate(`/rem/${remId}`)}
       draggable
       onDragStart={(e) => {

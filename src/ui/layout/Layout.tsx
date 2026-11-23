@@ -15,6 +15,8 @@ import { EditToolbar } from '../editor/EditToolbar';
 import { WhatsNew } from '../whatsnew/WhatsNew';
 import { GlobalModals } from '../pages/GlobalModals';
 import { Sidebar } from './Sidebar';
+import { FileDropLayer } from '../import/fileDrop';
+import { feature } from '../app/channel';
 
 /** The application layout. */
 export function Layout(): ReactNode {
@@ -82,6 +84,7 @@ export function Layout(): ReactNode {
         onNavigate={() => setMobileOpen(false)}
       />
       {mobileOpen && <div className="sidebar-scrim" onClick={() => setMobileOpen(false)} />}
+      {feature('fileDrop') && <FileDropLayer />}
       <main className="main">
         {
           <button

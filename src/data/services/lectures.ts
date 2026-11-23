@@ -4,6 +4,7 @@
  * `*.fokus.json` card files.
  */
 import { buildLectureState, isRunning } from '@core/lecture/session';
+import { ancestors } from '@core/model/graph';
 import type { CardFileDoc, MappedBy } from '@core/lecture/cardFile';
 import {
   anchorScore,
@@ -515,8 +516,12 @@ export class LectureService {
   // =========================================================================
 
   /** Suggests the deck a card file belongs to (by PDF name, then page count). */
-  suggestDeck(doc: CardFileDoc): RemId | undefined {
-    const decks = this.store.all('rems').filter((r) => r.deck);
+  suggestDeck(doc: CardFileDoc, within?: RemId | null): RemId | undefined {
+    // Decks inside `within` (e.g. the folder a file was dropped on) come first.
+    const inside = (id: RemId): boolean =>
+      !within || ancestors(this.store, id).some((a) => a.id === within);
+    const all = this.store.all('rems').filter((r) => r.deck);
+    const decks = [...all.filter((d) => inside(d.id)), ...all.filter((d) => !inside(d.id))];
     const name = doc.source?.pdf?.toLowerCase();
     return (
       decks.find((d) => name && d.deck!.pdfName.toLowerCase() === name) ??

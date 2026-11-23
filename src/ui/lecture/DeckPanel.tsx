@@ -35,10 +35,11 @@ export async function importCardFile(
   file: File,
   deckId: RemId | undefined,
   toast: (m: string, k?: 'info' | 'error') => void,
+  within?: RemId | null,
 ): Promise<RemId | undefined> {
   try {
     const doc = JSON.parse(await file.text()) as CardFileDoc;
-    const target = deckId ?? app.lectures.suggestDeck(doc);
+    const target = deckId ?? app.lectures.suggestDeck(doc, within);
     if (!target) {
       toast(
         `Kein passender Foliensatz für ${doc.source?.pdf ?? file.name} gefunden - importiere zuerst das PDF.`,

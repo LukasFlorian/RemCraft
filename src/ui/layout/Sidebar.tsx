@@ -33,6 +33,7 @@ import { RemIcon } from '../components/RemIcon';
 import { CHANNEL, feature, otherChannelUrl } from '../app/channel';
 import { selectSettings } from '@data/selectors';
 import { useHabitsOpenToday } from '../habits/useHabitReminders';
+import { fileDropAttr } from '../import/fileDrop';
 
 /** Documents and folders below a Rem (what the sidebar tree shows). */
 function useDocChildren(id: RemId | null): Rem[] {
@@ -91,6 +92,7 @@ function TreeItem({
       <div
         className={`tree-item${active ? ' active' : ''}${over ? ` drop-${over}` : ''}${dnd.dragging === rem.id ? ' dragging' : ''}`}
         style={{ paddingLeft: 6 + depth * 16 }}
+        data-file-drop={fileDropAttr(rem.id, Boolean(rem.deck))}
         onClick={() => navigate(`/rem/${rem.id}`)}
         role="treeitem"
         aria-expanded={kids.length > 0 ? Boolean(open) : undefined}
@@ -296,7 +298,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
           <PanelLeftClose size={17} />
         </button>
       </div>
-      <nav className="sidebar-scroll">
+      <nav className="sidebar-scroll" data-file-drop="root">
         <button className="nav-item" onClick={() => modals.open({ kind: 'search' })}>
           <Search size={17} /> Search <span className="nav-count kbd">⌘K</span>
         </button>

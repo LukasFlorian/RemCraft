@@ -28,6 +28,7 @@ import type { MenuEntry } from '../components/Menu';
 import { useLocalState } from '../hooks/useLocalState';
 import { useRemTitle } from '../hooks/useRemTitle';
 import { useRemMenu } from './remMenu';
+import { fileDropAttr } from '../import/fileDrop';
 
 type Filter = 'all' | 'documents' | 'folders' | 'pdfs' | 'tags' | 'daily';
 type Sort = 'newest' | 'oldest' | 'updated' | 'az';
@@ -147,7 +148,7 @@ export function DocumentsPage(): ReactNode {
   ];
 
   return (
-    <div className="main-scroll">
+    <div className="main-scroll" data-file-drop-page="root">
       <div className="page page-wide">
         <div className="page-header">
           <h1>Documents &amp; Folders</h1>
@@ -257,6 +258,9 @@ function DocRow({
   return (
     <div
       className="doc-row"
+      data-file-drop={
+        rem.isFolder || rem.isDocument ? fileDropAttr(rem.id, Boolean(rem.deck)) : undefined
+      }
       onClick={onOpen}
       role="link"
       tabIndex={0}

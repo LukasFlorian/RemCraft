@@ -69,6 +69,7 @@ import {
 import { useDeckPdf, useDeckSlides, useUpToDateTitles } from './useSlides';
 import type { WidgetRect } from './WidgetBoard';
 import { WidgetBoard } from './WidgetBoard';
+import { fileDropAttr } from '../import/fileDrop';
 
 /** Default widget layout (24 × 24 grid). */
 const DEFAULT_LAYOUT: Record<string, WidgetRect> = {
@@ -387,7 +388,10 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   );
 
   return (
-    <div className={`lecture${focusMode ? ' focus-mode' : ''}`}>
+    <div
+      className={`lecture${focusMode ? ' focus-mode' : ''}`}
+      data-file-drop-page={fileDropAttr(deckId, true)}
+    >
       <div className="topbar lecture-top">
         {returnTo ? (
           <button className="btn btn-sm btn-primary" onClick={() => navigate(returnTo)}>
