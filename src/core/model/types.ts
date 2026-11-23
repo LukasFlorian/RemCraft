@@ -498,6 +498,8 @@ export interface Settings {
   whatsNewSeen?: string;
   /** The user tests beta features (the stable app then links to the beta app). */
   betaTester?: boolean;
+  /** Widget layout of the lecture view, the same for every lecture (synced). */
+  lectureLayout?: Record<string, { x: number; y: number; w: number; h: number; hidden?: boolean }>;
   /** Interface language (synced; each device follows it). */
   language?: 'en' | 'de';
   /**

@@ -39,7 +39,8 @@ import { FLAG_ICONS, FLAG_LABELS } from '@core/lecture/notes';
 import type { RemId, SlideFlag } from '@core/model/types';
 import { rt, toPlainText } from '@core/richtext/ops';
 import { LAYOUT_MODES } from '@core/lecture/layout';
-import { useApp, useNow, useRem } from '../app/context';
+import { selectSettings } from '@data/selectors';
+import { useApp, useNow, useRem, useSelector } from '../app/context';
 import { useToast } from '../components/Toast';
 import { useController } from '../editor/controller';
 import { Outliner } from '../editor/Outliner';
@@ -78,9 +79,10 @@ const DEFAULT_LAYOUT: Record<string, WidgetRect> = {
   current: { x: 5, y: 0, w: 13, h: 15 },
   next: { x: 18, y: 0, w: 6, h: 5 },
   notes: { x: 18, y: 5, w: 6, h: 19 },
-  focus: { x: 0, y: 5, w: 5, h: 10 },
-  cards: { x: 0, y: 15, w: 9, h: 9 },
-  kpis: { x: 9, y: 15, w: 9, h: 9 },
+  // The focus actions live in the slide toolbar; the widget is optional.
+  focus: { x: 0, y: 5, w: 5, h: 10, hidden: true },
+  cards: { x: 0, y: 5, w: 5, h: 19 },
+  kpis: { x: 5, y: 15, w: 13, h: 9 },
 };
 
 /** The lecture page. */
@@ -130,6 +132,13 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const lectureId = lecture?.id ?? null;
   const state = useLectureState(lectureId);
   const running = state ? isRunning(state) : false;
+  // Widget layout: one layout for all lectures, synced across devices.
+  const syncedLayout = useSelector((s) => selectSettings(s).lectureLayout);
+  const saveLayout = (layout: Record<string, WidgetRect>): void =>
+    app.store.transact(
+      (tx) => void tx.put('settings', { ...selectSettings(app.store), lectureLayout: layout }),
+      { undoable: false },
+    );
   const paused = state?.pausedSince != null;
   const [lastSlide, setLastSlide] = useLocalState<number>(`deck.${deckId}.slide`, 0);
   const urlSlide = params.get('slide') ? Number(params.get('slide')) - 1 : null;
@@ -285,6 +294,35 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
           onClick={() => setDialog('overview')}
         >
           <Grid3x3 size={16} />
+        </button>
+        <span className="toolbar-sep" />
+        <button
+          className="btn btn-sm btn-ghost focus-action"
+          disabled={!running}
+          onClick={drift}
+          title={`${tr('↺ Distracted')} (A)`}
+        >
+          ↺
+        </button>
+        {(['important', 'unclear'] as SlideFlag[]).map((f) => (
+          <button
+            key={f}
+            className={`btn btn-sm btn-ghost focus-action${slide?.slideFlags?.includes(f) ? ' active' : ''}`}
+            onClick={() => toggleFlag(f)}
+            title={`${FLAG_LABELS[f]} (${f === 'important' ? 'W' : 'U'})`}
+            aria-label={FLAG_LABELS[f]}
+            aria-pressed={Boolean(slide?.slideFlags?.includes(f))}
+          >
+            {FLAG_ICONS[f]}
+          </button>
+        ))}
+        <button
+          className="btn btn-sm btn-ghost focus-action"
+          onClick={() => addNote('? ')}
+          title={`${tr('✎ Question')} (F)`}
+          aria-label={tr('✎ Question')}
+        >
+          ✎
         </button>
         <span className="toolbar-sep" />
         {toolButton('select', <MousePointer2 size={16} />, tr('Select / highlight text (Esc)'))}
@@ -528,7 +566,9 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
           </div>
         ) : (
           <WidgetBoard
-            storageKey="lecture.layout.v2"
+            storageKey="lecture.layout.v3"
+            synced={syncedLayout}
+            onSyncedChange={saveLayout}
             defaults={DEFAULT_LAYOUT}
             editing={editingLayout}
             onEditingChange={setEditingLayout}

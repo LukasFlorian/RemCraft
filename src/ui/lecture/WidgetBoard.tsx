@@ -35,6 +35,10 @@ export interface Widget {
 /** Props of {@link WidgetBoard}. */
 export interface WidgetBoardProps {
   storageKey: string;
+  /** Layout stored elsewhere (e.g. synced settings); wins over the local copy. */
+  synced?: Record<string, WidgetRect>;
+  /** Called with every layout change, to store it elsewhere. */
+  onSyncedChange?: (layout: Record<string, WidgetRect>) => void;
   widgets: Widget[];
   defaults: Record<string, WidgetRect>;
   editing: boolean;
@@ -112,12 +116,19 @@ export function moveEdge(
  */
 export function WidgetBoard({
   storageKey,
+  synced,
+  onSyncedChange,
   widgets,
   defaults,
   editing,
   onEditingChange,
 }: WidgetBoardProps): ReactNode {
-  const [stored, setLayout] = useLocalState<Record<string, WidgetRect>>(storageKey, defaults);
+  const [local, setLocal] = useLocalState<Record<string, WidgetRect>>(storageKey, defaults);
+  const stored = synced ?? local;
+  const setLayout = (next: Record<string, WidgetRect>): void => {
+    setLocal(next);
+    onSyncedChange?.(next);
+  };
   const [order, setOrder] = useState<string[]>(widgets.map((w) => w.id));
   const [active, setActive] = useState<string | null>(null);
   const [swapTarget, setSwapTarget] = useState<string | null>(null);

@@ -1121,6 +1121,10 @@ h3.snap-heading {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  /* Take the whole width of the lecture body (it is a flex row). */
+  flex: 1;
+  min-width: 0;
+  width: 100%;
 }
 .lecture-panel-bar {
   padding: 8px 16px 0;
@@ -1130,7 +1134,46 @@ h3.snap-heading {
   min-height: 0;
   overflow: auto;
   padding: 8px 24px 32px;
-  max-width: 1100px;
   width: 100%;
-  margin: 0 auto;
+}
+
+/* Review: as many columns as fit (one on narrow screens). */
+.review-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr));
+  gap: 10px;
+}
+.review-list .review-item {
+  margin-bottom: 0;
+}
+
+/* Lecture analysis: header and numbers on top, charts and lists side by side. */
+.lecture-analysis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 620px), 1fr));
+  gap: 20px;
+  align-items: start;
+}
+.lecture-analysis > :nth-child(-n + 2) {
+  grid-column: 1 / -1;
+}
+
+/* Small, quiet hide buttons in widget headers (they must not cover anything). */
+.widget-head .widget-hide {
+  width: 22px;
+  height: 22px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 6px;
+}
+
+/* Focus actions next to the slide tools. */
+.slide-toolbar .focus-action {
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.slide-toolbar .focus-action.active {
+  background: var(--accent-soft);
+  color: var(--accent);
 }

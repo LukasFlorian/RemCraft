@@ -189,7 +189,7 @@ function LectureAnalysis({
   const tl = timeline(st, now);
   const stats = slideStats(st, slideCount, now);
   return (
-    <div className="col" style={{ gap: 20 }}>
+    <div className="lecture-analysis">
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <button className="btn btn-sm btn-ghost" onClick={onBack}>
           {t('← All lectures')}

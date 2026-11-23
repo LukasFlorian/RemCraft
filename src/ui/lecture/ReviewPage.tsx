@@ -128,22 +128,24 @@ export function ReviewContent({
         </span>
       </div>
       {list.length === 0 && <div className="empty">{t('Nothing to follow up. 🎉')}</div>}
-      {list.map((r) => (
-        <ReviewItem
-          key={r.slide}
-          deckId={deckId}
-          slideId={slides[r.slide]?.id}
-          index={r.slide}
-          reasons={r.reasons.map((x) => x.label)}
-          priority={r.priority}
-          dwell={fmtDuration(r.stats.dwellMs)}
-          onOpen={() => open(r.slide)}
-          onToggle={(flag) => {
-            const slide = slides[r.slide];
-            if (slide) app.lectures.setFlag(slide.id, flag, !slide.slideFlags?.includes(flag));
-          }}
-        />
-      ))}
+      <div className="review-list">
+        {list.map((r) => (
+          <ReviewItem
+            key={r.slide}
+            deckId={deckId}
+            slideId={slides[r.slide]?.id}
+            index={r.slide}
+            reasons={r.reasons.map((x) => x.label)}
+            priority={r.priority}
+            dwell={fmtDuration(r.stats.dwellMs)}
+            onOpen={() => open(r.slide)}
+            onToggle={(flag) => {
+              const slide = slides[r.slide];
+              if (slide) app.lectures.setFlag(slide.id, flag, !slide.slideFlags?.includes(flag));
+            }}
+          />
+        ))}
+      </div>
     </>
   );
 }

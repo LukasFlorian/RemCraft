@@ -35,6 +35,10 @@ export const RELEASES: Release[] = [
       t(
         'Lecture: the dividers between widgets no longer show through dialogs such as the quick check.',
       ),
+      t(
+        'Lecture: Distracted, Important, Unclear and Question are now in the slide toolbar; the cards get more room, and your widget layout is kept for every lecture and device.',
+      ),
+      t('Follow-up and lecture statistics use the full width on large screens.'),
     ],
   },
   {
