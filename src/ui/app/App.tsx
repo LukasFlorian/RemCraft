@@ -28,6 +28,7 @@ import { ReviewPage } from '../lecture/ReviewPage';
 import { JoinSpacePage, SharedSnapshotPage } from '../sharing/SharedPages';
 import { AppContext, useApp } from './context';
 import { ModalProvider } from './modals';
+import { t } from '@core/i18n';
 
 /** Route table (hash routing works on any static host, e.g. GitHub Pages). */
 const router = createHashRouter([
@@ -113,8 +114,13 @@ export function App(): ReactNode {
 
   const controller = useMemo(() => (app ? new EditorController(app.store) : null), [app]);
 
-  if (error) return <div className="loading-screen">Failed to start: {error}</div>;
-  if (!app || !controller) return <div className="loading-screen">Loading RemCraft…</div>;
+  if (error)
+    return (
+      <div className="loading-screen">
+        {t('Failed to start:')} {error}
+      </div>
+    );
+  if (!app || !controller) return <div className="loading-screen">{t('Loading RemCraft…')}</div>;
   return (
     <AppContext.Provider value={app}>
       <ControllerContext.Provider value={controller}>

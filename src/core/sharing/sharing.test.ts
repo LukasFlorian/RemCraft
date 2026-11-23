@@ -98,9 +98,9 @@ describe('share scopes', () => {
   });
 
   it('describes custom scopes', () => {
-    expect(describeScope(SHARE_PRESETS.cards.scope)).toBe('Nur Karteikarten');
+    expect(describeScope(SHARE_PRESETS.cards.scope)).toBe('Flashcards only');
     expect(describeScope({ slides: false, notes: true, cards: true, annotations: false })).toBe(
-      'Notizen + Karten',
+      'Notes + Cards',
     );
   });
 });

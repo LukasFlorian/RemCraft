@@ -8,6 +8,7 @@ import type { RemId } from '@core/model/types';
 import { useApp } from '../app/context';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
+import { t as tr } from '@core/i18n';
 
 /** The recorder dialog. */
 export function AudioRecorder({
@@ -43,7 +44,7 @@ export function AudioRecorder({
         const blob = new Blob(chunks.current, { type: rec.mimeType || 'audio/webm' });
         const src = await app.files.save(blob, 'recording.webm');
         app.rems.update(remId, { embed: { url: src } });
-        toast('Recording attached');
+        toast(tr('Recording attached'));
         onClose();
       };
       recorder.current = rec;
@@ -51,14 +52,16 @@ export function AudioRecorder({
       setRecording(true);
     } catch (err) {
       toast(
-        `Microphone not available: ${err instanceof Error ? err.message : String(err)}`,
+        tr('Microphone not available: {0}', {
+          '0': err instanceof Error ? err.message : String(err),
+        }),
         'error',
       );
     }
   };
 
   return (
-    <Modal title="Record audio" onClose={onClose}>
+    <Modal title={tr('Record audio')} onClose={onClose}>
       <div className="col" style={{ alignItems: 'center', padding: 20 }}>
         <div className="mono" style={{ fontSize: 32 }}>
           {String(Math.floor(seconds / 60)).padStart(2, '0')}:
@@ -66,11 +69,11 @@ export function AudioRecorder({
         </div>
         {recording ? (
           <button className="btn btn-danger btn-lg" onClick={() => recorder.current?.stop()}>
-            <Square size={16} /> Stop &amp; attach
+            <Square size={16} /> {tr('Stop & attach')}
           </button>
         ) : (
           <button className="btn btn-primary btn-lg" onClick={() => void start()}>
-            <Mic size={16} /> Start recording
+            <Mic size={16} /> {tr('Start recording')}
           </button>
         )}
       </div>

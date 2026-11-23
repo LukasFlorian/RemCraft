@@ -19,6 +19,7 @@ import { useLocalState } from '../hooks/useLocalState';
 import { HabitEditor, WEEKDAYS } from './HabitEditor';
 import { RecentGrid } from './HabitGrid';
 import { CheckButton, HabitBadge, useHabitData, useRecordDay, useToday } from './common';
+import { t } from '@core/i18n';
 
 /** Overview layouts. */
 type Layout = 'grid' | 'checklist' | 'compact';
@@ -44,35 +45,35 @@ export function HabitsPage(): ReactNode {
     <div className="main-scroll">
       <div className="page habits-page">
         <div className="page-header habits-header">
-          <h1>Gewohnheiten</h1>
+          <h1>{t('Habits')}</h1>
           <span className="spacer" />
           <button
             className="icon-btn"
-            title="Statistik"
-            aria-label="Statistik"
+            title={t('Statistics')}
+            aria-label={t('Statistics')}
             onClick={() => navigate('/habits/stats')}
           >
             <BarChart3 size={18} />
           </button>
           <button className="btn btn-primary" onClick={() => setEditing(true)}>
-            <Plus size={15} /> Neu
+            <Plus size={15} /> {t('New')}
           </button>
         </div>
 
         {list.length === 0 && !showArchived && (
           <div className="card col habits-empty" style={{ gap: 10 }}>
-            <strong>Ein Tippen pro Tag.</strong>
+            <strong>{t('One tap a day.')}</strong>
             <span className="muted">
-              Lege eine Gewohnheit an – Sport, Seiten lesen, Wasser trinken, ein Tag ohne Zucker.
-              Jeder erledigte Tag füllt eine Kachel, und das Raster wird zu einer Kette, die du
-              nicht reißen lassen willst.
+              {t(
+                "Create a habit – sport, reading pages, drinking water, a day without sugar. Every completed day fills a tile, and the grid becomes a chain you don't want to break.",
+              )}
             </span>
             <button
               className="btn btn-primary"
               style={{ alignSelf: 'flex-start' }}
               onClick={() => setEditing(true)}
             >
-              <Plus size={15} /> Erste Gewohnheit anlegen
+              <Plus size={15} /> {t('Create your first habit')}
             </button>
           </div>
         )}
@@ -102,16 +103,18 @@ export function HabitsPage(): ReactNode {
             onClick={() => setShowArchived(!showArchived)}
           >
             <Archive size={14} />{' '}
-            {showArchived ? 'Zurück zu den aktiven' : `Archiv (${archived.length})`}
+            {showArchived
+              ? t('Back to the active ones')
+              : t('Archive ({length})', { length: archived.length })}
           </button>
         )}
 
-        <div className="habit-layout-bar" role="tablist" aria-label="Ansicht">
+        <div className="habit-layout-bar" role="tablist" aria-label={t('View')}>
           {(
             [
-              ['grid', LayoutGrid, 'Raster'],
-              ['checklist', ListChecks, 'Checkliste'],
-              ['compact', List, 'Kompakt'],
+              ['grid', LayoutGrid, t('Grid')],
+              ['checklist', ListChecks, t('Checklist')],
+              ['compact', List, t('Compact')],
             ] as const
           ).map(([id, Icon, label]) => (
             <button
@@ -294,8 +297,8 @@ function DragHandle({ id, handle }: { id: string; handle: HandleApi }): ReactNod
     <button
       type="button"
       className="habit-handle"
-      title="Ziehen zum Sortieren (oder Pfeiltasten)"
-      aria-label="Verschieben"
+      title={t('Drag to reorder (or arrow keys)')}
+      aria-label={t('Move')}
       onPointerDown={(e) => handle.start(id, e)}
       onKeyDown={(e) => handle.key(id, e)}
     >
@@ -323,7 +326,8 @@ function HabitCard({ habit, handle }: { habit: Habit; handle: HandleApi }): Reac
           <span className="col" style={{ gap: 2, minWidth: 0 }}>
             <strong className="ellipsis">{habit.name}</strong>
             <span className="faint ellipsis habit-desc">
-              {habit.description || `${s.current} ${streakUnit(s.period, s.current)} Serie`}
+              {habit.description ||
+                t('Streak: {n} {unit}', { n: s.current, unit: streakUnit(s.period, s.current) })}
             </span>
           </span>
         </button>
@@ -331,7 +335,7 @@ function HabitCard({ habit, handle }: { habit: Habit; handle: HandleApi }): Reac
       </div>
       <button
         className="habit-card-grid"
-        aria-label={`${habit.name} öffnen`}
+        aria-label={t('Open {name}', { name: habit.name })}
         onClick={() => navigate(`/habits/${habit.id}`)}
       >
         <RecentGrid data={data} color={habit.color} />
@@ -428,7 +432,7 @@ function CompactRow({ habit, handle }: { habit: Habit; handle: HandleApi }): Rea
           );
         })}
       </span>
-      <span className="faint habit-streak-mini" title="Aktuelle Serie">
+      <span className="faint habit-streak-mini" title={t('Current streak')}>
         {s.current}
       </span>
       <CheckButton data={data} day={today} size={32} />

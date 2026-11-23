@@ -11,6 +11,7 @@ import { fold } from '@core/search/search';
 import { useApp, useSelector } from '../app/context';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
+import { t as tr } from '@core/i18n';
 
 /** The move dialog. */
 export function MoveDialog({
@@ -34,27 +35,27 @@ export function MoveDialog({
     .slice(0, 50);
   const move = (parentId: RemId | null): void => {
     if (app.rems.move(remIds, { parentId })) {
-      toast('Moved');
+      toast(tr('Moved'));
       onClose();
-    } else toast('Cannot move a Rem into itself', 'error');
+    } else toast(tr('Cannot move a Rem into itself'), 'error');
   };
   return (
-    <Modal title="Move to…" onClose={onClose}>
+    <Modal title={tr('Move to…')} onClose={onClose}>
       <input
         className="input"
         autoFocus
-        placeholder="Search documents and folders"
+        placeholder={tr('Search documents and folders')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
       <div className="search-results">
         <button className="menu-item" onClick={() => move(null)}>
-          <Folder size={16} /> Top level
+          <Folder size={16} /> {tr('Top level')}
         </button>
         {list.map((t) => (
           <button key={t.id} className="menu-item" onClick={() => move(t.id)}>
             <RemIcon rem={t} size={16} />
-            <span className="ellipsis">{app.rems.title(t.id) || 'Untitled'}</span>
+            <span className="ellipsis">{app.rems.title(t.id) || tr('Untitled')}</span>
           </button>
         ))}
       </div>

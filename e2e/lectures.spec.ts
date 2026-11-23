@@ -8,9 +8,9 @@ import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/#/lectures');
-  await page.getByRole('button', { name: 'Demo-Kurs erzeugen' }).click();
+  await page.getByRole('button', { name: 'Create demo course' }).click();
   // The demo opens its slide deck in lecture mode.
-  await expect(page.getByRole('button', { name: 'Vorlesung starten' })).toBeVisible({
+  await expect(page.getByRole('button', { name: 'Start lecture' })).toBeVisible({
     timeout: 20_000,
   });
 });
@@ -20,18 +20,15 @@ test('runs a lecture on the demo deck and shows the analysis', async ({ page }) 
     page.locator('[data-w="current"] canvas, [data-w="current"] img').first(),
   ).toBeVisible();
   await page.keyboard.press('ArrowRight');
-  await expect(page.locator('[data-w="current"] .widget-title')).toHaveText('Folie 2');
-  await page.getByRole('button', { name: 'Vorlesung starten' }).click();
-  await page
-    .getByRole('dialog')
-    .getByRole('button', { name: /Starten/ })
-    .click();
+  await expect(page.locator('[data-w="current"] .widget-title')).toHaveText('Slide 2');
+  await page.getByRole('button', { name: 'Start lecture' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Start/ }).click();
   await page.keyboard.press('w');
-  await expect(page.getByRole('button', { name: /Wichtig/ })).toHaveClass(/active|btn-primary/);
-  await page.getByRole('button', { name: 'Abschließen' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
-  await expect(page.getByRole('heading', { name: 'Zeit pro Folie' })).toBeVisible();
-  await expect(page.getByText('Abschweifen bemerkt').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: '★ Important' })).toHaveClass(/active|btn-primary/);
+  await page.getByRole('button', { name: 'Finish' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('heading', { name: 'Time per slide' })).toBeVisible();
+  await expect(page.getByText('Drift noticed').first()).toBeVisible();
 });
 
 test('shares a course as a file and imports it as a copy', async ({ page }) => {
@@ -39,17 +36,17 @@ test('shares a course as a file and imports it as a copy', async ({ page }) => {
     .getByRole('treeitem', { name: /Demo-Kurs/ })
     .first()
     .click();
-  await page.getByRole('button', { name: 'Teilen' }).click();
-  await page.getByRole('button', { name: 'Nur Karteikarten' }).click();
+  await page.getByRole('button', { name: 'Share' }).click();
+  await page.getByRole('button', { name: 'Flashcards only' }).click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Als Datei' }).click(),
+    page.getByRole('button', { name: 'As file' }).click(),
   ]);
   const file = await download.path();
   await page.keyboard.press('Escape');
 
   await page.getByRole('button', { name: 'Import' }).first().click();
-  await page.getByRole('button', { name: /Freigabe/ }).click();
+  await page.getByRole('button', { name: /Share \(/ }).click();
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser'),
     page.getByRole('button', { name: /Choose file/ }).click(),
@@ -80,7 +77,7 @@ test('text boxes keep their text, can be deselected and move in one undo step', 
   await page.mouse.click(area.x + area.width * 0.2, area.y + area.height * 0.6);
   await expect(slide.locator('textarea')).toBeFocused();
   await page.keyboard.type('Zweites');
-  await page.getByTitle('Auswählen / Text markieren (Esc)').click();
+  await page.getByTitle('Select / highlight text (Esc)').click();
   await expect(box(0)).toHaveText('Erstes');
   await expect(box(1)).toHaveText('Zweites');
 
@@ -111,10 +108,10 @@ test('a share link shows the slides as images with their notes', async ({ page }
     .getByRole('treeitem', { name: /Demo-Kurs/ })
     .first()
     .click();
-  await page.getByRole('button', { name: 'Teilen' }).click();
+  await page.getByRole('button', { name: 'Share' }).click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Als Datei' }).click(),
+    page.getByRole('button', { name: 'As file' }).click(),
   ]);
   const snapshot = JSON.parse(readFileSync((await download.path())!, 'utf8')) as {
     files: { id: string; mimeType: string; data?: string }[];
@@ -148,7 +145,7 @@ test('a share link shows the slides as images with their notes', async ({ page }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/#/s/tok123');
   await page.reload();
-  await expect(page.getByRole('button', { name: /In meine Wissensbasis klonen/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Clone into my knowledge base/ })).toBeVisible();
   const firstSlide = page.locator('.snap-slide').first();
   await expect(firstSlide.locator('img')).toBeVisible({ timeout: 15_000 });
   expect(
@@ -167,7 +164,7 @@ test('looking at a card’s slide does not restart the practice session', async 
   // Answer one card, then find a card that came from a slide.
   await page.keyboard.press('Space');
   await page.keyboard.press('4');
-  const slideLink = page.getByRole('button', { name: /Folie \d+/ });
+  const slideLink = page.getByRole('button', { name: /Slide \d+/ });
   for (let i = 0; i < 15 && !(await slideLink.isVisible()); i++) {
     await page.keyboard.press('Space');
     await page.keyboard.press('4');
@@ -175,14 +172,14 @@ test('looking at a card’s slide does not restart the practice session', async 
   await expect(slideLink).toBeVisible();
   const before = await progress.textContent();
   await slideLink.click();
-  await page.getByRole('button', { name: 'Weiter üben' }).click();
+  await page.getByRole('button', { name: 'Continue practice' }).click();
   await expect(progress).toHaveText(before!);
 });
 
 test('a card can be edited right in the lecture cards widget', async ({ page }) => {
   const widget = page.locator('.slide-cards');
-  await widget.getByRole('button', { name: 'Alle Folien' }).click();
-  await widget.getByRole('button', { name: 'Karte bearbeiten' }).click();
+  await widget.getByRole('button', { name: 'All slides' }).click();
+  await widget.getByRole('button', { name: 'Edit card' }).click();
   const editor = page.getByTestId('slide-card-editor');
   await expect(editor).toBeVisible();
   // Append to the front of the card (first line of the embedded outliner).
@@ -191,8 +188,8 @@ test('a card can be edited right in the lecture cards widget', async ({ page }) 
   await expect(editor.locator('.ProseMirror').first()).toBeFocused();
   await page.keyboard.press('End');
   await page.keyboard.type(' (bearbeitet)');
-  await editor.getByRole('button', { name: 'Fertig' }).click();
+  await editor.getByRole('button', { name: 'Done' }).click();
   // The edited text is on the card (front or back, so reveal it).
-  await widget.getByRole('button', { name: 'Aufdecken' }).click();
+  await widget.getByRole('button', { name: 'Reveal' }).click();
   await expect(widget.locator('.mini-card')).toContainText('(bearbeitet)');
 });

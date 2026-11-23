@@ -18,6 +18,7 @@ import type { RemId } from '@core/model/types';
 import { useApp } from '../app/context';
 import { useToast } from '../components/Toast';
 import { useLocalState } from '../hooks/useLocalState';
+import { t } from '@core/i18n';
 
 /** Props of {@link AssistantPanel}. */
 export interface AssistantPanelProps {
@@ -175,19 +176,20 @@ export function AssistantPanel({
     return (
       <aside className="assistant">
         <header className="assistant-head">
-          <strong>Assistent</strong>
+          <strong>{t('Assistant')}</strong>
           <span className="spacer" />
-          <button className="icon-btn" onClick={onClose} aria-label="Schließen">
+          <button className="icon-btn" onClick={onClose} aria-label={t('Close')}>
             <X size={16} />
           </button>
         </header>
         <div className="assistant-body">
           <p className="muted">
-            Kein KI-Anbieter eingerichtet. Unter Einstellungen → KI kannst du Claude (Anthropic)
-            oder jede OpenAI-kompatible API mit eigenem Schlüssel verbinden.
+            {t(
+              'No AI provider set up. Under Settings → AI you can connect Claude (Anthropic) or any OpenAI-compatible API with your own key.',
+            )}
           </p>
           <button className="btn btn-primary" onClick={() => navigate('/settings/ai')}>
-            Einrichten
+            {t('Set up')}
           </button>
         </div>
       </aside>
@@ -197,15 +199,15 @@ export function AssistantPanel({
   return (
     <aside className="assistant">
       <header className="assistant-head">
-        <strong>Assistent</strong>
+        <strong>{t('Assistant')}</strong>
         <span className="faint" style={{ fontSize: 12 }}>
           {config.model}
         </span>
         <span className="spacer" />
-        <button className="icon-btn" title="Neuer Chat" onClick={() => setHistory([])}>
+        <button className="icon-btn" title={t('New chat')} onClick={() => setHistory([])}>
           <Trash2 size={15} />
         </button>
-        <button className="icon-btn" onClick={onClose} aria-label="Schließen">
+        <button className="icon-btn" onClick={onClose} aria-label={t('Close')}>
           <X size={16} />
         </button>
       </header>
@@ -236,7 +238,7 @@ export function AssistantPanel({
                 className="btn btn-sm btn-ghost"
                 onClick={() => onToNotes(m.content.split('\n')[0]!.slice(0, 500))}
               >
-                → Notizen
+                {t('→ Notes')}
               </button>
             )}
           </div>
@@ -252,7 +254,7 @@ export function AssistantPanel({
           <span key={i} className="chip">
             {chipLabel(c)}
             <button
-              aria-label="Entfernen"
+              aria-label={t('Remove')}
               onClick={() => setChips(chips.filter((_, k) => k !== i))}
             >
               ×
@@ -271,14 +273,14 @@ export function AssistantPanel({
             } else if (kind) setChips([...chips, { kind } as ContextChip]);
           }}
         >
-          <option value="">@ Kontext</option>
-          <option value="slide">Aktuelle Folie</option>
-          <option value="range">Folienbereich…</option>
-          <option value="deck">Ganzer Foliensatz</option>
-          <option value="notes">Meine Notizen</option>
-          <option value="cards">Karten</option>
-          <option value="lecture">Vorlesung</option>
-          <option value="course">Ganzer Kurs</option>
+          <option value="">{t('@ Context')}</option>
+          <option value="slide">{t('Current slide')}</option>
+          <option value="range">{t('Slide range…')}</option>
+          <option value="deck">{t('Whole deck')}</option>
+          <option value="notes">{t('My notes')}</option>
+          <option value="cards">{t('Cards')}</option>
+          <option value="lecture">{t('Lecture')}</option>
+          <option value="course">{t('Whole course')}</option>
         </select>
       </div>
       <form
@@ -292,7 +294,7 @@ export function AssistantPanel({
           className="textarea"
           rows={3}
           value={input}
-          placeholder="Frag etwas zu den Folien…"
+          placeholder={t('Ask something about the slides…')}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) =>
             e.key === 'Enter' &&
@@ -302,10 +304,10 @@ export function AssistantPanel({
         />
         {busy ? (
           <button type="button" className="btn" onClick={() => abort.current?.abort()}>
-            Stopp
+            {t('Stop')}
           </button>
         ) : (
-          <button className="btn btn-primary" aria-label="Senden">
+          <button className="btn btn-primary" aria-label={t('Send')}>
             <Send size={15} />
           </button>
         )}

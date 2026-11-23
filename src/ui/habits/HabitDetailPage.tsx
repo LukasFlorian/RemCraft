@@ -39,6 +39,7 @@ import { HabitEditor, WEEKDAYS } from './HabitEditor';
 import { MONTHS, YearGrid } from './HabitGrid';
 import { ShareCardDialog } from './ShareCard';
 import { CheckButton, formatValue, HabitBadge, useHabitData, useRecordDay } from './common';
+import { t as tr, locale } from '@core/i18n';
 
 /** The detail page. */
 export function HabitDetailPage(): ReactNode {
@@ -48,7 +49,7 @@ export function HabitDetailPage(): ReactNode {
     return (
       <div className="main-scroll">
         <div className="page">
-          <p className="muted">Diese Gewohnheit gibt es nicht (mehr).</p>
+          <p className="muted">{tr('This habit does not exist (any more).')}</p>
         </div>
       </div>
     );
@@ -72,10 +73,10 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
 
   const editNote = async (day: DayKey): Promise<void> => {
     const note = await dialogs.prompt({
-      title: `Notiz – ${formatDay(day)}`,
-      label: 'Was lief gut? Was kam dazwischen?',
+      title: tr('Note – {0}', { '0': formatDay(day) }),
+      label: tr('What went well? What got in the way?'),
       initial: app.habits.entry(habit.id, day)?.note ?? '',
-      confirmLabel: 'Speichern',
+      confirmLabel: tr('Save'),
     });
     if (note !== null) app.habits.setNote(habit.id, day, note);
   };
@@ -84,30 +85,30 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
     <div className="main-scroll">
       <div className="page habit-detail" style={{ '--hc': habit.color } as CSSProperties}>
         <div className="habit-detail-head">
-          <button className="icon-btn" aria-label="Zurück" onClick={() => navigate('/habits')}>
+          <button className="icon-btn" aria-label={tr('Back')} onClick={() => navigate('/habits')}>
             <ChevronLeft size={18} />
           </button>
           <span className="spacer" />
           <button
             className="icon-btn"
-            title="Teilen"
-            aria-label="Teilen"
+            title={tr('Share')}
+            aria-label={tr('Share')}
             onClick={() => setSharing(true)}
           >
             <Share2 size={17} />
           </button>
           <button
             className="icon-btn"
-            title="Bearbeiten"
-            aria-label="Bearbeiten"
+            title={tr('Edit')}
+            aria-label={tr('Edit')}
             onClick={() => setEditing(true)}
           >
             <Pencil size={17} />
           </button>
           <button
             className="icon-btn"
-            title={habit.archived ? 'Wiederherstellen' : 'Archivieren'}
-            aria-label={habit.archived ? 'Wiederherstellen' : 'Archivieren'}
+            title={habit.archived ? tr('Restore') : tr('Archive')}
+            aria-label={habit.archived ? tr('Restore') : tr('Archive')}
             onClick={() => {
               app.habits.archive(habit.id, !habit.archived);
               if (!habit.archived) navigate('/habits');
@@ -117,13 +118,16 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
           </button>
           <button
             className="icon-btn"
-            title="Löschen"
-            aria-label="Löschen"
+            title={tr('Delete')}
+            aria-label={tr('Delete')}
             onClick={async () => {
               const ok = await dialogs.confirm({
-                title: 'Gewohnheit löschen?',
-                message: `„${habit.name}“ und alle eingetragenen Tage und Notizen werden gelöscht. Archivieren behält den Verlauf.`,
-                confirmLabel: 'Löschen',
+                title: tr('Delete habit?'),
+                message: tr(
+                  '“{name}” and all its recorded days and notes will be deleted. Archiving keeps the history.',
+                  { name: habit.name },
+                ),
+                confirmLabel: tr('Delete'),
                 danger: true,
               });
               if (ok) {
@@ -150,7 +154,7 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
           <div className="row habit-year-nav">
             <button
               className="icon-btn"
-              aria-label="Vorheriges Jahr"
+              aria-label={tr('Previous year')}
               onClick={() => setYear(year - 1)}
             >
               <ChevronLeft size={16} />
@@ -158,7 +162,7 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
             <strong>{year}</strong>
             <button
               className="icon-btn"
-              aria-label="Nächstes Jahr"
+              aria-label={tr('Next year')}
               onClick={() => setYear(year + 1)}
             >
               <ChevronRight size={16} />
@@ -171,13 +175,13 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
             onDay={(d) => void record(data, d)}
           />
           <div className="row habit-chips">
-            <span className="habit-chip" title="Aktuelle Serie">
+            <span className="habit-chip" title={tr('Current streak')}>
               <Flame size={13} /> {s.current}
             </span>
             <span className="habit-chip">
               <Target size={13} /> {goalLabel(habit)}
             </span>
-            {habit.kind === 'quit' && <span className="habit-chip">Abgewöhnen</span>}
+            {habit.kind === 'quit' && <span className="habit-chip">{tr('Quit')}</span>}
           </div>
         </div>
 
@@ -187,8 +191,8 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
               habit.tracking === 'measure' ||
               habit.tracking === 'count' ||
               habit.tracking === 'flashcards'
-                ? 'Gesamt'
-                : 'Erledigungen'
+                ? tr('Total')
+                : tr('Completions')
             }
             value={
               habit.tracking === 'check' || habit.kind === 'quit'
@@ -198,23 +202,26 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
             hint={
               habit.tracking === 'check' || habit.kind === 'quit'
                 ? undefined
-                : `${t.completions} Tage erreicht`
+                : tr('{completions} days reached', { completions: t.completions })
             }
           />
-          <StatTile label="Erfüllungsrate" value={`${rate} %`} />
+          <StatTile label={tr('Completion rate')} value={`${rate} %`} />
           <StatTile
-            label="Aktuelle Serie"
+            label={tr('Current streak')}
             value={s.current}
             hint={streakUnit(s.period, s.current)}
           />
-          <StatTile label="Beste Serie" value={s.best} hint={streakUnit(s.period, s.best)} />
+          <StatTile label={tr('Best streak')} value={s.best} hint={streakUnit(s.period, s.best)} />
         </div>
 
         <div className="card">
-          <h2 className="card-title">Erledigungen pro Monat ({year})</h2>
+          <h2 className="card-title">
+            {tr('Completions per month (')}
+            {year})
+          </h2>
           <BarChart
             labels={MONTHS}
-            series={[{ name: 'Erledigt', color: habit.color, values: perMonth }]}
+            series={[{ name: tr('Completed'), color: habit.color, values: perMonth }]}
             height={150}
             ariaLabel={`Erledigungen pro Monat ${year}`}
           />
@@ -236,7 +243,7 @@ function HabitDetail({ habit }: { habit: Habit }): ReactNode {
 
 /** "Do., 19.11.2026". */
 export function formatDay(day: DayKey): string {
-  return dayDate(day).toLocaleDateString('de-DE', {
+  return dayDate(day).toLocaleDateString(locale(), {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -272,16 +279,16 @@ function MonthCalendar({
     <div className="card habit-month">
       <div className="row">
         <h2 className="card-title" style={{ margin: 0 }}>
-          {d0.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+          {d0.toLocaleDateString(locale(), { month: 'long', year: 'numeric' })}
         </h2>
         <span className="spacer" />
-        <button className="icon-btn" aria-label="Vorheriger Monat" onClick={() => shift(-1)}>
+        <button className="icon-btn" aria-label={tr('Previous month')} onClick={() => shift(-1)}>
           <ChevronLeft size={16} />
         </button>
         <button className="btn btn-sm" onClick={() => setMonth(data.today.slice(0, 7))}>
-          Heute
+          {tr('Today')}
         </button>
-        <button className="icon-btn" aria-label="Nächster Monat" onClick={() => shift(1)}>
+        <button className="icon-btn" aria-label={tr('Next month')} onClick={() => shift(1)}>
           <ChevronRight size={16} />
         </button>
       </div>
@@ -301,7 +308,7 @@ function MonthCalendar({
               key={d}
               className={`habit-month-day${inMonth ? '' : ' other'}${done ? ' done' : ''}${d === data.today ? ' today' : ''}`}
               disabled={d > data.today}
-              aria-label={`${formatDay(d)}${done ? ', erledigt' : ''}${note ? ', mit Notiz' : ''}`}
+              aria-label={`${formatDay(d)}${done ? tr(', done') : ''}${note ? tr(', with note') : ''}`}
               style={done ? { background: habit.color } : undefined}
               onPointerDown={() => {
                 held.current = false;
@@ -330,7 +337,7 @@ function MonthCalendar({
           );
         })}
       </div>
-      <p className="faint habit-hint">Halte einen Tag gedrückt, um eine Notiz hinzuzufügen.</p>
+      <p className="faint habit-hint">{tr('Hold a day to add a note.')}</p>
     </div>
   );
 }
@@ -350,23 +357,25 @@ function NotesList({
     <div className="card habit-notes">
       <div className="row">
         <h2 className="card-title" style={{ margin: 0 }}>
-          Notizen
+          {tr('Notes')}
         </h2>
         <span className="spacer" />
         <button className="btn btn-sm" onClick={() => onEdit(data.today)}>
-          <NotebookPen size={14} /> Heute
+          <NotebookPen size={14} /> {tr('Today')}
         </button>
       </div>
       {notes.length === 0 ? (
         <p className="faint" style={{ margin: 0 }}>
-          Noch keine Notizen. Was lief gut? Was kam dazwischen?
+          {tr('No notes yet. What went well? What got in the way?')}
         </p>
       ) : (
         <ul className="habit-note-list">
           {notes.map((n) => (
             <li key={n.id}>
               <button className="habit-note" onClick={() => onEdit(n.day)}>
-                <span className="faint">{n.day === data.today ? 'Heute' : formatDay(n.day)}</span>
+                <span className="faint">
+                  {n.day === data.today ? tr('Today') : formatDay(n.day)}
+                </span>
                 <span>{n.note}</span>
               </button>
             </li>

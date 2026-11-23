@@ -11,6 +11,7 @@ import { fold } from '@core/search/search';
 import { formatInterval } from '@core/util/time';
 import { cardStateOf, selectCardIndex } from '@data/selectors';
 import { useApp, useNow, useSelector } from '../../app/context';
+import { t } from '@core/i18n';
 
 type StateFilter = 'all' | 'new' | 'learning' | 'review' | 'due' | 'disabled';
 const PAGE = 100;
@@ -82,10 +83,10 @@ export function CardsTab(): ReactNode {
         <input
           className="input"
           style={{ maxWidth: 320 }}
-          placeholder="Search cards"
+          placeholder={t('Search cards')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search cards"
+          aria-label={t('Search cards')}
         />
         {(['all', 'new', 'learning', 'review', 'due', 'disabled'] as StateFilter[]).map((f) => (
           <button
@@ -97,25 +98,29 @@ export function CardsTab(): ReactNode {
           </button>
         ))}
         <span className="spacer" />
-        <span className="muted">{filtered.length} cards</span>
+        <span className="muted">
+          {filtered.length} {t('cards')}
+        </span>
       </div>
       {ids.length > 0 && (
         <div className="row bulk-bar">
-          <span>{ids.length} selected</span>
+          <span>
+            {ids.length} {t('selected')}
+          </span>
           <button className="btn btn-sm" onClick={() => app.practice.reset(ids)}>
-            Reset
+            {t('Reset')}
           </button>
           <button className="btn btn-sm" onClick={() => app.practice.setDisabled(ids, true)}>
-            Disable
+            {t('Disable')}
           </button>
           <button className="btn btn-sm" onClick={() => app.practice.setDisabled(ids, false)}>
-            Enable
+            {t('Enable')}
           </button>
           <button className="btn btn-sm" onClick={() => app.practice.setDue(ids, Date.now())}>
-            Make due now
+            {t('Make due now')}
           </button>
           <button className="btn btn-sm btn-ghost" onClick={() => setSelected(new Set())}>
-            Clear
+            {t('Clear')}
           </button>
         </div>
       )}
@@ -126,7 +131,7 @@ export function CardsTab(): ReactNode {
               <th>
                 <input
                   type="checkbox"
-                  aria-label="Select all"
+                  aria-label={t('Select all')}
                   checked={
                     filtered.length > 0 &&
                     filtered.slice(0, limit).every((r) => selected.has(r.spec.id))
@@ -140,14 +145,14 @@ export function CardsTab(): ReactNode {
                   }
                 />
               </th>
-              <th>Front</th>
-              <th>Back</th>
-              <th>Type</th>
-              <th>State</th>
-              <th>Due</th>
-              <th>Interval</th>
-              <th>Reps</th>
-              <th>Lapses</th>
+              <th>{t('Front')}</th>
+              <th>{t('Back side')}</th>
+              <th>{t('Type')}</th>
+              <th>{t('State')}</th>
+              <th>{t('Due')}</th>
+              <th>{t('Interval')}</th>
+              <th>{t('Reps')}</th>
+              <th>{t('Lapses')}</th>
             </tr>
           </thead>
           <tbody>
@@ -158,7 +163,7 @@ export function CardsTab(): ReactNode {
                     type="checkbox"
                     checked={selected.has(r.spec.id)}
                     onChange={() => toggle(r.spec.id)}
-                    aria-label="Select card"
+                    aria-label={t('Select card')}
                   />
                 </td>
                 <td>
@@ -174,7 +179,7 @@ export function CardsTab(): ReactNode {
                 <td className="nowrap">{r.type}</td>
                 <td>
                   {r.state.disabled ? (
-                    <span className="badge">disabled</span>
+                    <span className="badge">{t('disabled')}</span>
                   ) : (
                     <span
                       className={`badge ${r.state.phase === 'review' ? 'badge-success' : r.state.phase === 'new' ? 'badge-accent' : 'badge-warning'}`}
@@ -187,8 +192,8 @@ export function CardsTab(): ReactNode {
                   {r.state.phase === 'new'
                     ? '—'
                     : r.state.due <= now
-                      ? 'now'
-                      : `in ${formatInterval(r.state.due - now)}`}
+                      ? t('now')
+                      : t('in {0}', { '0': formatInterval(r.state.due - now) })}
                 </td>
                 <td className="nowrap muted">
                   {r.state.interval ? `${Math.round(r.state.interval)}d` : '—'}
@@ -202,10 +207,11 @@ export function CardsTab(): ReactNode {
       </div>
       {filtered.length > limit && (
         <button className="btn" onClick={() => setLimit((l) => l + PAGE)}>
-          Show more ({filtered.length - limit} remaining)
+          {t('Show more (')}
+          {filtered.length - limit} {t('remaining)')}
         </button>
       )}
-      {filtered.length === 0 && <div className="empty">No cards match.</div>}
+      {filtered.length === 0 && <div className="empty">{t('No cards match.')}</div>}
     </div>
   );
 }

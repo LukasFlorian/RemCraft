@@ -2,6 +2,7 @@
  * Full JSON backup of all collections (lossless export/import).
  */
 import type { CollectionName, CollectionTypes, Timestamp } from '../model/types';
+import { t } from '@core/i18n';
 
 /** Current backup format version. */
 export const BACKUP_VERSION = 1;
@@ -49,20 +50,20 @@ export function createBackup(
  */
 export function parseBackup(json: string): Backup {
   const data = JSON.parse(json) as Partial<Backup>;
-  if (data.format !== 'remcraft-backup') throw new Error('Not a RemCraft backup file.');
+  if (data.format !== 'remcraft-backup') throw new Error(t('Not a RemCraft backup file.'));
   if (typeof data.version !== 'number' || data.version > BACKUP_VERSION) {
-    throw new Error(`Unsupported backup version ${String(data.version)}.`);
+    throw new Error(t('Unsupported backup version {0}.', { '0': String(data.version) }));
   }
   const collections = data.collections ?? ({} as Backup['collections']);
   for (const name of COLLECTIONS) {
     const list = (collections as Record<string, unknown>)[name];
     if (list !== undefined && !Array.isArray(list))
-      throw new Error(`Invalid collection "${name}".`);
+      throw new Error(t('Invalid collection "{name}".', { name }));
     (collections as Record<string, unknown>)[name] = list ?? [];
   }
   for (const rem of collections.rems) {
     if (typeof rem.id !== 'string' || !Array.isArray(rem.text))
-      throw new Error('Invalid Rem in backup.');
+      throw new Error(t('Invalid Rem in backup.'));
   }
   return {
     format: 'remcraft-backup',

@@ -7,6 +7,7 @@ import { loadAiConfig, saveAiConfig } from '@ai/openaiCompatible';
 import { AI_PROVIDERS, createAiProvider } from '@ai/registry';
 import { Field } from '../../components/Controls';
 import { useToast } from '../../components/Toast';
+import { t } from '@core/i18n';
 
 /** AI settings. */
 export function AiSection(): ReactNode {
@@ -19,14 +20,13 @@ export function AiSection(): ReactNode {
   const [testing, setTesting] = useState(false);
   return (
     <div className="card col" style={{ gap: 14 }}>
-      <h2 className="card-title">AI provider (experimental)</h2>
+      <h2 className="card-title">{t('AI provider (experimental)')}</h2>
       <p className="muted" style={{ margin: 0 }}>
-        The lecture assistant (slides, notes, card generation) uses this provider: Claude via the
-        Anthropic API or any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Mistral, a local
-        Ollama/LM Studio server, …) can be configured here for future features. The key is stored
-        only on this device and never synchronised.
+        {t(
+          'The lecture assistant (slides, notes, card generation) uses this provider: Claude via the Anthropic API or any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Mistral, a local Ollama/LM Studio server, …) can be configured here for future features. The key is stored only on this device and never synchronised.',
+        )}
       </p>
-      <Field label="Anbieter">
+      <Field label={t('Provider')}>
         <select
           className="select"
           value={provider}
@@ -46,7 +46,7 @@ export function AiSection(): ReactNode {
           ))}
         </select>
       </Field>
-      <Field label="Base URL">
+      <Field label={t('Base URL')}>
         <input
           className="input"
           value={baseUrl}
@@ -54,7 +54,7 @@ export function AiSection(): ReactNode {
           placeholder="https://api.openai.com/v1"
         />
       </Field>
-      <Field label="API key">
+      <Field label={t('API key')}>
         <input
           className="input"
           type="password"
@@ -63,12 +63,12 @@ export function AiSection(): ReactNode {
           autoComplete="off"
         />
       </Field>
-      <Field label="Model">
+      <Field label={t('Model')}>
         <input
           className="input"
           value={model}
           onChange={(e) => setModel(e.target.value)}
-          placeholder="e.g. gpt-4o-mini, llama3.1"
+          placeholder={t('e.g. gpt-4o-mini, llama3.1')}
         />
       </Field>
       <div className="row">
@@ -76,10 +76,10 @@ export function AiSection(): ReactNode {
           className="btn btn-primary"
           onClick={() => {
             saveAiConfig(model ? { provider, baseUrl, apiKey, model } : null);
-            toast('Saved on this device');
+            toast(t('Saved on this device'));
           }}
         >
-          Save
+          {t('Save')}
         </button>
         <button
           className="btn"
@@ -93,7 +93,7 @@ export function AiSection(): ReactNode {
                   maxTokens: 5,
                 },
               );
-              toast(`Provider answered: ${answer.trim() || '(empty)'}`);
+              toast(t('Provider answered: {0}', { '0': answer.trim() || '(empty)' }));
             } catch (e) {
               toast(e instanceof Error ? e.message : String(e), 'error');
             } finally {
@@ -101,17 +101,17 @@ export function AiSection(): ReactNode {
             }
           }}
         >
-          Test connection
+          {t('Test connection')}
         </button>
         <button
           className="btn btn-ghost"
           onClick={() => {
             saveAiConfig(null);
             setApiKey('');
-            toast('Removed');
+            toast(t('Removed'));
           }}
         >
-          Remove
+          {t('Remove')}
         </button>
       </div>
     </div>

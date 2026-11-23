@@ -10,46 +10,46 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('create a habit, tick today, switch layouts, add a note', async ({ page }) => {
-  await page.getByRole('button', { name: /Gewohnheiten/ }).click();
-  await page.getByRole('button', { name: 'Erste Gewohnheit anlegen' }).click();
-  await page.getByPlaceholder('z. B. Sport').fill('Sport');
-  await page.getByPlaceholder(/Laufen, Krafttraining/).fill('Laufen oder Kraft');
-  await page.getByRole('button', { name: 'Speichern' }).click();
+  await page.getByRole('button', { name: /Habits/ }).click();
+  await page.getByRole('button', { name: 'Create your first habit' }).click();
+  await page.getByPlaceholder('e.g. Sport').fill('Sport');
+  await page.getByPlaceholder(/running, strength training/).fill('Laufen oder Kraft');
+  await page.getByRole('button', { name: 'Save' }).click();
 
   // The detail page opens; tick today.
   await expect(page.getByRole('heading', { name: 'Sport' })).toBeVisible();
-  await page.getByRole('button', { name: 'Sport: Als erledigt markieren' }).click();
-  await expect(page.getByRole('button', { name: /Sport: Erledigt/ })).toBeVisible();
-  await expect(page.locator('.stat-tile', { hasText: 'Aktuelle Serie' })).toContainText('1');
+  await page.getByRole('button', { name: 'Sport: Mark as done' }).click();
+  await expect(page.getByRole('button', { name: /Sport: Done/ })).toBeVisible();
+  await expect(page.locator('.stat-tile', { hasText: 'Current streak' })).toContainText('1');
 
   // A note for today.
-  await page.getByRole('button', { name: 'Heute', exact: true }).last().click();
+  await page.getByRole('button', { name: 'Today', exact: true }).last().click();
   await page.locator('.modal input').fill('Morgens 5 km');
-  await page.getByRole('button', { name: 'Speichern' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.locator('.habit-note')).toContainText('Morgens 5 km');
 
   // A counter habit from the overview.
-  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
-  await page.getByRole('button', { name: 'Neu' }).click();
-  await page.getByPlaceholder('z. B. Sport').fill('Wasser');
-  await page.getByRole('button', { name: 'Zähler' }).click();
-  await page.locator('label', { hasText: 'Tagesziel' }).locator('input').fill('2');
-  await page.getByRole('button', { name: 'Speichern' }).click();
-  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByPlaceholder('e.g. Sport').fill('Wasser');
+  await page.getByRole('button', { name: 'Counter' }).click();
+  await page.locator('label', { hasText: 'Daily target' }).locator('input').fill('2');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
   const water = page.getByTestId('habit-card').filter({ hasText: 'Wasser' });
-  await water.getByRole('button', { name: /Wasser: Als erledigt/ }).click();
+  await water.getByRole('button', { name: /Wasser: Mark as done/ }).click();
   await expect(water.locator('.habit-check-num')).toHaveText('1');
-  await water.getByRole('button', { name: /Wasser: Als erledigt/ }).click();
-  await expect(water.getByRole('button', { name: /Wasser: Erledigt/ })).toBeVisible();
+  await water.getByRole('button', { name: /Wasser: Mark as done/ }).click();
+  await expect(water.getByRole('button', { name: /Wasser: Done/ })).toBeVisible();
 
   // Layouts.
-  await page.getByRole('tab', { name: 'Checkliste' }).click();
+  await page.getByRole('tab', { name: 'Checklist' }).click();
   await expect(page.getByTestId('habit-row')).toHaveCount(2);
-  await page.getByRole('tab', { name: 'Kompakt' }).click();
+  await page.getByRole('tab', { name: 'Compact' }).click();
   await expect(page.getByTestId('habit-row')).toHaveCount(2);
 
   // Statistics.
-  await page.getByRole('button', { name: 'Statistik' }).click();
+  await page.getByRole('button', { name: 'Statistics' }).click();
   await expect(page.locator('.habit-table')).toContainText('Sport');
   await expect(page.locator('.habit-table')).toContainText('Wasser');
 });
@@ -57,12 +57,12 @@ test('create a habit, tick today, switch layouts, add a note', async ({ page }) 
 test('habits fit on a phone screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/#/habits');
-  await page.getByRole('button', { name: 'Erste Gewohnheit anlegen' }).click();
-  await page.getByPlaceholder('z. B. Sport').fill('Lesen');
-  await page.getByRole('button', { name: 'Messwert' }).click();
-  await page.getByPlaceholder('Einheit (km)').fill('Seiten');
-  await page.getByRole('button', { name: 'Erinnerung hinzufügen' }).click();
-  await page.getByRole('button', { name: 'Speichern' }).click();
+  await page.getByRole('button', { name: 'Create your first habit' }).click();
+  await page.getByPlaceholder('e.g. Sport').fill('Lesen');
+  await page.getByRole('button', { name: 'Measurement' }).click();
+  await page.getByPlaceholder('Unit (km)').fill('Seiten');
+  await page.getByRole('button', { name: 'Add reminder' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('heading', { name: 'Lesen' })).toBeVisible();
   for (const path of ['/#/habits', '/#/habits/stats']) {
     await page.goto(path);
@@ -81,21 +81,18 @@ test('reordering shows where the habit lands', async ({ page }) => {
   await page.goto('/#/habits');
   for (const name of ['Eins', 'Zwei', 'Drei']) {
     await page
-      .getByRole('button', { name: /Neu|Erste Gewohnheit/ })
+      .getByRole('button', { name: /^New$|Create your first habit/ })
       .first()
       .click();
-    await page.getByPlaceholder('z. B. Sport').fill(name);
-    await page.getByRole('button', { name: 'Speichern' }).click();
-    await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+    await page.getByPlaceholder('e.g. Sport').fill(name);
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Back', exact: true }).click();
   }
   const titles = page.locator('.habit-card strong');
   await expect(titles).toHaveText(['Eins', 'Zwei', 'Drei']);
 
   // Grab "Drei" and move it above "Eins".
-  const handle = page
-    .getByTestId('habit-card')
-    .filter({ hasText: 'Drei' })
-    .getByLabel('Verschieben');
+  const handle = page.getByTestId('habit-card').filter({ hasText: 'Drei' }).getByLabel('Move');
   const box = (await handle.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -110,11 +107,7 @@ test('reordering shows where the habit lands', async ({ page }) => {
   await expect(titles).toHaveText(['Drei', 'Eins', 'Zwei']);
 
   // Keyboard: focus the handle of "Drei" and move it down.
-  await page
-    .getByTestId('habit-card')
-    .filter({ hasText: 'Drei' })
-    .getByLabel('Verschieben')
-    .focus();
+  await page.getByTestId('habit-card').filter({ hasText: 'Drei' }).getByLabel('Move').focus();
   await page.keyboard.press('ArrowDown');
   await expect(titles).toHaveText(['Eins', 'Drei', 'Zwei']);
 });

@@ -25,6 +25,7 @@ import { useApp } from '../app/context';
 import { useDialogs } from '../components/Confirm';
 import { useToast } from '../components/Toast';
 import { importCardFile } from '../lecture/DeckPanel';
+import { t } from '@core/i18n';
 
 /** Where dropped files go. */
 export interface FileDropTarget {
@@ -59,15 +60,15 @@ export interface DropResult {
 
 /** German labels of the kinds (singular, plural). */
 const KIND_LABELS: Record<FileKind, [string, string]> = {
-  pdf: ['Foliensatz', 'Foliensätze'],
-  cards: ['Kartendatei', 'Kartendateien'],
-  share: ['Freigabe', 'Freigaben'],
-  backup: ['Backup', 'Backups'],
-  markdown: ['Dokument', 'Dokumente'],
-  csv: ['Tabelle', 'Tabellen'],
-  opml: ['Gliederung', 'Gliederungen'],
-  image: ['Bild', 'Bilder'],
-  file: ['Datei', 'Dateien'],
+  pdf: [t('slide deck'), t('slide decks')],
+  cards: [t('card file'), t('card files')],
+  share: [t('share'), t('shares')],
+  backup: [t('backup'), t('backups')],
+  markdown: [t('document'), t('documents')],
+  csv: [t('table'), t('tables')],
+  opml: [t('outline'), t('outlines')],
+  image: [t('image'), t('images')],
+  file: [t('file'), t('files')],
 };
 
 /** "2 Foliensätze, 1 Dokument". */
@@ -96,13 +97,13 @@ export function useImportFiles(): (files: File[], target: FileDropTarget) => Pro
         const name = file.name.replace(/\.(cards|fokus|remcraft)?\.?[^.]+$/i, '') || file.name;
         switch (kind) {
           case 'pdf': {
-            toast(`„${file.name}“ wird als Foliensatz analysiert …`);
+            toast(t('Analysing “{name}” as a slide deck …', { name: file.name }));
             result.created.push(await app.lectures.importPdf(file, parent));
             break;
           }
           case 'cards': {
             const deck = await importCardFile(app, file, target.deckId, toast, parent);
-            if (!deck) throw new Error('kein passender Foliensatz');
+            if (!deck) throw new Error(t('no matching slide deck'));
             if (!target.deckId) result.created.push(deck);
             break;
           }
@@ -113,13 +114,16 @@ export function useImportFiles(): (files: File[], target: FileDropTarget) => Pro
           }
           case 'backup': {
             const ok = await dialogs.confirm({
-              title: 'Backup wiederherstellen?',
-              message: `„${file.name}“ ist ein vollständiges RemCraft-Backup. Seine Einträge werden mit deinen zusammengeführt (neuere lokale Einträge bleiben).`,
-              confirmLabel: 'Wiederherstellen',
+              title: t('Restore backup?'),
+              message: t(
+                '“{name}” is a complete RemCraft backup. Its records are merged with yours (newer local records are kept).',
+                { name: file.name },
+              ),
+              confirmLabel: t('Restore'),
             });
             if (!ok) continue;
             const n = app.io.importBackup(text ?? (await file.text()), 'merge');
-            toast(`${n} Einträge wiederhergestellt`);
+            toast(t('{n} records restored', { n }));
             break;
           }
           case 'markdown':
@@ -172,11 +176,11 @@ export function useImportFiles(): (files: File[], target: FileDropTarget) => Pro
 function useResolveTarget(): (attr: string) => FileDropTarget | null {
   const app = useApp();
   return (attr) => {
-    if (attr === 'root') return { parentId: null, label: 'oberste Ebene' };
+    if (attr === 'root') return { parentId: null, label: t('top level') };
     const [kind, id] = attr.split(':') as [string, RemId];
     const rem = app.store.get(id);
     if (!rem) return null;
-    const label = app.rems.title(id) || 'Ohne Titel';
+    const label = app.rems.title(id) || t('Untitled');
     if (kind === 'deck' || rem.deck)
       // Cards go onto the deck; PDFs and documents next to it.
       return { parentId: rem.parentId, deckId: id, label };
@@ -193,7 +197,7 @@ function hintFor(target: FileDropTarget): string {
     return `Bilder und Dateien werden an „${target.label}“ angehängt; PDFs und Texte werden Unterdokumente.`;
   return target.parentId
     ? `PDFs werden Foliensätze, Texte Dokumente – in „${target.label}“.`
-    : 'PDFs werden Foliensätze, Texte Dokumente – auf oberster Ebene.';
+    : t('PDFs become slide decks, texts documents – at the top level.');
 }
 
 /**
@@ -221,7 +225,7 @@ export function FileDropLayer(): ReactNode {
         el?.getAttribute('data-file-drop') ?? page?.getAttribute('data-file-drop-page') ?? 'root';
       return {
         el: el ?? page,
-        target: api.current.resolve(attr) ?? { parentId: null, label: 'oberste Ebene' },
+        target: api.current.resolve(attr) ?? { parentId: null, label: t('top level') },
       };
     };
     const highlight = (el: Element | null): void => {
@@ -261,7 +265,7 @@ export function FileDropLayer(): ReactNode {
       if (files.length === 0) return;
       void api.current.importFiles(files, target).then((res) => {
         const done = summarize(res.counts);
-        if (done) api.current.toast(`Importiert: ${done}`);
+        if (done) api.current.toast(t('Imported: {done}', { done }));
         for (const f of res.failed.slice(0, 3)) api.current.toast(f, 'error');
         if (files.length === 1 && res.created.length === 1)
           api.current.navigate(`/rem/${res.created[0]}`);
@@ -282,7 +286,10 @@ export function FileDropLayer(): ReactNode {
     <div className="file-drop-hint" role="status" data-testid="file-drop-hint">
       <Upload size={18} />
       <span className="col" style={{ gap: 2, minWidth: 0 }}>
-        <strong>Ablegen in „{active.label}“</strong>
+        <strong>
+          {t('Drop into “')}
+          {active.label}“
+        </strong>
         <span className="muted">{hintFor(active)}</span>
       </span>
     </div>

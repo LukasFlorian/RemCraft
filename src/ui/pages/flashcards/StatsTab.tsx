@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router';
 import { toPlainText } from '@core/richtext/ops';
 import { useNow, useSelector } from '../../app/context';
 import { BarChart, Heatmap, StatTile } from '../../components/Charts';
+import { t as tr } from '@core/i18n';
 
 /** The stats tab. */
 export function StatsTab(): ReactNode {
@@ -67,24 +68,24 @@ export function StatsTab(): ReactNode {
     <div className="col" style={{ gap: 24 }}>
       <div className="stat-grid">
         <StatTile
-          label="Cards"
+          label={tr('Cards')}
           value={counts.total}
-          hint={`${counts.new} new · ${counts.mature} mature`}
+          hint={tr('{new} new · {mature} mature', { new: counts.new, mature: counts.mature })}
         />
-        <StatTile label="Reviews today" value={streak.today} />
-        <StatTile label="Total reviews" value={logs.length} />
+        <StatTile label={tr('Reviews today')} value={streak.today} />
+        <StatTile label={tr('Total reviews')} value={logs.length} />
         <StatTile
-          label="Retention (30 d)"
+          label={tr('Retention (30 d)')}
           value={retention === null ? '—' : `${Math.round(retention * 100)} %`}
-          hint="Reviews not forgotten"
+          hint={tr('Reviews not forgotten')}
         />
         <StatTile
-          label="Streak"
+          label={tr('Streak')}
           value={`${streak.current} d`}
-          hint={`Longest ${streak.longest} d`}
+          hint={tr('Longest {longest} d', { longest: streak.longest })}
         />
         <StatTile
-          label="Avg. answer time"
+          label={tr('Avg. answer time')}
           value={`${Math.round(averageAnswerTime(logs) / 1000)} s`}
         />
       </div>
@@ -95,68 +96,71 @@ export function StatsTab(): ReactNode {
             className={`pill${range === r ? ' active' : ''}`}
             onClick={() => setRange(r)}
           >
-            {r === 365 ? '1 year' : `${r} days`}
+            {r === 365 ? tr('1 year') : tr('{r} days', { r })}
           </button>
         ))}
       </div>
       <div className="grid-2">
         <div className="card">
-          <h3 className="card-title">Reviews per day</h3>
+          <h3 className="card-title">{tr('Reviews per day')}</h3>
           <BarChart
-            ariaLabel="Reviews per day"
+            ariaLabel={tr('Reviews per day')}
             labels={days.map((d) => fmtDay(d.day))}
             labelEvery={every}
             series={[
-              { name: 'Reviews', color: 'var(--series-1)', values: days.map((d) => d.count) },
+              { name: tr('Reviews'), color: 'var(--series-1)', values: days.map((d) => d.count) },
             ]}
           />
         </div>
         <div className="card">
-          <h3 className="card-title">Forecast: cards due</h3>
+          <h3 className="card-title">{tr('Forecast: cards due')}</h3>
           <BarChart
-            ariaLabel="Cards due per day in the future"
+            ariaLabel={tr('Cards due per day in the future')}
             labels={forecast.map((_, i) => fmtDay(addStudyDays(now, i, settings.dayStartHour)))}
             labelEvery={every}
             series={[{ name: 'Due', color: 'var(--series-1)', values: forecast }]}
           />
         </div>
         <div className="card">
-          <h3 className="card-title">Card maturity</h3>
+          <h3 className="card-title">{tr('Card maturity')}</h3>
           <BarChart
-            ariaLabel="Cards by maturity"
-            labels={['Cards']}
+            ariaLabel={tr('Cards by maturity')}
+            labels={[tr('Cards')]}
             series={[
               { name: 'New', color: 'var(--series-1)', values: [counts.new] },
-              { name: 'Learning', color: 'var(--series-2)', values: [counts.learning] },
+              { name: tr('Learning'), color: 'var(--series-2)', values: [counts.learning] },
               { name: 'Young (< 21 d)', color: 'var(--series-3)', values: [counts.young] },
-              { name: 'Mature', color: 'var(--series-4)', values: [counts.mature] },
+              { name: tr('Mature'), color: 'var(--series-4)', values: [counts.mature] },
             ]}
           />
           <table className="table compact">
             <tbody>
               <tr>
-                <td>New</td>
+                <td>{tr('New')}</td>
                 <td>{counts.new}</td>
-                <td>Learning</td>
+                <td>{tr('Learning')}</td>
                 <td>{counts.learning}</td>
               </tr>
               <tr>
-                <td>Young</td>
+                <td>{tr('Young')}</td>
                 <td>{counts.young}</td>
-                <td>Mature</td>
+                <td>{tr('Mature')}</td>
                 <td>{counts.mature}</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div className="card">
-          <h3 className="card-title">Answers ({range === 365 ? '1 year' : `${range} days`})</h3>
+          <h3 className="card-title">
+            {tr('Answers (')}
+            {range === 365 ? tr('1 year') : tr('{range} days', { range })})
+          </h3>
           <BarChart
-            ariaLabel="Answer distribution"
+            ariaLabel={tr('Answer distribution')}
             labels={[1, 2, 3, 4].map((r) => RATING_LABELS[r as 1])}
             series={[
               {
-                name: 'Answers',
+                name: tr('Answers'),
                 color: 'var(--series-1)',
                 values: [ratings[1], ratings[2], ratings[3], ratings[4]],
               },
@@ -165,25 +169,26 @@ export function StatsTab(): ReactNode {
         </div>
       </div>
       <div className="card">
-        <h3 className="card-title">Activity (last year)</h3>
-        <Heatmap days={year} ariaLabel="Reviews per day over the last year" />
+        <h3 className="card-title">{tr('Activity (last year)')}</h3>
+        <Heatmap days={year} ariaLabel={tr('Reviews per day over the last year')} />
       </div>
       <div className="card">
-        <h3 className="card-title">Schwierige Karten</h3>
+        <h3 className="card-title">{tr('Difficult cards')}</h3>
         <p className="muted" style={{ marginTop: 0 }}>
-          Karten, bei denen du am längsten brauchst oder die du oft vergisst (Ø der letzten
-          Antworten; nur aktive Zeit in der App).
+          {tr(
+            'Cards that take you longest or that you often forget (average of the last answers; only active time in the app).',
+          )}
         </p>
         {hardest.length === 0 ? (
-          <p className="faint">Noch zu wenige Antworten – jede Karte braucht mindestens zwei.</p>
+          <p className="faint">{tr('Not enough answers yet – every card needs at least two.')}</p>
         ) : (
           <table className="table hard-cards">
             <thead>
               <tr>
-                <th>Karte</th>
-                <th>Ø Zeit</th>
-                <th>Vergessen</th>
-                <th>Gesamt</th>
+                <th>{tr('Card')}</th>
+                <th>{tr('Avg. time')}</th>
+                <th>{tr('Forgotten')}</th>
+                <th>{tr('Total')}</th>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +196,7 @@ export function StatsTab(): ReactNode {
                 <tr
                   key={t.cardId}
                   className="clickable"
-                  title="Im Dokument öffnen"
+                  title={tr('Open in document')}
                   onClick={() => navigate(`/rem/${t.remId}`)}
                 >
                   <td className="hard-card-text">{t.text}</td>

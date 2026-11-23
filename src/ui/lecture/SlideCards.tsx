@@ -15,6 +15,7 @@ import { useApp, useSelector } from '../app/context';
 import { RemContent } from '../editor/RemBlock';
 import { CardFace } from '../pages/practice/CardFace';
 import { CardEditor } from '../editor/CardEditor';
+import { t } from '@core/i18n';
 
 /** Card ids and explanation Rems below some roots. */
 function useSlideCards(rootIds: RemId[]): { cards: string[]; explanations: RemId[] } {
@@ -114,29 +115,31 @@ export function SlideCards({
       <div className="row" style={{ marginBottom: 8 }}>
         <div className="segmented" style={{ flex: 1 }}>
           <button className={!all ? 'active' : ''} onClick={() => (setAll(false), setPos(0))}>
-            Diese Folie
+            {t('This slide')}
           </button>
           <button className={all ? 'active' : ''} onClick={() => (setAll(true), setPos(0))}>
-            Alle Folien
+            {t('All slides')}
           </button>
         </div>
       </div>
       {!all && explanations.map((id) => <Explanation key={id} remId={id} />)}
       {order.length === 0 ? (
         <div className="faint" style={{ fontSize: 13 }}>
-          Keine Karten {all ? 'in diesem Foliensatz' : 'zu dieser Folie'}. Schreib in den Notizen z.
-          B. „Begriff &gt;&gt; Erklärung“ oder importiere eine Kartendatei (*.cards.json).
+          {t('No cards')} {all ? t('in this slide deck') : t('for this slide')}
+          {t(
+            '. Write e.g. “term >> explanation” in the notes or import a card file (*.cards.json).',
+          )}
         </div>
       ) : editingRemId ? (
         <div className="mini-card mini-card-edit" data-testid="slide-card-editor">
           {/* "Fertig" on top: the editing toolbar covers the bottom of the widget. */}
           <div className="row" style={{ marginBottom: 6 }}>
             <span className="faint" style={{ fontSize: 12 }}>
-              Karte bearbeiten – Änderungen werden sofort gespeichert
+              {t('Edit card – changes are saved immediately')}
             </span>
             <span className="spacer" />
             <button className="btn btn-sm btn-primary" onClick={() => setEditingRemId(null)}>
-              Fertig
+              {t('Done')}
             </button>
           </div>
           <CardEditor remId={editingRemId} />
@@ -144,7 +147,7 @@ export function SlideCards({
       ) : view ? (
         <div className="mini-card">
           <div className="faint" style={{ fontSize: 12 }}>
-            Karte {(pos % order.length) + 1} / {order.length}
+            {t('Card')} {(pos % order.length) + 1} / {order.length}
           </div>
           <CardFace
             key={cardId}
@@ -157,37 +160,37 @@ export function SlideCards({
           <div className="row" style={{ marginTop: 8 }}>
             {!revealed ? (
               <button className="btn btn-primary" onClick={() => setRevealed(true)}>
-                Aufdecken
+                {t('Reveal')}
               </button>
             ) : (
               <>
                 <button className="btn" onClick={() => answer(3)}>
-                  <Check size={14} /> gewusst
+                  <Check size={14} /> {t('knew it')}
                 </button>
                 <button className="btn" onClick={() => answer(1)}>
-                  <X size={14} /> nicht gewusst
+                  <X size={14} /> {t("didn't know")}
                 </button>
               </>
             )}
             <span className="spacer" />
             <button
               className="icon-btn"
-              title="Karte bearbeiten"
-              aria-label="Karte bearbeiten"
+              title={t('Edit card')}
+              aria-label={t('Edit card')}
               onClick={() => setEditingRemId(view.remId)}
             >
               <Pencil size={14} />
             </button>
             <button
               className="icon-btn"
-              title="Überspringen"
+              title={t('Skip')}
               onClick={() => (setRevealed(false), setPos((p) => p + 1))}
             >
               <RotateCcw size={14} />
             </button>
             <button
               className="icon-btn"
-              title="Karte deaktivieren"
+              title={t('Disable card')}
               onClick={() =>
                 cardId && (app.practice.setDisabled([cardId], true), setRevealed(false))
               }

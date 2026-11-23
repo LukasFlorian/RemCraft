@@ -4,9 +4,10 @@
 import type { RemId } from '@core/model/types';
 import { toPlainText } from '@core/richtext/ops';
 import { useSelector } from '../app/context';
+import { t } from '@core/i18n';
 
 /** Returns the Rem's plain-text title (re-renders when it changes). */
-export function useRemTitle(id: RemId | null | undefined, fallback = 'Untitled'): string {
+export function useRemTitle(id: RemId | null | undefined, fallback = t('Untitled')): string {
   return useSelector((s) => {
     if (!id) return fallback;
     const rem = s.get(id);

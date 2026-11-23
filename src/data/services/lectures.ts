@@ -36,6 +36,7 @@ import { pdfJsEngine, textInBox } from '../lecture/pdf';
 import type { Store, Transaction } from '../store/store';
 import type { FileService } from './files';
 import type { RemService } from './rems';
+import { t as tr } from '@core/i18n';
 
 /** Result of a card import. */
 export interface CardImportResult {
@@ -77,11 +78,11 @@ export class LectureService {
   /** Opens (and caches) the PDF of a deck. */
   openDeck(deckId: RemId): Promise<PdfDoc> {
     const deck = this.store.get(deckId)?.deck;
-    if (!deck) return Promise.reject(new Error('Not a slide deck'));
+    if (!deck) return Promise.reject(new Error(tr('Not a slide deck')));
     let doc = this.openDocs.get(deck.src);
     if (!doc) {
       doc = this.files.blob(deck.src, deck.origin).then((blob) => {
-        if (!blob) throw new Error('PDF file is not available on this device yet');
+        if (!blob) throw new Error(tr('PDF file is not available on this device yet'));
         return this.engine.open(blob);
       });
       doc.catch(() => this.openDocs.delete(deck.src));
@@ -564,7 +565,7 @@ export class LectureService {
             this.rems.createIn(
               tx,
               { parentId: deckId },
-              { text: rt('Karten ohne Folie'), fokus: { file: fileName, key: 'unmapped' } },
+              { text: rt(tr('Cards without slide')), fokus: { file: fileName, key: 'unmapped' } },
             ).id;
         }
         return orphanParent;

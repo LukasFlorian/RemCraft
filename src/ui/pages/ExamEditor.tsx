@@ -12,6 +12,7 @@ import { useApp, useChildren } from '../app/context';
 import { Field, Switch } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { useRemTitle } from '../hooks/useRemTitle';
+import { t as tr } from '@core/i18n';
 
 /** Formats a timestamp for `<input type="date">` (local date). */
 function toLocalInput(t: number): string {
@@ -44,7 +45,7 @@ export function ExamEditor({
   const navigate = useNavigate();
   const existing = examId ? app.store.getRecord('exams', examId) : undefined;
   const [name, setName] = useState(
-    existing?.name ?? (initialScope?.[0] ? `${app.rems.title(initialScope[0])} exam` : 'Exam'),
+    existing?.name ?? (initialScope?.[0] ? `${app.rems.title(initialScope[0])} exam` : tr('Exam')),
   );
   const [date, setDate] = useState(
     toLocalInput(existing?.date ?? new Date(new Date().setHours(12, 0, 0, 0) + 14 * DAY).getTime()),
@@ -59,7 +60,7 @@ export function ExamEditor({
     setScope((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const save = (): void => {
     const data: Partial<Exam> = {
-      name: name.trim() || 'Exam',
+      name: name.trim() || tr('Exam'),
       date: fromLocalInput(date),
       scope,
       newCardMode,
@@ -77,25 +78,25 @@ export function ExamEditor({
 
   return (
     <Modal
-      title={existing ? 'Edit exam' : 'New exam'}
+      title={existing ? tr('Edit exam') : tr('New exam')}
       onClose={onClose}
       wide
       footer={
         <>
           <button className="btn" onClick={onClose}>
-            Cancel
+            {tr('Cancel')}
           </button>
           <button className="btn btn-primary" disabled={scope.length === 0 || !date} onClick={save}>
-            {existing ? 'Save' : 'Create exam'}
+            {existing ? tr('Save') : tr('Create exam')}
           </button>
         </>
       }
     >
       <div className="grid-2">
-        <Field label="Name">
+        <Field label={tr('Name')}>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Exam date">
+        <Field label={tr('Exam date')}>
           <input
             className="input"
             type="date"
@@ -106,26 +107,28 @@ export function ExamEditor({
       </div>
       <Field
         group
-        label="Material"
-        hint="Choose the folders and documents the exam covers. Their cards get the Exam priority."
+        label={tr('Material')}
+        hint={tr(
+          'Choose the folders and documents the exam covers. Their cards get the Exam priority.',
+        )}
       >
         <div className="scope-tree">
           <ScopeLevel parentId={null} depth={0} scope={scope} toggle={toggle} />
         </div>
       </Field>
-      <Field group label="Cards you have never practiced">
+      <Field group label={tr('Cards you have never practiced')}>
         <div className="segmented">
           <button
             className={newCardMode === 'spread' ? 'active' : ''}
             onClick={() => setNewCardMode('spread')}
           >
-            Spread them out until the exam (recommended)
+            {tr('Spread them out until the exam (recommended)')}
           </button>
           <button
             className={newCardMode === 'due-now' ? 'active' : ''}
             onClick={() => setNewCardMode('due-now')}
           >
-            Make them all due now
+            {tr('Make them all due now')}
           </button>
         </div>
       </Field>
@@ -134,10 +137,10 @@ export function ExamEditor({
           <Switch
             checked={finalReview}
             onChange={setFinalReview}
-            label="Final review before the exam"
+            label={tr('Final review before the exam')}
           />
           {finalReview && (
-            <Field label="Final review length (days)">
+            <Field label={tr('Final review length (days)')}>
               <input
                 className="input"
                 type="number"
@@ -154,7 +157,7 @@ export function ExamEditor({
         <Switch
           checked={extraPractice}
           onChange={setExtraPractice}
-          label="Extra practice: missed cards need two correct answers in a row"
+          label={tr('Extra practice: missed cards need two correct answers in a row')}
         />
       </div>
     </Modal>
@@ -216,7 +219,7 @@ function ScopeItem({
             type="button"
             className={`tree-toggle${open ? ' open' : ''}`}
             onClick={(e) => (e.preventDefault(), setOpen(!open))}
-            aria-label="Expand"
+            aria-label={tr('Expand')}
           >
             <ChevronRight size={13} />
           </button>

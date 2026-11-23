@@ -7,6 +7,7 @@ import { selectSettings } from '@data/selectors';
 import { useApp, useSelector } from '../../app/context';
 import { Field, Switch } from '../../components/Controls';
 import { useLectureSettings } from '../../lecture/useLecture';
+import { t } from '@core/i18n';
 
 /** Lecture settings. */
 export function LectureSection(): ReactNode {
@@ -28,33 +29,33 @@ export function LectureSection(): ReactNode {
   );
   return (
     <div className="card col" style={{ gap: 16 }}>
-      <h2 className="card-title">Vorlesungen</h2>
+      <h2 className="card-title">{t('Lectures')}</h2>
       <Switch
         checked={cfg.trackAway}
         onChange={(v) => set({ trackAway: v })}
-        label="Zeit außerhalb der App messen (anderer Tab, anderes Programm, Laptop zu)"
+        label={t('Measure time outside the app (other tab, other program, laptop closed)')}
       />
       <div className="grid-3">
         {num(
-          'Kurz-Check alle … Minuten',
+          t('Quick check every … minutes'),
           'checkinMinutes',
-          '0 = aus; Abruf aus dem Gedächtnis hält die Aufmerksamkeit (Szpunar et al. 2013).',
+          t('0 = off; retrieval from memory keeps attention up (Szpunar et al. 2013).'),
         )}
-        {num('Wechsel ignorieren unter … s', 'awayMinSeconds', 'Kürzere Wechsel zählen nicht.')}
+        {num(t('Ignore switches under … s'), 'awayMinSeconds', t('Shorter switches do not count.'))}
         {num(
-          '„Willkommen zurück“ ab … s',
+          t('“Welcome back” after … s'),
           'welcomeBackSeconds',
-          'Banner nach längerer Abwesenheit.',
+          t('Banner after a longer absence.'),
         )}
         {num(
-          'Folie „übersprungen“ unter … s',
+          t('Slide “skipped” under … s'),
           'minDwellSeconds',
-          'Kürzere Besuche zählen nicht als besprochen.',
+          t('Shorter visits do not count as covered.'),
         )}
-        {num('Verpasst ab … s außerhalb', 'missedMinSeconds', '→ Nacharbeiten')}
-        {num('… oder Anteil außerhalb', 'missedRatio', '0.3 = 30 % der Folienzeit', 0.05)}
+        {num(t('Missed after … s outside'), 'missedMinSeconds', '→ Nacharbeiten')}
+        {num(t('… or share outside'), 'missedRatio', t('0.3 = 30 % of the slide time'), 0.05)}
         {num(
-          'Lange erklärt ab … s ohne Notiz',
+          t('Explained long after … s without a note'),
           'longDwellSeconds',
           '(und ≥ 1,5 × Median) → Nacharbeiten',
         )}

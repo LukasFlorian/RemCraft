@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { GraduationCap, Minus, Pause, Repeat, Triangle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { EffectivePriority } from '@core/model/types';
+import { t } from '@core/i18n';
 
 /** Label, icon and colour of a priority. */
 export interface PriorityMeta {
@@ -22,33 +23,33 @@ export interface PriorityMeta {
 /** Priority metadata (RemNote wording). */
 export const PRIORITY_META: Record<EffectivePriority, PriorityMeta> = {
   exam: {
-    label: 'Exam',
-    hint: 'Part of an active exam: scheduled by the exam plan',
+    label: t('Exam'),
+    hint: t('Part of an active exam: scheduled by the exam plan'),
     icon: GraduationCap,
     color: 'var(--danger)',
   },
   active: {
-    label: 'Currently Studying',
-    hint: 'New cards are introduced every day',
+    label: t('Currently Studying'),
+    hint: t('New cards are introduced every day'),
     icon: Triangle,
     color: 'var(--success)',
     filled: true,
   },
   maintaining: {
-    label: 'Maintaining',
-    hint: 'Only reviews, no new cards',
+    label: t('Maintaining'),
+    hint: t('Only reviews, no new cards'),
     icon: Repeat,
     color: 'var(--accent)',
   },
   none: {
-    label: 'No Priority',
-    hint: 'Practised when time allows',
+    label: t('No Priority'),
+    hint: t('Practised when time allows'),
     icon: Minus,
     color: 'var(--text-muted)',
   },
   paused: {
-    label: 'Paused',
-    hint: 'Not practised at all',
+    label: t('Paused'),
+    hint: t('Not practised at all'),
     icon: Pause,
     color: 'var(--warning, #eab308)',
   },

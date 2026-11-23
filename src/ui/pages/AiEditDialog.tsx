@@ -23,13 +23,16 @@ import { useApp } from '../app/context';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { useRemTitle } from '../hooks/useRemTitle';
+import { t } from '@core/i18n';
 
 /** Example instructions (tap to use). */
 const EXAMPLES = [
-  'Formuliere alle Karten mit "::" als normale Frage-Antwort-Karten (">>") um.',
-  'Mach aus Karten, deren Antwort eine Aufzählung mit Kommas ist, Listen-Karten (">>>") mit einem Unterpunkt je Eintrag.',
-  'Korrigiere Tippfehler und Grammatik, ohne den Inhalt zu ändern.',
-  'Ergänze bei Multiple-Choice-Fragen ohne falsche Optionen zwei plausible falsche Antworten.',
+  t('Rephrase all cards with "::" as normal question-answer cards (">>").'),
+  t(
+    'Turn cards whose answer is a comma-separated enumeration into list cards (">>>") with one child per item.',
+  ),
+  t('Fix typos and grammar without changing the content.'),
+  t('Add two plausible wrong answers to multiple-choice questions without wrong options.'),
 ];
 
 /** Label of an operation for the preview. */
@@ -40,7 +43,7 @@ function describe(op: EditOp): { kind: string; before?: string; after?: string }
     return {
       kind:
         op.correct === undefined
-          ? 'Ändern'
+          ? t('Change')
           : `Ändern · Option ${op.correct ? 'richtig' : 'falsch'}`,
       before: op.before,
       after: op.line,
@@ -59,7 +62,7 @@ export function AiEditDialog({
   const app = useApp();
   const toast = useToast();
   const navigate = useNavigate();
-  const title = useRemTitle(rootId, 'Ohne Titel');
+  const title = useRemTitle(rootId, t('Untitled'));
   const config = useMemo(() => loadAiConfig(), []);
   const [instruction, setInstruction] = useState('');
   const [busy, setBusy] = useState<{ done: number; total: number } | null>(null);
@@ -115,37 +118,37 @@ export function AiEditDialog({
   const chosen = result ? result.ops.filter((_, i) => !skipped.has(i)) : [];
   const apply = (): void => {
     const n = app.io.applyEdits(chosen);
-    toast(`${n} Änderung(en) übernommen – Rückgängig mit ⌘Z`);
+    toast(t('{n} change(s) applied – undo with ⌘Z', { n }));
     onClose();
   };
 
   if (!config)
     return (
-      <Modal title="Mit KI überarbeiten" onClose={onClose}>
-        <p>Dafür braucht RemCraft einen Zugang zu einem Sprachmodell (z. B. Claude oder OpenAI).</p>
+      <Modal title={t('Revise with AI')} onClose={onClose}>
+        <p>{t('This needs access to a language model (e.g. Claude or OpenAI).')}</p>
         <button className="btn btn-primary" onClick={() => (onClose(), navigate('/settings/ai'))}>
-          KI einrichten
+          {t('Set up AI')}
         </button>
       </Modal>
     );
 
   return (
-    <Modal title="Mit KI überarbeiten" onClose={() => (abort.current?.abort(), onClose())} wide>
+    <Modal title={t('Revise with AI')} onClose={() => (abort.current?.abort(), onClose())} wide>
       <div className="ai-edit">
         <p className="muted" style={{ margin: 0 }}>
-          Bereich: <strong>{title}</strong> · {entries.length} Rems
-          {batches.length > 1 ? ` · ${batches.length} Anfragen` : ''}. Die KI schlägt Änderungen
-          vor; du prüfst sie, bevor etwas übernommen wird.
+          {t('Applies to:')} <strong>{title}</strong> · {entries.length} {t('Rems')}
+          {batches.length > 1 ? t(' · {length} requests', { length: batches.length }) : ''}
+          {t('. The AI suggests changes; you review them before anything is applied.')}
         </p>
         <textarea
           className="input ai-edit-input"
           rows={3}
           autoFocus
-          placeholder="Was soll geändert werden? z. B. „Mach aus allen ::-Karten normale >>-Karten“"
+          placeholder={t('What should be changed? e.g. “Turn all :: cards into normal >> cards”')}
           value={instruction}
           disabled={busy !== null}
           onChange={(e) => setInstruction(e.target.value)}
-          aria-label="Anweisung"
+          aria-label={t('Instruction')}
         />
         {!result && !busy && (
           <div className="ai-edit-examples">
@@ -162,15 +165,16 @@ export function AiEditDialog({
             disabled={!instruction.trim() || busy !== null}
             onClick={() => void run()}
           >
-            <Sparkles size={15} /> {result ? 'Neu vorschlagen' : 'Vorschläge holen'}
+            <Sparkles size={15} /> {result ? t('Suggest again') : t('Get suggestions')}
           </button>
           {busy && (
             <>
               <span className="muted">
-                Die KI arbeitet … {busy.total > 1 ? `(${busy.done + 1}/${busy.total})` : ''}
+                {t('The AI is working …')}{' '}
+                {busy.total > 1 ? `(${busy.done + 1}/${busy.total})` : ''}
               </span>
               <button className="btn btn-sm" onClick={() => abort.current?.abort()}>
-                Abbrechen
+                {t('Cancel')}
               </button>
             </>
           )}
@@ -182,7 +186,7 @@ export function AiEditDialog({
               <div className="muted ai-edit-summary">{result.summaries.join(' ')}</div>
             )}
             {result.ops.length === 0 ? (
-              <p className="muted">Keine Änderungen vorgeschlagen.</p>
+              <p className="muted">{t('No changes suggested.')}</p>
             ) : (
               <ul className="replace-list ai-edit-list">
                 {result.ops.map((op, i) => {
@@ -192,7 +196,7 @@ export function AiEditDialog({
                       <input
                         type="checkbox"
                         checked={!skipped.has(i)}
-                        aria-label="Diese Änderung übernehmen"
+                        aria-label={t('Apply this change')}
                         onChange={() =>
                           setSkipped((s) => {
                             const next = new Set(s);
@@ -216,16 +220,16 @@ export function AiEditDialog({
             )}
             {result.warnings.length > 0 && (
               <div className="faint" style={{ fontSize: 12 }}>
-                {result.warnings.length} Vorschlag/Vorschläge der KI waren ungültig und wurden
-                ausgelassen.
+                {result.warnings.length}{' '}
+                {t('suggestion(s) of the AI were invalid and have been left out.')}
               </div>
             )}
             <div className="row" style={{ justifyContent: 'flex-end' }}>
               <button className="btn" onClick={onClose}>
-                Verwerfen
+                {t('Discard')}
               </button>
               <button className="btn btn-primary" disabled={chosen.length === 0} onClick={apply}>
-                {chosen.length} übernehmen
+                {t('Apply {n}', { n: chosen.length })}
               </button>
             </div>
           </>

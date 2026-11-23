@@ -9,16 +9,17 @@
 import type { CardState, Rating, SchedulerConfig, Timestamp } from '../model/types';
 import type { Rng, Scheduler } from './common';
 import { SCHEDULERS } from './registry';
+import { t } from '@core/i18n';
 
 /** All ratings in ascending order. */
 export const RATINGS: readonly Rating[] = [1, 2, 3, 4];
 
 /** RemNote's labels of the four ratings. */
 export const RATING_LABELS: Readonly<Record<Rating, string>> = {
-  1: 'Forgot',
-  2: 'Partially recalled',
-  3: 'Recalled with effort',
-  4: 'Easily recalled',
+  1: t('Forgot'),
+  2: t('Partially recalled'),
+  3: t('Recalled with effort'),
+  4: t('Easily recalled'),
 };
 
 /**

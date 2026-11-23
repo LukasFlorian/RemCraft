@@ -27,6 +27,7 @@ import type { Store, Transaction } from '../store/store';
 import type { PublishedShare, ShareBackend, ShareUpload } from '../sync/shareBackend';
 import type { FileService } from './files';
 import { FILE_PREFIX } from './files';
+import { t as tr } from '@core/i18n';
 
 /** Meta key: files already uploaded into spaces (`space/fileId`). */
 const SPACE_FILES_KEY = 'sharing.spaceFiles';
@@ -336,7 +337,9 @@ export class SharingService {
   async fetch(token: string): Promise<ShareSnapshot> {
     if (!this.backend)
       throw new Error(
-        'Diese RemCraft-Instanz hat keinen Server konfiguriert - Freigabe-Links funktionieren nur mit Supabase.',
+        tr(
+          'This RemCraft instance has no server configured – share links only work with Supabase.',
+        ),
       );
     return validateSnapshot(await this.backend.fetchSnapshot(token));
   }
@@ -495,8 +498,8 @@ export class SharingService {
   async shareLive(rootId: RemId): Promise<SpaceInfo> {
     const backend = this.requireBackend();
     const root = this.store.get(rootId);
-    if (!root) throw new Error('Nicht gefunden');
-    if (root.spaceId) throw new Error('Bereits geteilt');
+    if (!root) throw new Error(tr('Not found'));
+    if (root.spaceId) throw new Error(tr('Already shared'));
     const space = await backend.createSpace(this.title(rootId), rootId);
     this.setSpaces([...this.spaces, space]);
     this.store.transact((tx) => void tx.update('rems', rootId, { spaceRoot: space.id }), {
@@ -618,13 +621,13 @@ export class SharingService {
   private title(id: RemId): string {
     return (
       (this.store.get(id)?.text ?? []).map((s) => (s.type === 'text' ? s.text : '')).join('') ||
-      'Geteilt'
+      tr('Shared')
     );
   }
 
   private requireBackend(): ShareBackend {
     if (!this.backend)
-      throw new Error('Zum Teilen per Link musst du angemeldet sein (Einstellungen → Konto).');
+      throw new Error(tr('Sharing via link requires you to be signed in (Settings → Account).'));
     return this.backend;
   }
 }

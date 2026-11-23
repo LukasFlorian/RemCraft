@@ -24,6 +24,7 @@ import {
   useLectures,
   useLectureState,
 } from './useLecture';
+import { t } from '@core/i18n';
 
 /** The analytics page. */
 export function LecturesPage(): ReactNode {
@@ -102,27 +103,28 @@ function LectureList({
   return (
     <>
       <div className="page-header">
-        <h1>Vorlesungen</h1>
+        <h1>{t('Lectures')}</h1>
       </div>
       {rows.length === 0 && (
         <div className="empty">
-          Noch keine Vorlesung aufgezeichnet. Importiere einen Foliensatz (PDF) in einen Kursordner
-          und klicke „Vorlesung starten“.
+          {t(
+            'No lecture recorded yet. Import a slide deck (PDF) into a course folder and click “Start lecture”.',
+          )}
           <div style={{ marginTop: 12 }}>
             <button
               className="btn btn-primary"
               onClick={() => void createDemo(app).then((id) => navigate(`/lecture/${id}`))}
             >
-              Demo-Kurs erzeugen
+              {t('Create demo course')}
             </button>
           </div>
         </div>
       )}
       {rows.length > 1 && (
         <div className="card" style={{ marginBottom: 18 }}>
-          <h3 className="card-title">Vergleich: Anteil in der App</h3>
+          <h3 className="card-title">{t('Comparison: share in the app')}</h3>
           <BarChart
-            ariaLabel="Anteil der Zeit in der App je Vorlesung"
+            ariaLabel={t('Share of time in the app per lecture')}
             labels={chrono.map((r) =>
               new Date(r.l.createdAt).toLocaleDateString(undefined, {
                 day: 'numeric',
@@ -131,7 +133,7 @@ function LectureList({
             )}
             series={[
               {
-                name: 'In der App (%)',
+                name: t('In the app (%)'),
                 color: 'var(--series-1)',
                 values: chrono.map((r) =>
                   r.sum.focusRatio === null ? 0 : Math.round(r.sum.focusRatio * 100),
@@ -145,12 +147,13 @@ function LectureList({
         <button key={l.id} className="doc-row" onClick={() => onOpen(l.id)}>
           <span className="col" style={{ gap: 0, flex: 1, minWidth: 0 }}>
             <span className="doc-title ellipsis">
-              {l.name} {sum.running && <span className="badge badge-success">läuft</span>}{' '}
-              {sum.paused && <span className="badge badge-warning">Pause</span>}
+              {l.name} {sum.running && <span className="badge badge-success">{t('running')}</span>}{' '}
+              {sum.paused && <span className="badge badge-warning">{t('Pause')}</span>}
             </span>
             <span className="doc-parent">
               {new Date(l.createdAt).toLocaleString()} · {deck} · {clock(sum.durationMs)}
-              {sum.focusRatio !== null && ` · ${Math.round(sum.focusRatio * 100)} % in der App`}
+              {sum.focusRatio !== null &&
+                t(' · {0} % in the app', { '0': Math.round(sum.focusRatio * 100) })}
             </span>
           </span>
         </button>
@@ -181,7 +184,7 @@ function LectureAnalysis({
   const slideCount = useSelector((s) =>
     lecture?.deckId ? s.children(lecture.deckId).filter((r) => r.slide).length : 0,
   );
-  if (!lecture || !st) return <div className="empty">Vorlesung nicht gefunden.</div>;
+  if (!lecture || !st) return <div className="empty">{t('Lecture not found.')}</div>;
   const k = lectureKpis(st, cfg, slideCount, now);
   const tl = timeline(st, now);
   const stats = slideStats(st, slideCount, now);
@@ -189,7 +192,7 @@ function LectureAnalysis({
     <div className="col" style={{ gap: 20 }}>
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <button className="btn btn-sm btn-ghost" onClick={onBack}>
-          ← Alle Vorlesungen
+          {t('← All lectures')}
         </button>
         <h2 style={{ flex: 1, fontSize: 24 }}>{lecture.name}</h2>
         {lecture.deckId && (
@@ -198,7 +201,7 @@ function LectureAnalysis({
               className="btn"
               onClick={() => (onSlides ? onSlides() : navigate(`/lecture/${lecture.deckId}`))}
             >
-              <Play size={15} /> Folien
+              <Play size={15} /> {t('Slides')}
             </button>
             <button
               className="btn"
@@ -206,7 +209,7 @@ function LectureAnalysis({
                 onReview ? onReview() : navigate(`/review/${lecture.deckId}?lecture=${lecture.id}`)
               }
             >
-              Nacharbeiten
+              {t('Follow-up')}
             </button>
             <button
               className="btn"
@@ -218,7 +221,7 @@ function LectureAnalysis({
                 )
               }
             >
-              <Download size={15} /> Export für KI
+              <Download size={15} /> {t('Export for AI')}
             </button>
           </>
         )}
@@ -239,13 +242,13 @@ function LectureAnalysis({
         </button>
         <button
           className="btn btn-danger"
-          aria-label="Vorlesung löschen"
+          aria-label={t('Delete lecture')}
           onClick={async () => {
             if (
               await dialogs.confirm({
-                title: 'Vorlesung löschen?',
-                message: 'Notizen und Karten der Folien bleiben erhalten.',
-                confirmLabel: 'Löschen',
+                title: t('Delete lecture?'),
+                message: t('Notes and cards of the slides are kept.'),
+                confirmLabel: t('Delete'),
                 danger: true,
               })
             ) {
@@ -259,68 +262,71 @@ function LectureAnalysis({
       </div>
       {st.goal && (
         <div className="card">
-          <strong>Ziel:</strong> {st.goal}
+          <strong>{t('Goal:')}</strong> {st.goal}
         </div>
       )}
       {st.summary && (
         <div className="card" style={{ whiteSpace: 'pre-wrap' }}>
-          <strong>Zusammenfassung:</strong>
+          <strong>{t('Summary:')}</strong>
           {'\n'}
           {st.summary}
         </div>
       )}
       <div className="stat-grid">
-        <StatTile label="Dauer" value={clock(k.durationMs)} />
+        <StatTile label={t('Duration')} value={clock(k.durationMs)} />
         <StatTile
-          label="In der App"
+          label={t('In the app')}
           value={k.focusRatio === null ? '—' : `${Math.round(k.focusRatio * 100)} %`}
         />
         <StatTile
-          label="Zeit außerhalb"
+          label={t('Time away')}
           value={clock(k.awayMs)}
-          hint={`${k.awayCount}×, längste ${clock(k.longestAwayMs)}`}
+          hint={t('{awayCount}×, longest {1}', {
+            awayCount: k.awayCount,
+            '1': clock(k.longestAwayMs),
+          })}
         />
-        <StatTile label="Abschweifen bemerkt" value={k.drifts} />
+        <StatTile label={t('Drift noticed')} value={k.drifts} />
         <StatTile
-          label="Check-ins"
+          label={t('Check-ins')}
           value={`${k.checkinsAnswered}/${k.checkins}`}
-          hint={k.focusAvg ? `Ø Fokus ${k.focusAvg}/5` : undefined}
+          hint={k.focusAvg ? t('Avg. focus {focusAvg}/5', { focusAvg: k.focusAvg }) : undefined}
         />
         <StatTile
-          label="Folien besprochen"
+          label={t('Slides covered')}
           value={k.slidesSeen}
-          hint={k.paceMs ? `Ø ${clock(k.paceMs)} pro Folie` : undefined}
+          hint={k.paceMs ? t('Avg. {0} per slide', { '0': clock(k.paceMs) }) : undefined}
         />
       </div>
       <div className="card">
         <h3 className="card-title">
-          Aufmerksamkeit im Verlauf (Sekunden außerhalb der App pro Minute)
+          {t('Attention over time (seconds outside the app per minute)')}
         </h3>
         <BarChart
-          ariaLabel="Sekunden außerhalb der App pro Minute"
+          ariaLabel={t('Seconds outside the app per minute')}
           labels={tl.awaySeconds.map((_, i) => `${i + 1}′`)}
           labelEvery={Math.ceil(tl.minutes / 12)}
-          series={[{ name: 'außerhalb (s)', color: 'var(--series-2)', values: tl.awaySeconds }]}
+          series={[{ name: t('outside (s)'), color: 'var(--series-2)', values: tl.awaySeconds }]}
         />
         <div className="faint" style={{ fontSize: 13, marginTop: 6 }}>
-          Abschweifen bemerkt bei Minute {tl.drifts.map((d) => Math.round(d)).join(', ') || '—'}
+          {t('Drift noticed at minute')} {tl.drifts.map((d) => Math.round(d)).join(', ') || '—'}
         </div>
       </div>
       {slideCount > 0 && (
         <div className="card">
-          <h3 className="card-title">Zeit pro Folie</h3>
+          <h3 className="card-title">{t('Time per slide')}</h3>
           <BarChart
-            ariaLabel="Zeit pro Folie in Sekunden"
+            ariaLabel={t('Time per slide in seconds')}
             labels={stats.map((x) => String(x.slide + 1))}
             labelEvery={Math.ceil(stats.length / 20)}
             series={[
               {
-                name: 'in der App (s)',
+                name: t('in the app (s)'),
                 color: 'var(--series-1)',
                 values: stats.map((x) => Math.round(Math.max(0, x.dwellMs - x.awayMs) / 1000)),
               },
               {
-                name: 'außerhalb (s)',
+                name: t('outside (s)'),
                 color: 'var(--series-2)',
                 values: stats.map((x) => Math.round(x.awayMs / 1000)),
               },
@@ -330,18 +336,25 @@ function LectureAnalysis({
       )}
       {tl.checkins.length > 0 && (
         <div className="card">
-          <h3 className="card-title">Check-ins</h3>
+          <h3 className="card-title">{t('Check-ins')}</h3>
           {tl.checkins.map((c, i) => (
             <div key={i} className="checkin-row">
-              <span className="faint">Min. {Math.round(c.minute)}</span> <em>{c.prompt}</em>
-              <div>{c.skipped ? <span className="faint">übersprungen</span> : c.text}</div>
-              {c.focus && <span className="badge">Fokus {c.focus}/5</span>}
+              <span className="faint">
+                {t('min')} {Math.round(c.minute)}
+              </span>{' '}
+              <em>{c.prompt}</em>
+              <div>{c.skipped ? <span className="faint">{t('skipped')}</span> : c.text}</div>
+              {c.focus && (
+                <span className="badge">
+                  {t('Focus')} {c.focus}/5
+                </span>
+              )}
             </div>
           ))}
         </div>
       )}
       <details>
-        <summary className="muted">Rohdaten (Markdown)</summary>
+        <summary className="muted">{t('Raw data (Markdown)')}</summary>
         <pre className="code-block">{lectureMarkdown(app.store, lectureId)}</pre>
       </details>
     </div>

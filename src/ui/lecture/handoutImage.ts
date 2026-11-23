@@ -5,13 +5,14 @@
  * slide widget: every slide is one plain `<img>`.
  */
 import type { SlideAnnotations } from '@core/model/types';
+import { t } from '@core/i18n';
 
 /** Loads an image. */
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Folie konnte nicht geladen werden'));
+    img.onerror = () => reject(new Error(t('Slide could not be loaded')));
     img.src = src;
   });
 }

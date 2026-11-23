@@ -85,7 +85,7 @@ describe('lecture session', () => {
     const running = buildLectureState([ev('start', 0)]);
     expect(nextCheckinIn(running, T0 + 60 * S, 10)).toBe(540 * S);
     expect(nextCheckinIn(running, T0, 0)).toBeNull();
-    expect(nextCheckinPrompt(running)).toMatch(/Kernpunkt/);
+    expect(nextCheckinPrompt(running)).toMatch(/key point/);
   });
 });
 
@@ -153,7 +153,7 @@ describe('fokus cards', () => {
     });
   });
   it('validates and builds outlines', () => {
-    expect(validateCardFile({ format: 'x' })[0]).toMatch(/Keine RemCraft-Kartendatei/);
+    expect(validateCardFile({ format: 'x' })[0]).toMatch(/Not a RemCraft card file/);
     expect(
       validateCardFile({ format: 'fokus-cards', version: 1, cards: [{ front: '' }] })[0],
     ).toMatch(/front/);

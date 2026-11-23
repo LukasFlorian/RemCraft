@@ -17,6 +17,8 @@ import { GlobalModals } from '../pages/GlobalModals';
 import { Sidebar } from './Sidebar';
 import { FileDropLayer } from '../import/fileDrop';
 import { feature } from '../app/channel';
+import { t } from '@core/i18n';
+import { LanguageSync } from '../app/LanguageSync';
 
 /** The application layout. */
 export function Layout(): ReactNode {
@@ -85,12 +87,13 @@ export function Layout(): ReactNode {
       />
       {mobileOpen && <div className="sidebar-scrim" onClick={() => setMobileOpen(false)} />}
       {feature('fileDrop') && <FileDropLayer />}
+      <LanguageSync />
       <main className="main">
         {
           <button
             className={`icon-btn floating-menu-btn${collapsed ? '' : ' mobile-only'}`}
             onClick={() => (window.innerWidth <= 860 ? setMobileOpen(true) : setCollapsed(false))}
-            aria-label="Show sidebar"
+            aria-label={t('Show sidebar')}
           >
             <MenuIcon size={18} />
           </button>

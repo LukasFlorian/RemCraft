@@ -15,6 +15,7 @@ import type { Scheduler } from './common';
 import { createExponentialScheduler } from './exponential';
 import { createFsrsScheduler } from './fsrs';
 import { createSm2Scheduler } from './sm2';
+import { t } from '@core/i18n';
 
 /** A scheduling algorithm plugin. */
 export interface SchedulerPlugin extends Registrable {
@@ -29,20 +30,23 @@ export const SCHEDULERS = new Registry<SchedulerPlugin>('scheduler');
 
 SCHEDULERS.register({
   id: 'sm2',
-  label: 'Anki SM-2',
-  description: "RemNote's default: learning steps, then intervals multiplied by a per-card ease.",
+  label: t('Anki SM-2'),
+  description: t(
+    "RemNote's default: learning steps, then intervals multiplied by a per-card ease.",
+  ),
   create: (c) => createSm2Scheduler(c.sm2),
 });
 SCHEDULERS.register({
   id: 'fsrs',
-  label: 'FSRS-6',
-  description:
+  label: t('FSRS-6'),
+  description: t(
     'Memory model (stability, difficulty) that targets a desired retention; ~20-30 % fewer reviews.',
+  ),
   create: (c) => createFsrsScheduler(c.fsrs),
 });
 SCHEDULERS.register({
   id: 'exponential',
-  label: 'Exponential (legacy)',
-  description: "RemNote's early fixed exponential intervals; not recommended for new cards.",
+  label: t('Exponential (legacy)'),
+  description: t("RemNote's early fixed exponential intervals; not recommended for new cards."),
   create: () => createExponentialScheduler(),
 });

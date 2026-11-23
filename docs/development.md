@@ -123,3 +123,17 @@ Fixes and small changes to stable features do not need a flag.
 - The stable service worker never answers navigations below `beta/` (`navigateFallbackDenylist`).
 - Who is a beta tester is a synced setting (`settings.betaTester`): the stable app then links to
   the beta app in the sidebar. Anyone can open `<base>/beta/`; nothing secret is behind it.
+
+## Translations (English / German)
+
+- Every visible text is written in English and passed through `t()` from `@core/i18n`
+  (`t('Imported {count} Rems', { count })`, plurals with `tn('{n} card', '{n} cards', n)`).
+  Keep sentences whole: German word order differs, so fragments cannot be translated well.
+- German lives in `src/core/i18n/de.ts` (English text → German). `src/core/i18n/i18n.test.ts`
+  scans the sources and fails for any `t()`/`tn()` text without a German entry or with
+  different `{placeholders}`.
+- The language is read once at startup (localStorage `remcraft.lang`, else the browser
+  language), so module-level texts are translated too. Settings → Appearance stores it in the
+  synced settings (`settings.language`); a change reloads the app, and other devices follow
+  (`LanguageSync`). Dates and numbers use `locale()`.
+- Not translated: user content (notes, card text, imported names), AI prompts, developer errors.

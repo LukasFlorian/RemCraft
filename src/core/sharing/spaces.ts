@@ -11,6 +11,7 @@
  * root" is maintained by {@link expectedSpace}, applied on every local write.
  */
 import type { Rem } from '../model/types';
+import { t } from '@core/i18n';
 
 /** Role of a member in a space. */
 export type SpaceRole = 'owner' | 'writer' | 'reader';
@@ -34,9 +35,9 @@ export interface SpaceMember {
 
 /** German labels of roles. */
 export const ROLE_LABELS: Record<SpaceRole, string> = {
-  owner: 'Besitzer',
-  writer: 'Bearbeiten',
-  reader: 'Nur lesen',
+  owner: t('Owner'),
+  writer: t('Edit'),
+  reader: t('Read only'),
 };
 
 /**

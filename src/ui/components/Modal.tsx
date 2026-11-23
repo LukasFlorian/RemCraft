@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { t } from '@core/i18n';
 
 /** Props of {@link Modal}. */
 export interface ModalProps {
@@ -63,7 +64,7 @@ export function Modal({
         <div className="modal-header">
           <h2>{title}</h2>
           {headerExtra}
-          <button className="icon-btn modal-close" onClick={onClose} aria-label="Close">
+          <button className="icon-btn modal-close" onClick={onClose} aria-label={t('Close')}>
             <X size={18} />
           </button>
         </div>

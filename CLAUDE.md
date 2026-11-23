@@ -1,6 +1,11 @@
 # Notes for coding agents
 
-- Language of the UI and of answers to the owner: German (code, comments and docs in English).
+- Answers to the owner: German. Code, comments and docs: English.
+- **UI texts are bilingual (English/German):** write every visible text in English and pass it
+  through `t()` (`@core/i18n`; `tn()` for plurals, `{name}` placeholders), and add the German
+  translation to `src/core/i18n/de.ts`. Never build sentences from fragments. `i18n.test.ts`
+  fails for texts without a German entry. The language is a synced setting (Settings →
+  Appearance); e2e tests run in English (`e2e/i18n.spec.ts` covers German).
 - Before committing: `npm run typecheck`, `npx eslint .`, `npx vitest run`, and for UI changes
   `npx playwright test --trace off`.
 - **Release notes:** every change users will notice gets a line in `src/ui/whatsnew/releases.ts`.

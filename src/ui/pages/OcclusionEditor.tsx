@@ -11,6 +11,7 @@ import { useApp, useRem } from '../app/context';
 import { Switch } from '../components/Controls';
 import { Modal } from '../components/Modal';
 import { useFileUrl } from '../editor/blocks';
+import { t, tn } from '@core/i18n';
 
 /** The occlusion editor dialog. */
 export function OcclusionEditor({
@@ -47,25 +48,25 @@ export function OcclusionEditor({
 
   return (
     <Modal
-      title="Image occlusion"
+      title={t('Image occlusion')}
       wide
       onClose={onClose}
       footer={
         <>
           <span className="muted" style={{ marginRight: 'auto' }}>
-            {masks.length} card{masks.length === 1 ? '' : 's'}
+            {tn('{n} card', '{n} cards', masks.length)}
           </span>
           <button className="btn" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button className="btn btn-primary" onClick={save}>
-            Save
+            {t('Save')}
           </button>
         </>
       }
     >
       <p className="muted" style={{ margin: 0 }}>
-        Drag over the image to cover a region. Every region becomes one flashcard.
+        {t('Drag over the image to cover a region. Every region becomes one flashcard.')}
       </p>
       <div
         ref={boxRef}
@@ -128,14 +129,14 @@ export function OcclusionEditor({
       <Switch
         checked={hideAll}
         onChange={setHideAll}
-        label="Hide all regions while asking (otherwise only the asked one)"
+        label={t('Hide all regions while asking (otherwise only the asked one)')}
       />
       {masks.map((m, i) => (
         <div key={m.id} className="row">
           <span className="badge">{i + 1}</span>
           <input
             className="input"
-            placeholder="Label / expected answer (optional)"
+            placeholder={t('Label / expected answer (optional)')}
             value={m.label ?? ''}
             onChange={(e) =>
               setMasks((all) =>
@@ -145,7 +146,7 @@ export function OcclusionEditor({
           />
           <button
             className="icon-btn"
-            aria-label="Delete region"
+            aria-label={t('Delete region')}
             onClick={() => setMasks((all) => all.filter((x) => x.id !== m.id))}
           >
             <Trash2 size={16} />

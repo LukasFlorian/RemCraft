@@ -8,6 +8,7 @@
  * tested them for a while, the status becomes `stable` (plus a release note)
  * and the stable app shows them too. See docs/development.md → "Beta channel".
  */
+import { t } from '@core/i18n';
 
 /** Deployment channel of this build. */
 export type Channel = 'stable' | 'beta';
@@ -28,15 +29,17 @@ export interface FeatureInfo {
 export const FEATURES = {
   habits: {
     status: 'beta',
-    title: 'Gewohnheiten',
-    description:
-      'Gewohnheiten mit Jahres-Raster, Zielen pro Tag/Woche/Monat, Serien, Statistiken, Notizen, Erinnerungen und Teilen-Karten.',
+    title: t('Habits'),
+    description: t(
+      'Habits with a year grid, goals per day/week/month, streaks, statistics, notes, reminders and share cards.',
+    ),
   },
   fileDrop: {
     status: 'beta',
-    title: 'Dateien hineinziehen',
-    description:
-      'PDFs, Karten (.cards.json), Markdown, CSV, Freigaben, Bilder und andere Dateien einfach in die Seitenleiste, auf Ordner, Dokumente oder eine geöffnete Vorlesung ziehen.',
+    title: t('Drag files in'),
+    description: t(
+      'Simply drag PDFs, cards (.cards.json), Markdown, CSV, shares, images and other files into the sidebar, onto folders, documents or an open lecture.',
+    ),
   },
 } satisfies Record<string, FeatureInfo>;
 

@@ -6,14 +6,15 @@
  *
  * Boxes are relative page coordinates `[x0, y0, x1, y1]`.
  */
+import { t } from '../i18n';
 
 /** Layout modes: `auto` or rows × columns. */
 export const LAYOUT_MODES: Record<string, string> = {
-  auto: 'Automatisch erkennen',
-  '1x1': '1 Folie pro Seite',
-  '2x1': '2 untereinander',
-  '1x2': '2 nebeneinander',
-  '3x1': '3 untereinander',
+  auto: t('Detect automatically'),
+  '1x1': t('1 slide per page'),
+  '2x1': t('2 stacked'),
+  '1x2': t('2 side by side'),
+  '3x1': t('3 stacked'),
   '2x2': '4 (2×2)',
   '3x2': '6 (3×2)',
 };

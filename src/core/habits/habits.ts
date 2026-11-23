@@ -6,6 +6,7 @@
 import type { Habit, HabitEntry, HabitPeriod } from '../model/types';
 import { addDays, dayRange, nextPeriod, periodStart } from './days';
 import type { DayKey } from './days';
+import { t } from '@core/i18n';
 
 /** Everything needed to evaluate a habit. */
 export interface HabitData {
@@ -232,8 +233,8 @@ export function tapValue(d: HabitData, day: DayKey): number | null {
  */
 export function goalLabel(habit: Habit): string {
   const { period, times } = habit.goal;
-  if (period === 'day') return 'Täglich';
-  return `${times}× pro ${period === 'week' ? 'Woche' : 'Monat'}`;
+  if (period === 'day') return t('Daily');
+  return period === 'week' ? t('{times}× per week', { times }) : t('{times}× per month', { times });
 }
 
 /**
@@ -245,9 +246,9 @@ export function goalLabel(habit: Habit): string {
  */
 export function streakUnit(period: HabitPeriod, n: number): string {
   const one = n === 1;
-  if (period === 'day') return one ? 'Tag' : 'Tage';
-  if (period === 'week') return one ? 'Woche' : 'Wochen';
-  return one ? 'Monat' : 'Monate';
+  if (period === 'day') return one ? t('day') : t('days');
+  if (period === 'week') return one ? t('week') : t('weeks');
+  return one ? t('month') : t('months');
 }
 
 /**

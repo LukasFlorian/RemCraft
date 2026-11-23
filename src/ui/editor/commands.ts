@@ -82,6 +82,7 @@ import { insertInline, toggleMark } from './BlockEditor';
 import type { EditorController } from './controller';
 import { deleteRems, indent, outdent, toggleCollapsed } from './actions';
 import { schema } from './schema';
+import { t as tr } from '@core/i18n';
 
 /** Services available to commands. */
 export interface CommandContext {
@@ -116,18 +117,18 @@ export interface SlashCommand {
 
 /** Category order of the slash menu (mirrors RemNote). */
 export const COMMAND_GROUPS = [
-  'Insert Flashcard',
-  'Flashcard Configuration',
+  tr('Insert Flashcard'),
+  tr('Flashcard Configuration'),
   'Headings & Highlights',
-  'Text Style & Formatting',
+  tr('Text Style & Formatting'),
   'Image & Drawing',
   'References, Tags & Portals',
   'Date & Time',
   'Code, Math & Quote',
   'Tables, Divider, Columns',
-  'Upload File or Link Source',
-  'Record Audio/Video',
-  'Hierarchy',
+  tr('Upload File or Link Source'),
+  tr('Record Audio/Video'),
+  tr('Hierarchy'),
   'AI Tools',
 ] as const;
 
@@ -221,11 +222,11 @@ function hasCards(ctx: CommandContext, rem: Rem): boolean {
 /** Display names of highlight colours. */
 const COLOR_NAMES: Record<HighlightColor, string> = {
   red: 'Red',
-  orange: 'Orange',
-  yellow: 'Yellow',
-  green: 'Green',
-  blue: 'Blue',
-  purple: 'Purple',
+  orange: tr('Orange'),
+  yellow: tr('Yellow'),
+  green: tr('Green'),
+  blue: tr('Blue'),
+  purple: tr('Purple'),
 };
 
 // ---------------------------------------------------------------------------
@@ -237,8 +238,8 @@ export const COMMANDS: SlashCommand[] = [
   // Insert Flashcard
   {
     id: 'card-basic',
-    group: 'Insert Flashcard',
-    label: 'Single-Line Card',
+    group: tr('Insert Flashcard'),
+    label: tr('Single-Line Card'),
     icon: SquareStack,
     hint: '==',
     keywords: 'basic forward front back',
@@ -246,8 +247,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'card-multiline',
-    group: 'Insert Flashcard',
-    label: 'Multi-Line Flashcard',
+    group: tr('Insert Flashcard'),
+    label: tr('Multi-Line Flashcard'),
     icon: AlignLeft,
     hint: '>>>',
     keywords: 'set multiline',
@@ -255,8 +256,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'card-mc',
-    group: 'Insert Flashcard',
-    label: 'Multiple-Choice Flashcard',
+    group: tr('Insert Flashcard'),
+    label: tr('Multiple-Choice Flashcard'),
     icon: ListChecks,
     hint: '>>A)',
     keywords: 'mc choice quiz',
@@ -264,8 +265,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'card-list',
-    group: 'Insert Flashcard',
-    label: 'List-Answer Flashcard',
+    group: tr('Insert Flashcard'),
+    label: tr('List-Answer Flashcard'),
     icon: ListOrdered,
     hint: '>>1.',
     keywords: 'list ordered sequence',
@@ -273,8 +274,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'card-cloze',
-    group: 'Insert Flashcard',
-    label: 'Cloze Flashcard',
+    group: tr('Insert Flashcard'),
+    label: tr('Cloze Flashcard'),
     icon: Brackets,
     hint: '{{',
     keywords: 'cloze deletion fill blank',
@@ -282,8 +283,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'card-occlusion',
-    group: 'Insert Flashcard',
-    label: 'Image Occlusion Flashcard',
+    group: tr('Insert Flashcard'),
+    label: tr('Image Occlusion Flashcard'),
     icon: Image,
     keywords: 'image occlusion mask',
     run: async (c, r) => {
@@ -298,8 +299,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'card-concept',
-    group: 'Insert Flashcard',
-    label: 'Concept Flashcard',
+    group: tr('Insert Flashcard'),
+    label: tr('Concept Flashcard'),
     icon: Lightbulb,
     hint: '::',
     keywords: 'concept definition term',
@@ -307,8 +308,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'card-descriptor',
-    group: 'Insert Flashcard',
-    label: 'Descriptor Flashcard',
+    group: tr('Insert Flashcard'),
+    label: tr('Descriptor Flashcard'),
     icon: Spline,
     hint: ';;',
     keywords: 'descriptor attribute property',
@@ -318,40 +319,40 @@ export const COMMANDS: SlashCommand[] = [
   // Flashcard Configuration
   {
     id: 'dir-forward',
-    group: 'Flashcard Configuration',
-    label: 'Practice forward',
+    group: tr('Flashcard Configuration'),
+    label: tr('Practice forward'),
     icon: ArrowRight,
     available: (_c, r) => r.direction !== 'none',
     run: (c, r) => c.app.rems.update(r.id, { direction: 'forward' }),
   },
   {
     id: 'dir-backward',
-    group: 'Flashcard Configuration',
-    label: 'Practice backward',
+    group: tr('Flashcard Configuration'),
+    label: tr('Practice backward'),
     icon: ArrowLeftRight,
     available: (_c, r) => r.direction !== 'none' && r.answerMode !== 'mc',
     run: (c, r) => c.app.rems.update(r.id, { direction: 'backward' }),
   },
   {
     id: 'dir-both',
-    group: 'Flashcard Configuration',
-    label: 'Practice both directions',
+    group: tr('Flashcard Configuration'),
+    label: tr('Practice both directions'),
     icon: ArrowLeftRight,
     available: (_c, r) => r.direction !== 'none' && r.answerMode !== 'mc',
     run: (c, r) => c.app.rems.update(r.id, { direction: 'both' }),
   },
   {
     id: 'dir-disabled',
-    group: 'Flashcard Configuration',
-    label: 'Disable flashcard',
+    group: tr('Flashcard Configuration'),
+    label: tr('Disable flashcard'),
     icon: Ban,
     available: (_c, r) => r.direction !== 'none',
     run: (c, r) => c.app.rems.update(r.id, { direction: 'disabled' }),
   },
   {
     id: 'card-remove',
-    group: 'Flashcard Configuration',
-    label: 'Remove flashcard',
+    group: tr('Flashcard Configuration'),
+    label: tr('Remove flashcard'),
     icon: Eraser,
     available: (_c, r) => r.direction !== 'none',
     run: (c, r) =>
@@ -368,8 +369,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'type-in',
-    group: 'Flashcard Configuration',
-    label: 'Type in Answer',
+    group: tr('Flashcard Configuration'),
+    label: tr('Type in Answer'),
     icon: Keyboard,
     hint: '/tia',
     keywords: 'tia type answer input',
@@ -377,8 +378,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'extra-detail',
-    group: 'Flashcard Configuration',
-    label: 'Extra Card Detail',
+    group: tr('Flashcard Configuration'),
+    label: tr('Extra Card Detail'),
     icon: Info,
     hint: '/ecd',
     keywords: 'ecd extra detail back',
@@ -386,16 +387,16 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'hide-context',
-    group: 'Flashcard Configuration',
-    label: 'Hide context in queue',
+    group: tr('Flashcard Configuration'),
+    label: tr('Hide context in queue'),
     icon: EyeOff,
     keywords: 'hide ancestors breadcrumb',
     run: (c, r) => toggle(c, r, 'hideContextInQueue'),
   },
   {
     id: 'mc-correct',
-    group: 'Flashcard Configuration',
-    label: 'Toggle correct answer',
+    group: tr('Flashcard Configuration'),
+    label: tr('Toggle correct answer'),
     icon: CheckSquare,
     hint: '/mcr',
     keywords: 'mcr mcw correct wrong option',
@@ -415,21 +416,21 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'practice-rem',
-    group: 'Flashcard Configuration',
-    label: 'Practice this Rem',
+    group: tr('Flashcard Configuration'),
+    label: tr('Practice this Rem'),
     icon: SquareStack,
     available: hasCards,
     run: (c, r) => c.navigate(`/practice?scope=${r.id}&mode=all-in-order`),
   },
   {
     id: 'reset-cards',
-    group: 'Flashcard Configuration',
-    label: 'Reset flashcard progress',
+    group: tr('Flashcard Configuration'),
+    label: tr('Reset flashcard progress'),
     icon: RotateCcw,
     available: hasCards,
     run: (c, r) => {
       c.app.practice.reset(generateCards(r, c.app.store.children(r.id)).map((s) => s.id));
-      c.toast('Card progress reset');
+      c.toast(tr('Card progress reset'));
     },
   },
 
@@ -437,7 +438,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'h1',
     group: 'Headings & Highlights',
-    label: 'Heading 1',
+    label: tr('Heading 1'),
     icon: Heading1,
     hint: '#',
     keywords: 'title h1',
@@ -446,7 +447,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'h2',
     group: 'Headings & Highlights',
-    label: 'Heading 2',
+    label: tr('Heading 2'),
     icon: Heading2,
     hint: '##',
     keywords: 'h2',
@@ -455,7 +456,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'h3',
     group: 'Headings & Highlights',
-    label: 'Heading 3',
+    label: tr('Heading 3'),
     icon: Heading3,
     hint: '###',
     keywords: 'h3',
@@ -464,7 +465,7 @@ export const COMMANDS: SlashCommand[] = [
   ...HIGHLIGHT_COLORS.map((color): SlashCommand => ({
     id: `hl-${color}`,
     group: 'Headings & Highlights',
-    label: `${COLOR_NAMES[color]} highlight`,
+    label: tr('{0} highlight', { '0': COLOR_NAMES[color] }),
     icon: Highlighter,
     keywords: `highlight color ${color}`,
     run: (c, r) => {
@@ -475,7 +476,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'hl-none',
     group: 'Headings & Highlights',
-    label: 'Remove highlight',
+    label: tr('Remove highlight'),
     icon: Eraser,
     available: (_c, r) => Boolean(r.highlight),
     run: (c, r) => c.app.rems.update(r.id, { highlight: undefined }),
@@ -484,52 +485,52 @@ export const COMMANDS: SlashCommand[] = [
   // Text Style & Formatting
   {
     id: 'bold',
-    group: 'Text Style & Formatting',
-    label: 'Bold',
+    group: tr('Text Style & Formatting'),
+    label: tr('Bold'),
     icon: Bold,
     hint: '⌘B',
     run: (c) => mark(c, 'bold'),
   },
   {
     id: 'italic',
-    group: 'Text Style & Formatting',
-    label: 'Italic',
+    group: tr('Text Style & Formatting'),
+    label: tr('Italic'),
     icon: Italic,
     hint: '⌘I',
     run: (c) => mark(c, 'italic'),
   },
   {
     id: 'underline',
-    group: 'Text Style & Formatting',
-    label: 'Underline',
+    group: tr('Text Style & Formatting'),
+    label: tr('Underline'),
     icon: Underline,
     hint: '⌘U',
     run: (c) => mark(c, 'underline'),
   },
   {
     id: 'strike',
-    group: 'Text Style & Formatting',
-    label: 'Strikethrough',
+    group: tr('Text Style & Formatting'),
+    label: tr('Strikethrough'),
     icon: Strikethrough,
     hint: '⌘⇧S',
     run: (c) => mark(c, 'strike'),
   },
   {
     id: 'inline-code',
-    group: 'Text Style & Formatting',
-    label: 'Inline code',
+    group: tr('Text Style & Formatting'),
+    label: tr('Inline code'),
     icon: Code,
     hint: '`',
     run: (c) => mark(c, 'code'),
   },
   {
     id: 'link',
-    group: 'Text Style & Formatting',
-    label: 'Link',
+    group: tr('Text Style & Formatting'),
+    label: tr('Link'),
     icon: Link2,
     keywords: 'url hyperlink',
     run: async (c) => {
-      const href = await c.prompt('Link URL', 'https://');
+      const href = await c.prompt(tr('Link URL'), 'https://');
       if (href && c.view) mark(c, 'link', { href });
     },
   },
@@ -538,7 +539,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'image-upload',
     group: 'Image & Drawing',
-    label: 'Upload image',
+    label: tr('Upload image'),
     icon: Image,
     keywords: 'picture photo',
     run: async (c, r) => {
@@ -551,17 +552,17 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'image-url',
     group: 'Image & Drawing',
-    label: 'Image from URL',
+    label: tr('Image from URL'),
     icon: Image,
     run: async (c, r) => {
-      const src = await c.prompt('Image URL', 'https://');
+      const src = await c.prompt(tr('Image URL'), 'https://');
       if (src) c.app.rems.update(r.id, { image: { src } });
     },
   },
   {
     id: 'occlusion-edit',
     group: 'Image & Drawing',
-    label: 'Edit image occlusion',
+    label: tr('Edit image occlusion'),
     icon: Square,
     available: (_c, r) => Boolean(r.image),
     run: (c, r) => c.openOcclusion(r.id),
@@ -569,7 +570,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'image-remove',
     group: 'Image & Drawing',
-    label: 'Remove image',
+    label: tr('Remove image'),
     icon: Trash2,
     available: (_c, r) => Boolean(r.image),
     run: (c, r) => c.app.rems.update(r.id, { image: undefined }),
@@ -579,7 +580,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'reference',
     group: 'References, Tags & Portals',
-    label: 'Reference',
+    label: tr('Reference'),
     icon: Link2,
     hint: '[[',
     keywords: 'link rem',
@@ -588,7 +589,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'tag',
     group: 'References, Tags & Portals',
-    label: 'Tag',
+    label: tr('Tag'),
     icon: Tag,
     hint: '#',
     run: (c) => insertTrigger(c, ' #'),
@@ -596,7 +597,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'portal',
     group: 'References, Tags & Portals',
-    label: 'Portal',
+    label: tr('Portal'),
     icon: PanelTop,
     hint: '((',
     keywords: 'embed transclusion',
@@ -605,29 +606,32 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'search-portal',
     group: 'References, Tags & Portals',
-    label: 'Search Portal',
+    label: tr('Search Portal'),
     icon: Search,
     keywords: 'query search results',
     run: async (c, r) => {
-      const q = await c.prompt('Search query (e.g. "#Book is:unfinished")', r.searchQuery ?? '');
+      const q = await c.prompt(
+        tr('Search query (e.g. "#Book is:unfinished")'),
+        r.searchQuery ?? '',
+      );
       if (q !== null) c.app.rems.update(r.id, { searchQuery: q || undefined });
     },
   },
   {
     id: 'alias',
     group: 'References, Tags & Portals',
-    label: 'Add Alias',
+    label: tr('Add Alias'),
     icon: Hash,
     keywords: 'alternative name synonym',
     run: async (c, r) => {
-      const alias = await c.prompt('Alias');
+      const alias = await c.prompt(tr('Alias'));
       if (alias?.trim()) c.app.rems.update(r.id, { aliases: [...r.aliases, alias.trim()] });
     },
   },
   {
     id: 'template',
     group: 'References, Tags & Portals',
-    label: 'Toggle Template',
+    label: tr('Toggle Template'),
     icon: LayoutTemplate,
     keywords: 'template',
     run: (c, r) => toggle(c, r, 'isTemplate'),
@@ -635,13 +639,13 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'insert-template',
     group: 'References, Tags & Portals',
-    label: 'Insert Template…',
+    label: tr('Insert Template…'),
     icon: LayoutTemplate,
     keywords: 'apply template',
     run: async (c, r) => {
       const templates = c.app.store.all('rems').filter((x) => x.isTemplate);
       if (templates.length === 0) {
-        c.toast('No templates yet - mark a Rem as template first.');
+        c.toast(tr('No templates yet - mark a Rem as template first.'));
         return;
       }
       const name = await c.prompt(
@@ -651,13 +655,13 @@ export const COMMANDS: SlashCommand[] = [
         (t) => c.app.rems.title(t.id).toLowerCase() === name?.trim().toLowerCase(),
       );
       if (tpl) c.app.rems.applyTemplate(tpl.id, r.id);
-      else if (name) c.toast('Template not found');
+      else if (name) c.toast(tr('Template not found'));
     },
   },
   {
     id: 'property',
     group: 'References, Tags & Portals',
-    label: 'Toggle Property',
+    label: tr('Toggle Property'),
     icon: Tag,
     keywords: 'slot column field',
     run: (c, r) => toggle(c, r, 'isProperty'),
@@ -667,7 +671,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'date-today',
     group: 'Date & Time',
-    label: 'Today',
+    label: tr('Today'),
     icon: Calendar,
     keywords: 'date daily',
     run: (c) => insertDate(c, 0),
@@ -675,21 +679,21 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'date-tomorrow',
     group: 'Date & Time',
-    label: 'Tomorrow',
+    label: tr('Tomorrow'),
     icon: Calendar,
     run: (c) => insertDate(c, 1),
   },
   {
     id: 'date-yesterday',
     group: 'Date & Time',
-    label: 'Yesterday',
+    label: tr('Yesterday'),
     icon: Calendar,
     run: (c) => insertDate(c, -1),
   },
   {
     id: 'date-pick',
     group: 'Date & Time',
-    label: 'Pick a date…',
+    label: tr('Pick a date…'),
     icon: Calendar,
     run: async (c) => {
       const date = await c.prompt('Date (YYYY-MM-DD)', isoDate(Date.now()));
@@ -699,7 +703,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'time-now',
     group: 'Date & Time',
-    label: 'Current time',
+    label: tr('Current time'),
     icon: Clock,
     run: (c) =>
       c.view?.dispatch(
@@ -713,7 +717,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'code-block',
     group: 'Code, Math & Quote',
-    label: 'Code block',
+    label: tr('Code block'),
     icon: Code,
     hint: '```',
     keywords: 'source program',
@@ -727,7 +731,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'latex-inline',
     group: 'Code, Math & Quote',
-    label: 'Inline LaTeX',
+    label: tr('Inline LaTeX'),
     icon: Sigma,
     hint: '$x$',
     keywords: 'math formula katex',
@@ -739,7 +743,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'latex-block',
     group: 'Code, Math & Quote',
-    label: 'LaTeX block',
+    label: tr('LaTeX block'),
     icon: Sigma,
     hint: '$$',
     keywords: 'math formula display equation',
@@ -754,7 +758,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'quote',
     group: 'Code, Math & Quote',
-    label: 'Quote',
+    label: tr('Quote'),
     icon: Quote,
     hint: '>',
     run: (c, r) => toggle(c, r, 'quote'),
@@ -764,7 +768,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'table',
     group: 'Tables, Divider, Columns',
-    label: 'Table (Rems tagged with this)',
+    label: tr('Table (Rems tagged with this)'),
     icon: Table,
     keywords: 'table grid properties',
     run: (c, r) => toggle(c, r, 'tableView'),
@@ -772,7 +776,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'divider',
     group: 'Tables, Divider, Columns',
-    label: 'Divider',
+    label: tr('Divider'),
     icon: Minus,
     hint: '---',
     keywords: 'line separator hr',
@@ -782,8 +786,8 @@ export const COMMANDS: SlashCommand[] = [
   // Upload File or Link Source
   {
     id: 'file-upload',
-    group: 'Upload File or Link Source',
-    label: 'Upload file / PDF',
+    group: tr('Upload File or Link Source'),
+    label: tr('Upload file / PDF'),
     icon: FileUp,
     keywords: 'pdf attachment document',
     run: async (c, r) => {
@@ -798,12 +802,12 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'embed',
-    group: 'Upload File or Link Source',
-    label: 'Embed video / audio / website',
+    group: tr('Upload File or Link Source'),
+    label: tr('Embed video / audio / website'),
     icon: Video,
     keywords: 'youtube vimeo iframe url link source',
     run: async (c, r) => {
-      const url = await c.prompt('URL to embed', 'https://');
+      const url = await c.prompt(tr('URL to embed'), 'https://');
       if (url) c.app.rems.update(r.id, { embed: { url } });
     },
   },
@@ -811,8 +815,8 @@ export const COMMANDS: SlashCommand[] = [
   // Record Audio/Video
   {
     id: 'record-audio',
-    group: 'Record Audio/Video',
-    label: 'Record audio',
+    group: tr('Record Audio/Video'),
+    label: tr('Record audio'),
     icon: Mic,
     keywords: 'voice microphone',
     run: (c, r) => c.openRecorder(r.id),
@@ -821,8 +825,8 @@ export const COMMANDS: SlashCommand[] = [
   // Hierarchy
   {
     id: 'todo',
-    group: 'Hierarchy',
-    label: 'Todo',
+    group: tr('Hierarchy'),
+    label: tr('Todo'),
     icon: CheckSquare,
     hint: '[]',
     keywords: 'task checkbox',
@@ -830,16 +834,16 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'make-document',
-    group: 'Hierarchy',
-    label: 'Toggle document',
+    group: tr('Hierarchy'),
+    label: tr('Toggle document'),
     icon: FileText,
     keywords: 'page doc',
     run: (c, r) => toggle(c, r, 'isDocument'),
   },
   {
     id: 'make-folder',
-    group: 'Hierarchy',
-    label: 'Toggle folder',
+    group: tr('Hierarchy'),
+    label: tr('Toggle folder'),
     icon: Folder,
     run: (c, r) =>
       c.app.rems.update(r.id, {
@@ -849,8 +853,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'indent',
-    group: 'Hierarchy',
-    label: 'Indent',
+    group: tr('Hierarchy'),
+    label: tr('Indent'),
     icon: Indent,
     hint: 'Tab',
     run: (c, r) =>
@@ -858,8 +862,8 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'outdent',
-    group: 'Hierarchy',
-    label: 'Outdent',
+    group: tr('Hierarchy'),
+    label: tr('Outdent'),
     icon: Outdent,
     hint: '⇧Tab',
     run: (c, r) =>
@@ -867,24 +871,24 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'move-up',
-    group: 'Hierarchy',
-    label: 'Move up',
+    group: tr('Hierarchy'),
+    label: tr('Move up'),
     icon: ArrowUpToLine,
     hint: '⌘⇧↑',
     run: (c, r) => void c.app.rems.moveUp(r.id),
   },
   {
     id: 'move-down',
-    group: 'Hierarchy',
-    label: 'Move down',
+    group: tr('Hierarchy'),
+    label: tr('Move down'),
     icon: ArrowDownToLine,
     hint: '⌘⇧↓',
     run: (c, r) => void c.app.rems.moveDown(r.id),
   },
   {
     id: 'collapse',
-    group: 'Hierarchy',
-    label: 'Collapse / expand',
+    group: tr('Hierarchy'),
+    label: tr('Collapse / expand'),
     icon: ChevronsDownUp,
     hint: '⌘↑/↓',
     run: (c, r) =>
@@ -892,39 +896,39 @@ export const COMMANDS: SlashCommand[] = [
   },
   {
     id: 'zoom',
-    group: 'Hierarchy',
-    label: 'Zoom in',
+    group: tr('Hierarchy'),
+    label: tr('Zoom in'),
     icon: ZoomIn,
     keywords: 'open focus',
     run: (c, r) => c.navigate(`/rem/${r.id}`),
   },
   {
     id: 'duplicate',
-    group: 'Hierarchy',
-    label: 'Duplicate',
+    group: tr('Hierarchy'),
+    label: tr('Duplicate'),
     icon: Copy,
     hint: '⌘⇧D',
     run: (c, r) => void c.app.rems.duplicate(r.id),
   },
   {
     id: 'edit-later',
-    group: 'Hierarchy',
-    label: 'Edit later',
+    group: tr('Hierarchy'),
+    label: tr('Edit later'),
     icon: Pencil,
     keywords: 'review todo later',
     run: (c, r) => toggle(c, r, 'editLater'),
   },
   {
     id: 'pin',
-    group: 'Hierarchy',
-    label: 'Pin to sidebar',
+    group: tr('Hierarchy'),
+    label: tr('Pin to sidebar'),
     icon: List,
     run: (c, r) => toggle(c, r, 'pinned'),
   },
   {
     id: 'delete',
-    group: 'Hierarchy',
-    label: 'Delete',
+    group: tr('Hierarchy'),
+    label: tr('Delete'),
     icon: Trash2,
     hint: '⌘⇧⌫',
     run: (c, r) =>
@@ -935,7 +939,7 @@ export const COMMANDS: SlashCommand[] = [
   {
     id: 'ai',
     group: 'AI Tools',
-    label: 'AI tools (configure in Settings → AI)',
+    label: tr('AI tools (configure in Settings → AI)'),
     icon: Sparkles,
     keywords: 'ai gpt generate',
     run: (c) => c.navigate('/settings/ai'),

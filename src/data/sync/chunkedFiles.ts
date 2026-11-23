@@ -12,6 +12,7 @@
  * Small files keep their plain `<path>`, so existing data and older app
  * versions keep working. Readers try `<path>` first, then the manifest.
  */
+import { t } from '@core/i18n';
 
 /** Size of one part (well below Supabase's 50 MB default limit). */
 export const CHUNK_SIZE = 20 * 1024 * 1024;
@@ -107,9 +108,9 @@ export async function getChunked(store: ObjectStore, path: string): Promise<Blob
   const parts = await Promise.all(
     Array.from({ length: manifest.count }, (_, i) => store.get(partPath(path, i))),
   );
-  if (parts.some((p) => !p)) throw new Error('Datei unvollständig (Teil fehlt)');
+  if (parts.some((p) => !p)) throw new Error(t('File incomplete (part missing)'));
   const blob = new Blob(parts as Blob[], { type: manifest.mimeType });
-  if (blob.size !== manifest.size) throw new Error('Datei unvollständig (Größe stimmt nicht)');
+  if (blob.size !== manifest.size) throw new Error(t('File incomplete (size does not match)'));
   return blob;
 }
 

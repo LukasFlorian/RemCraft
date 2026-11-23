@@ -10,22 +10,12 @@ import { addDays, weekday } from '@core/habits/days';
 import type { DayKey } from '@core/habits/days';
 import { dayProgress, isDone } from '@core/habits/habits';
 import type { HabitData } from '@core/habits/habits';
+import { locale, t } from '@core/i18n';
 
 /** Month abbreviations. */
-export const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mär',
-  'Apr',
-  'Mai',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Okt',
-  'Nov',
-  'Dez',
-];
+export const MONTHS = Array.from({ length: 12 }, (_, m) =>
+  new Date(2026, m, 1).toLocaleDateString(locale(), { month: 'short' }).replace('.', ''),
+);
 
 /** Visual state of one tile. */
 function tileStyle(d: HabitData, day: DayKey, color: string): CSSProperties {
@@ -147,7 +137,7 @@ export function YearGrid({
                   key={day}
                   className="habit-tile"
                   title={day}
-                  aria-label={`${day}${isDone(data, day) ? ' erledigt' : ''}`}
+                  aria-label={`${day}${isDone(data, day) ? t(', done') : ''}`}
                   disabled={!onDay || day > data.today}
                   onClick={() => onDay?.(day)}
                   style={{ width: 11, height: 11, ...tileStyle(data, day, color) }}

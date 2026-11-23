@@ -17,6 +17,7 @@ import { SlideView } from './SlideView';
 import { selectLectureState, useLectureSettings } from './useLecture';
 import { useDeckSlides } from './useSlides';
 import { fmtDuration } from '@core/lecture/review';
+import { t } from '@core/i18n';
 
 /** The review page (stand-alone route `#/review/:deckId`). */
 export function ReviewPage(): ReactNode {
@@ -120,13 +121,13 @@ export function ReviewContent({
   return (
     <>
       <div className="page-header">
-        <h1>Nacharbeiten</h1>
+        <h1>{t('Follow-up')}</h1>
         <span className="muted">
           {deckTitle}
-          {lectureFilter ? ' · eine Vorlesung' : ' · alle Vorlesungen'}
+          {lectureFilter ? t(' · one lecture') : t(' · all lectures')}
         </span>
       </div>
-      {list.length === 0 && <div className="empty">Nichts nachzuarbeiten. 🎉</div>}
+      {list.length === 0 && <div className="empty">{t('Nothing to follow up. 🎉')}</div>}
       {list.map((r) => (
         <ReviewItem
           key={r.slide}
@@ -175,9 +176,9 @@ function ReviewItem({
       </div>
       <div className="col" style={{ flex: 1, minWidth: 0 }}>
         <strong>
-          Folie {index + 1}{' '}
+          {t('Slide')} {index + 1}{' '}
           <span className="faint">
-            · Priorität {priority} · {dwell}
+            {t('· priority')} {priority} · {dwell}
           </span>
         </strong>
         <div className="row" style={{ flexWrap: 'wrap' }}>
@@ -192,19 +193,19 @@ function ReviewItem({
         </div>
         <div className="row">
           <button className="btn btn-sm btn-primary" onClick={onOpen}>
-            Öffnen
+            {t('Open')}
           </button>
           <button
             className={`btn btn-sm${slide?.slideFlags?.includes('important') ? ' btn-primary' : ''}`}
             onClick={() => onToggle('important')}
           >
-            ★ Wichtig
+            {t('★ Important')}
           </button>
           <button
             className={`btn btn-sm${slide?.slideFlags?.includes('unclear') ? ' btn-primary' : ''}`}
             onClick={() => onToggle('unclear')}
           >
-            ? Unklar
+            {t('? Unclear')}
           </button>
         </div>
       </div>

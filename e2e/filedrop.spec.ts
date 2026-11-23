@@ -71,7 +71,7 @@ test('a Markdown file dropped on the sidebar becomes a document', async ({ page 
   const hint = await dropFiles(page, page.locator('.sidebar-scroll'), [
     { name: 'Vokabeln.md', type: 'text/markdown', text: '- Haus >> house\n- Baum >> tree\n' },
   ]);
-  expect(hint).toContain('oberste Ebene');
+  expect(hint).toContain('top level');
   await expect(page.getByLabel('Title')).toHaveText('Vokabeln');
   await expect(page.locator('.rem-row .separator')).toHaveCount(2);
   await expect(page.getByRole('treeitem', { name: 'Vokabeln' })).toBeVisible();
@@ -95,8 +95,8 @@ test('a PDF dropped on a folder becomes a slide deck inside it', async ({ page }
 
 test('a card file dropped on an open lecture goes onto its slides', async ({ page }) => {
   await page.goto('/#/lectures');
-  await page.getByRole('button', { name: 'Demo-Kurs erzeugen' }).click();
-  await expect(page.getByRole('button', { name: 'Vorlesung starten' })).toBeVisible({
+  await page.getByRole('button', { name: 'Create demo course' }).click();
+  await expect(page.getByRole('button', { name: 'Start lecture' })).toBeVisible({
     timeout: 20_000,
   });
   const deckId = /#\/lecture\/([^/?]+)/.exec(page.url())![1]!;
@@ -104,7 +104,7 @@ test('a card file dropped on an open lecture goes onto its slides', async ({ pag
   await page.goto(`/#/rem/${deckId}`);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Karten exportieren' }).click(),
+    page.getByRole('button', { name: 'Export cards' }).click(),
   ]);
   const text = readFileSync((await download.path())!, 'utf8');
   // ... and drop the file onto the lecture.
@@ -115,5 +115,5 @@ test('a card file dropped on an open lecture goes onto its slides', async ({ pag
     { name: 'demo.cards.json', type: 'application/json', text },
   ]);
   expect(hint).toContain('Karten');
-  await expect(page.getByText(/Karten, \d+ Erklärungen importiert/)).toBeVisible();
+  await expect(page.getByText(/cards, \d+ explanations imported/)).toBeVisible();
 });

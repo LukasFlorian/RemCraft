@@ -34,6 +34,7 @@ import { CHANNEL, feature, otherChannelUrl } from '../app/channel';
 import { selectSettings } from '@data/selectors';
 import { useHabitsOpenToday } from '../habits/useHabitReminders';
 import { fileDropAttr } from '../import/fileDrop';
+import { t } from '@core/i18n';
 
 /** Documents and folders below a Rem (what the sidebar tree shows). */
 function useDocChildren(id: RemId | null): Rem[] {
@@ -121,7 +122,7 @@ function TreeItem({
         {kids.length > 0 ? (
           <button
             className={`tree-toggle${open ? ' open' : ''}`}
-            aria-label={open ? 'Collapse' : 'Expand'}
+            aria-label={open ? t('Collapse') : t('Expand')}
             onClick={(e) => {
               e.stopPropagation();
               toggle(rem.id);
@@ -268,15 +269,15 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
     prefix === '/' ? location.pathname === '/' : location.pathname.startsWith(prefix);
 
   return (
-    <aside className="sidebar" aria-label="Sidebar">
+    <aside className="sidebar" aria-label={t('Sidebar')}>
       <div className="sidebar-header">
         <img className="sidebar-logo" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-        <span className="sidebar-title ellipsis" title={account.user?.email ?? 'Local only'}>
+        <span className="sidebar-title ellipsis" title={account.user?.email ?? t('Local only')}>
           {account.user?.email ?? 'RemCraft'}
         </span>
         {CHANNEL === 'beta' && (
-          <span className="badge badge-beta" title="Beta-Version: neue Funktionen, evtl. Fehler">
-            Beta
+          <span className="badge badge-beta" title={t('Beta version: new features, possibly bugs')}>
+            {t('Beta')}
           </span>
         )}
         {account.configured && (
@@ -284,38 +285,41 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
             className={`sync-dot ${account.sync.state}`}
             title={
               account.user
-                ? `Sync: ${account.sync.state}${account.sync.error ? ` - ${account.sync.error}` : ''}`
-                : 'Not signed in'
+                ? t('Sync: {state}{1}', {
+                    state: account.sync.state,
+                    '1': account.sync.error ? ` - ${account.sync.error}` : '',
+                  })
+                : t('Not signed in')
             }
           />
         )}
         <button
           className="icon-btn"
           onClick={onCollapse}
-          aria-label="Hide sidebar"
-          title="Hide sidebar (⌘\)"
+          aria-label={t('Hide sidebar')}
+          title={t('Hide sidebar (⌘\\)')}
         >
           <PanelLeftClose size={17} />
         </button>
       </div>
       <nav className="sidebar-scroll" data-file-drop="root">
         <button className="nav-item" onClick={() => modals.open({ kind: 'search' })}>
-          <Search size={17} /> Search <span className="nav-count kbd">⌘K</span>
+          <Search size={17} /> {t('Search')} <span className="nav-count kbd">⌘K</span>
         </button>
         <button className={`nav-item${isActive('/') ? ' active' : ''}`} onClick={() => go('/')}>
-          <LayoutGrid size={17} /> Documents &amp; Folders
+          <LayoutGrid size={17} /> {t('Documents & Folders')}
         </button>
         <button
           className={`nav-item${location.pathname.startsWith('/rem/daily-') ? ' active' : ''}`}
           onClick={() => go(`/rem/${app.rems.ensureDaily()}`)}
         >
-          <CalendarDays size={17} /> Today&apos;s Note
+          <CalendarDays size={17} /> {t("Today's Note")}
         </button>
         <button
           className={`nav-item${isActive('/flashcards') || isActive('/practice') ? ' active' : ''}`}
           onClick={() => go('/flashcards')}
         >
-          <Layers size={17} /> Flashcards{' '}
+          <Layers size={17} /> {t('Flashcards')}{' '}
           {due > 0 && <span className="nav-count badge">{due}</span>}
         </button>
         <button
@@ -324,17 +328,17 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
             go(activeLecture?.deckId ? `/lecture/${activeLecture.deckId}` : '/lectures')
           }
         >
-          <Presentation size={17} /> Vorlesungen{' '}
-          {activeLecture && <span className="nav-count badge badge-success">live</span>}
+          <Presentation size={17} /> {t('Lectures')}{' '}
+          {activeLecture && <span className="nav-count badge badge-success">{t('live')}</span>}
         </button>
         {feature('habits') && (
           <button
             className={`nav-item${isActive('/habits') ? ' active' : ''}`}
             onClick={() => go('/habits')}
           >
-            <Flame size={17} /> Gewohnheiten{' '}
+            <Flame size={17} /> {t('Habits')}{' '}
             {habitsOpen > 0 && (
-              <span className="nav-count" title="Heute noch offen">
+              <span className="nav-count" title={t('Still open today')}>
                 {habitsOpen}
               </span>
             )}
@@ -344,7 +348,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
           className={`nav-item${isActive('/edit-later') ? ' active' : ''}`}
           onClick={() => go('/edit-later')}
         >
-          <Clock3 size={17} /> Edit Later{' '}
+          <Clock3 size={17} /> {t('Edit Later')}{' '}
           {editLater > 0 && <span className="nav-count">{editLater}</span>}
         </button>
         <button
@@ -354,10 +358,10 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
             go(`/rem/${doc.id}`);
           }}
         >
-          <PlusCircle size={17} /> <strong>Create</strong>
+          <PlusCircle size={17} /> <strong>{t('Create')}</strong>
         </button>
         <button className="nav-item accent" onClick={() => modals.open({ kind: 'import' })}>
-          <Upload size={17} /> Upload / Import
+          <Upload size={17} /> {t('Upload / Import')}
         </button>
 
         <DndContext.Provider value={dnd}>
@@ -365,9 +369,9 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
             className={`sidebar-section${overSection === 'pinned' ? ' drop-target' : ''}`}
             onClick={() => setPinnedOpen(!pinnedOpen)}
             {...headerDrop('pinned')}
-            title="Hierher ziehen zum Anheften"
+            title={t('Drag here to pin')}
           >
-            Pinned {pinnedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            {t('Pinned')} {pinnedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </button>
           {pinnedOpen &&
             pinned.map((r) => (
@@ -382,7 +386,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
             ))}
           {pinnedOpen && pinned.length === 0 && (
             <div className="faint" style={{ fontSize: 13, padding: '2px 10px' }}>
-              Hierher ziehen oder über das ⋯-Menü anheften
+              {t('Drag here or pin via the ⋯ menu')}
             </div>
           )}
 
@@ -390,9 +394,9 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
             className={`sidebar-section${overSection === 'tree' ? ' drop-target' : ''}`}
             onClick={() => setUnpinnedOpen(!unpinnedOpen)}
             {...headerDrop('tree')}
-            title="Hierher ziehen: nach oben verschieben und lösen"
+            title={t('Drag here: move to the top level and unpin')}
           >
-            Unpinned {unpinnedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            {t('Unpinned')} {unpinnedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </button>
           {unpinnedOpen &&
             topLevel.map((r) => (
@@ -414,24 +418,24 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps): ReactNode {
           target="_blank"
           rel="noreferrer"
         >
-          <HelpCircle size={17} /> Help &amp; Docs
+          <HelpCircle size={17} /> {t('Help & Docs')}
         </a>
         <button
           className={`nav-item${isActive('/settings') ? ' active' : ''}`}
           onClick={() => go('/settings')}
         >
-          <Settings size={17} /> Settings
+          <Settings size={17} /> {t('Settings')}
         </button>
         {(CHANNEL === 'beta' || betaTester) && (
           <a className="sidebar-legal" href={otherChannelUrl()}>
-            {CHANNEL === 'beta' ? 'Zur stabilen Version' : 'Beta-Version öffnen'}
+            {CHANNEL === 'beta' ? t('Switch to the stable version') : t('Open the beta version')}
           </a>
         )}
         <button
           className={`sidebar-legal${isActive('/legal') ? ' active' : ''}`}
           onClick={() => go('/legal')}
         >
-          Impressum &amp; Datenschutz
+          {t('Legal notice & privacy')}
         </button>
       </div>
     </aside>

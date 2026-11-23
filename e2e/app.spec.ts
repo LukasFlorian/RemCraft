@@ -147,7 +147,7 @@ test('multi-line answers are graded item by item with one reveal button', async 
   await page.getByRole('button', { name: /Show answer/ }).click();
   // Mark one of three items as not known: "Partially recalled" is suggested.
   await page.getByRole('button', { name: /Datenrate/ }).click();
-  await expect(page.getByText('2/3 gewusst', { exact: false })).toBeVisible();
+  await expect(page.getByText('2/3 known', { exact: false })).toBeVisible();
   await expect(page.locator('.rating-2')).toHaveClass(/is-suggested/);
 });
 
@@ -183,14 +183,14 @@ test('find and replace in a document with preview and one undo step', async ({ p
 
   await page.keyboard.press('ControlOrMeta+Shift+H');
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Suchen', { exact: true }).fill('Hash');
-  await dialog.getByLabel('Ersetzen durch').fill('Streu');
-  await dialog.getByText('Ganzes Wort').click();
+  await dialog.getByLabel('Find', { exact: true }).fill('Hash');
+  await dialog.getByLabel('Replace with').fill('Streu');
+  await dialog.getByText('Whole word').click();
   // "Hashing" is no whole-word match; "Hash-Funktionen" and "Hash" are.
   await expect(dialog.locator('.replace-list li')).toHaveCount(2);
   // Leave out the first change.
-  await dialog.getByLabel('Diese Änderung übernehmen').first().uncheck();
-  await dialog.getByRole('button', { name: '1 ersetzen' }).click();
+  await dialog.getByLabel('Apply this change').first().uncheck();
+  await dialog.getByRole('button', { name: 'Replace 1' }).click();
   await expect(page.locator('.outliner')).toContainText('Ein Streu');
   await expect(page.locator('.outliner')).toContainText('Hashing nutzt Hash-Funktionen');
   await page.keyboard.press('ControlOrMeta+z');
@@ -230,21 +230,21 @@ test('AI editing proposes changes that are previewed and applied in one step', a
     .locator('.topbar')
     .getByRole('button', { name: /More|Mehr/ })
     .click();
-  await page.getByRole('menuitem', { name: /Mit KI überarbeiten/ }).click();
+  await page.getByRole('menuitem', { name: /Revise with AI/ }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Anweisung').fill('Mach normale Karten daraus');
-  await dialog.getByRole('button', { name: /Vorschläge holen/ }).click();
+  await dialog.getByLabel('Instruction').fill('Mach normale Karten daraus');
+  await dialog.getByRole('button', { name: /Get suggestions/ }).click();
   await expect(dialog.getByText('Eine Karte umgestellt.')).toBeVisible();
   await expect(dialog.locator('.ai-edit-list li')).toHaveCount(2);
-  await dialog.getByRole('button', { name: '2 übernehmen' }).click();
+  await dialog.getByRole('button', { name: 'Apply 2' }).click();
   await expect(page.locator('.outliner')).toContainText('Was ist ein Hash?');
   await expect(page.locator('.outliner')).toContainText('Neue Karte');
 });
 
 test('legal page with Impressum, privacy policy and RemNote notice', async ({ page }) => {
-  await page.getByRole('button', { name: 'Impressum & Datenschutz' }).click();
-  await expect(page.getByRole('heading', { name: 'Datenschutzerklärung' })).toBeVisible();
-  await expect(page.getByTestId('remnote-notice')).toContainText('keiner Verbindung zu RemNote');
+  await page.getByRole('button', { name: 'Legal notice & privacy' }).click();
+  await expect(page.getByRole('heading', { name: 'Privacy policy' })).toBeVisible();
+  await expect(page.getByTestId('remnote-notice')).toContainText('not affiliated with');
   // No operator details in the test build: the page says so instead of showing blanks.
   await expect(page.getByTestId('legal-missing').first()).toBeVisible();
   // Phone width: the long text wraps, nothing scrolls sideways.

@@ -13,7 +13,7 @@ describe('skill download', () => {
   it('refuses an HTML fallback instead of saving it as .zip', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('<!doctype html><html></html>'));
     const save = vi.spyOn(picker, 'downloadBlob').mockImplementation(() => {});
-    await expect(downloadSkill()).rejects.toThrow(/kein ZIP/);
+    await expect(downloadSkill()).rejects.toThrow(/not a ZIP/);
     expect(save).not.toHaveBeenCalled();
   });
 

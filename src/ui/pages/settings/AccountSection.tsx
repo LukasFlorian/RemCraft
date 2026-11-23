@@ -11,6 +11,7 @@ import { useAccount, useApp } from '../../app/context';
 import { useDialogs } from '../../components/Confirm';
 import { Field } from '../../components/Controls';
 import { useToast } from '../../components/Toast';
+import { t } from '@core/i18n';
 
 /** Account settings. */
 export function AccountSection(): ReactNode {
@@ -26,62 +27,72 @@ export function AccountSection(): ReactNode {
   const sync = account.sync;
   return (
     <div className="card col" style={{ gap: 14 }}>
-      <h2 className="card-title">Account</h2>
+      <h2 className="card-title">{t('Account')}</h2>
       <div className="row">
         <Cloud size={18} />
         <span>
-          Signed in as <strong>{account.user.email}</strong>
+          {t('Signed in as')} <strong>{account.user.email}</strong>
         </span>
       </div>
       <div className="row muted">
-        <span className={`sync-dot ${sync.state}`} /> Sync: {sync.state}
+        <span className={`sync-dot ${sync.state}`} /> {t('Sync:')} {sync.state}
         {sync.lastSyncedAt && (
-          <> · last synced {new Date(sync.lastSyncedAt).toLocaleTimeString()}</>
+          <>
+            {' '}
+            {t('· last synced')} {new Date(sync.lastSyncedAt).toLocaleTimeString()}
+          </>
         )}
-        {sync.pending > 0 && <> · {sync.pending} changes waiting</>}
+        {sync.pending > 0 && (
+          <>
+            {' '}
+            · {sync.pending} {t('changes waiting')}
+          </>
+        )}
       </div>
       {sync.error && <div className="badge badge-danger">{sync.error}</div>}
       <div className="row">
         <button
           className="btn"
-          onClick={() => void app.syncNow().then(() => toast('Synchronised'))}
+          onClick={() => void app.syncNow().then(() => toast(t('Synchronised')))}
         >
-          <RefreshCw size={15} /> Sync now
+          <RefreshCw size={15} /> {t('Sync now')}
         </button>
         <button
           className="btn"
           onClick={async () => {
-            const pw = await dialogs.prompt({ title: 'New password' });
+            const pw = await dialogs.prompt({ title: t('New password') });
             if (pw)
               await app
                 .auth!.updatePassword(pw)
-                .then(() => toast('Password changed'))
+                .then(() => toast(t('Password changed')))
                 .catch((e: Error) => toast(e.message, 'error'));
           }}
         >
-          Change password
+          {t('Change password')}
         </button>
         <span className="spacer" />
         <button
           className="btn btn-danger"
           onClick={async () => {
             const clear = await dialogs.confirm({
-              title: 'Sign out',
-              message:
+              title: t('Sign out'),
+              message: t(
                 'Remove the local copy of your notes from this device? Choose “Sign out & clear” on shared devices. Your data stays safe in the cloud.',
-              confirmLabel: 'Sign out & clear',
+              ),
+              confirmLabel: t('Sign out & clear'),
               danger: true,
             });
             await app.signOut(clear);
           }}
         >
-          <LogOut size={15} /> Sign out
+          <LogOut size={15} /> {t('Sign out')}
         </button>
       </div>
       <p className="faint" style={{ margin: 0, fontSize: 13 }}>
-        Your notes are stored on this device first (works offline) and synchronised with your
-        Supabase project. Changes from other devices arrive in real time. Details:{' '}
-        <Link to="/legal">Datenschutzerklärung</Link>.
+        {t(
+          'Your notes are stored on this device first (works offline) and synchronised with your Supabase project. Changes from other devices arrive in real time. Details:',
+        )}{' '}
+        <Link to="/legal">{t('Privacy policy')}</Link>.
       </p>
       <DeleteAccount />
     </div>
@@ -100,35 +111,37 @@ function DeleteAccount(): ReactNode {
   const dialogs = useDialogs();
   return (
     <div className="col danger-zone" style={{ gap: 8 }}>
-      <h3 style={{ margin: 0, fontSize: 15 }}>Konto löschen</h3>
+      <h3 style={{ margin: 0, fontSize: 15 }}>{t('Delete account')}</h3>
       <p className="faint" style={{ margin: 0, fontSize: 13 }}>
-        Löscht dein Konto und alle Daten auf dem Server (Notizen, Dateien, Lernverlauf, Leselinks,
-        gemeinsame Bereiche, die dir gehören, Integrationen) sowie die lokale Kopie auf diesem
-        Gerät. Exportiere vorher, was du behalten willst. Das kann nicht rückgängig gemacht werden.
+        {t(
+          'Deletes your account and all data on the server (notes, files, learning history, read-only links, shared spaces you own, integrations) as well as the local copy on this device. Export what you want to keep first. This cannot be undone.',
+        )}
       </p>
       <div>
         <button
           className="btn btn-danger"
           onClick={async () => {
             const typed = await dialogs.prompt({
-              title: 'Konto endgültig löschen?',
-              label: `Zur Bestätigung deine E-Mail-Adresse eingeben (${account.user?.email ?? ''})`,
-              confirmLabel: 'Endgültig löschen',
+              title: t('Delete account permanently?'),
+              label: t('Enter your email address to confirm ({0})', {
+                '0': account.user?.email ?? '',
+              }),
+              confirmLabel: t('Delete permanently'),
             });
             if (typed === null) return;
             if (typed.trim().toLowerCase() !== (account.user?.email ?? '').toLowerCase()) {
-              toast('E-Mail-Adresse stimmt nicht überein - nichts gelöscht.', 'error');
+              toast(t('The email address does not match – nothing was deleted.'), 'error');
               return;
             }
             try {
               await app.deleteAccount();
-              toast('Dein Konto und deine Daten wurden gelöscht.');
+              toast(t('Your account and your data have been deleted.'));
             } catch (e) {
               toast(e instanceof Error ? e.message : String(e), 'error');
             }
           }}
         >
-          <Trash2 size={15} /> Konto und alle Daten löschen
+          <Trash2 size={15} /> {t('Delete account and all data')}
         </button>
       </div>
     </div>
@@ -156,10 +169,11 @@ function SignIn(): ReactNode {
   };
   return (
     <div className="card col" style={{ gap: 14, maxWidth: 480 }}>
-      <h2 className="card-title">{mode === 'signin' ? 'Sign in' : 'Create account'}</h2>
+      <h2 className="card-title">{mode === 'signin' ? t('Sign in') : t('Create account')}</h2>
       <p className="muted" style={{ margin: 0 }}>
-        Sign in to synchronise your notes and flashcards across devices. Without an account
-        everything stays on this device.
+        {t(
+          'Sign in to synchronise your notes and flashcards across devices. Without an account everything stays on this device.',
+        )}
       </p>
       <form
         className="col"
@@ -170,13 +184,15 @@ function SignIn(): ReactNode {
             else {
               const { needsConfirmation } = await auth.signUp(email, password);
               toast(
-                needsConfirmation ? 'Check your inbox to confirm your email.' : 'Account created',
+                needsConfirmation
+                  ? t('Check your inbox to confirm your email.')
+                  : t('Account created'),
               );
             }
           });
         }}
       >
-        <Field label="Email">
+        <Field label={t('Email')}>
           <input
             className="input"
             type="email"
@@ -186,7 +202,7 @@ function SignIn(): ReactNode {
             onChange={(e) => setEmail(e.target.value)}
           />
         </Field>
-        <Field label="Password">
+        <Field label={t('Password')}>
           <input
             className="input"
             type="password"
@@ -198,11 +214,11 @@ function SignIn(): ReactNode {
           />
         </Field>
         <button className="btn btn-primary" disabled={busy}>
-          {mode === 'signin' ? 'Sign in' : 'Create account'}
+          {mode === 'signin' ? t('Sign in') : t('Create account')}
         </button>
         <p className="faint legal-consent" style={{ margin: 0, fontSize: 13 }}>
-          Hinweise zur Verarbeitung deiner Daten findest du in der{' '}
-          <Link to="/legal">Datenschutzerklärung</Link>.
+          {t('Information on how your data is processed can be found in the')}{' '}
+          <Link to="/legal">{t('Privacy policy')}</Link>.
         </p>
       </form>
       <div className="row" style={{ flexWrap: 'wrap' }}>
@@ -213,34 +229,36 @@ function SignIn(): ReactNode {
             void run(
               async () => (
                 await auth.sendMagicLink(email),
-                toast('Magic link sent - check your inbox')
+                toast(t('Magic link sent - check your inbox'))
               ),
             )
           }
         >
-          Email me a magic link
+          {t('Email me a magic link')}
         </button>
         <button
           className="btn btn-sm"
           disabled={busy}
           onClick={() => void run(() => auth.signInWithProvider('github'))}
         >
-          <LogIn size={14} /> GitHub
+          <LogIn size={14} /> {t('GitHub')}
         </button>
         <button
           className="btn btn-sm btn-ghost"
           disabled={!email || busy}
           onClick={() =>
             void run(
-              async () => (await auth.resetPassword(email), toast('Password reset email sent')),
+              async () => (await auth.resetPassword(email), toast(t('Password reset email sent'))),
             )
           }
         >
-          Forgot password?
+          {t('Forgot password?')}
         </button>
       </div>
       <button className="link-btn" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
-        {mode === 'signin' ? 'No account yet? Create one' : 'Already have an account? Sign in'}
+        {mode === 'signin'
+          ? t('No account yet? Create one')
+          : t('Already have an account? Sign in')}
       </button>
     </div>
   );
@@ -253,13 +271,14 @@ function BackendSetup(): ReactNode {
   return (
     <div className="card col" style={{ gap: 14 }}>
       <h2 className="card-title">
-        <CloudOff size={18} /> Local only
+        <CloudOff size={18} /> {t('Local only')}
       </h2>
       <p className="muted" style={{ margin: 0 }}>
-        RemCraft currently stores everything in this browser only. To get accounts and sync across
-        devices, create a free Supabase project (see docs/deployment.md), run the SQL migration and
-        either set <code>VITE_SUPABASE_URL</code>/<code>VITE_SUPABASE_ANON_KEY</code> at build time
-        or enter the values here.
+        {t(
+          'RemCraft currently stores everything in this browser only. To get accounts and sync across devices, create a free Supabase project (see docs/deployment.md), run the SQL migration and either set',
+        )}{' '}
+        <code>VITE_SUPABASE_URL</code>/<code>VITE_SUPABASE_ANON_KEY</code>{' '}
+        {t('at build time or enter the values here.')}
       </p>
       {!isBuildTimeConfig() && (
         <form
@@ -270,7 +289,7 @@ function BackendSetup(): ReactNode {
             window.location.reload();
           }}
         >
-          <Field label="Supabase project URL">
+          <Field label={t('Supabase project URL')}>
             <input
               className="input"
               placeholder="https://xyz.supabase.co"
@@ -280,8 +299,10 @@ function BackendSetup(): ReactNode {
             />
           </Field>
           <Field
-            label="Supabase anon (public) key"
-            hint="The anon key is public by design; your data is protected by row-level security."
+            label={t('Supabase anon (public) key')}
+            hint={t(
+              'The anon key is public by design; your data is protected by row-level security.',
+            )}
           >
             <input
               className="input"
@@ -290,7 +311,7 @@ function BackendSetup(): ReactNode {
               onChange={(e) => setKey(e.target.value)}
             />
           </Field>
-          <button className="btn btn-primary">Connect</button>
+          <button className="btn btn-primary">{t('Connect')}</button>
         </form>
       )}
     </div>

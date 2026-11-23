@@ -13,6 +13,7 @@ import { selectHabitData } from '@data/services/habits';
 import { useApp, useNow, useSelector } from '../app/context';
 import { useDialogs } from '../components/Confirm';
 import { habitIcon } from './habitIcons';
+import { t, locale } from '@core/i18n';
 
 /** Today's day key (updates at midnight). */
 export function useToday(): DayKey {
@@ -27,7 +28,7 @@ export function useHabitData(habit: Habit): HabitData {
 
 /** Formats a value (no trailing zeros, German decimal comma). */
 export function formatValue(v: number): string {
-  return v.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+  return v.toLocaleString(locale(), { maximumFractionDigits: 2 });
 }
 
 /**
@@ -47,9 +48,12 @@ export function useRecordDay(): (data: HabitData, day: DayKey) => Promise<void> 
     if (habit.tracking !== 'measure') return;
     const input = await dialogs.prompt({
       title: `${habit.name}: ${day.split('-').reverse().join('.')}`,
-      label: `Wert${habit.unit ? ` in ${habit.unit}` : ''} (Ziel ${formatValue(habit.target)})`,
+      label: t('Value{0} (target {1})', {
+        '0': habit.unit ? ` in ${habit.unit}` : '',
+        '1': formatValue(habit.target),
+      }),
       initial: dayValue(data, day) ? String(dayValue(data, day)) : '',
-      confirmLabel: 'Speichern',
+      confirmLabel: t('Save'),
     });
     if (input === null) return;
     const value = Number(input.replace(',', '.'));
@@ -96,20 +100,20 @@ export function CheckButton({
   const automatic = habit.tracking === 'flashcards';
   const label = quit
     ? slipped
-      ? 'Rückfall entfernen'
-      : 'Rückfall eintragen'
+      ? t('Remove relapse')
+      : t('Record relapse')
     : automatic
       ? `${formatValue(value)} von ${formatValue(habit.target)} Karten`
       : done
-        ? 'Erledigt – tippen zum Zurücksetzen'
-        : 'Als erledigt markieren';
+        ? t('Done – tap to reset')
+        : t('Mark as done');
   const ring = !done && !quit && habit.tracking !== 'check' && progress > 0;
   return (
     <span className="row habit-check-wrap" style={{ gap: 4 }}>
       {habit.tracking === 'count' && value > 0 && !quit && (
         <button
           className="icon-btn"
-          aria-label="Eins weniger"
+          aria-label={t('One less')}
           onClick={() => app.habits.setValue(habit.id, day, value - 1)}
         >
           <Minus size={14} />

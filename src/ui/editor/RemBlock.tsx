@@ -29,6 +29,7 @@ import { useController, useControllerState } from './controller';
 import { PlainBlockEditor } from './PlainBlockEditor';
 import { CardPopover } from './CardPopover';
 import { SlideView } from '../lecture/SlideView';
+import { t as tr, tn } from '@core/i18n';
 
 /** How the parent presents its children. */
 export type ChildMode = AnswerMode | 'none';
@@ -60,7 +61,7 @@ export function RemContent({ rem }: { rem: Rem }): ReactNode {
     return src ? (
       <Latex source={src} display />
     ) : (
-      <span className="placeholder">Empty LaTeX block</span>
+      <span className="placeholder">{tr('Empty LaTeX block')}</span>
     );
   }
   const empty = isEmpty(rem.text) && rem.back === null;
@@ -75,7 +76,7 @@ export function RemContent({ rem }: { rem: Rem }): ReactNode {
         <>
           <span
             className={`separator separator-${rem.kind} separator-${rem.answerMode}`}
-            title="Flashcard"
+            title={tr('Flashcard')}
           >
             {separatorGlyph(rem.kind, rem.direction)}
             {rem.answerMode === 'mc'
@@ -103,7 +104,7 @@ function TagChips({ rem }: { rem: Rem }): ReactNode {
         <TagChip key={t} tagId={t} onRemove={() => app.rems.removeTag(rem.id, t)} />
       ))}
       {rem.aliases.map((a) => (
-        <span key={a} className="alias-chip" title="Alias">
+        <span key={a} className="alias-chip" title={tr('Alias')}>
           ≡ {a}
         </span>
       ))}
@@ -119,7 +120,11 @@ function TagChip({ tagId, onRemove }: { tagId: RemId; onRemove: () => void }): R
       <button className="tag-chip-name" onClick={() => navigate(`/rem/${tagId}`)}>
         #{title}
       </button>
-      <button className="tag-chip-x" onClick={onRemove} aria-label={`Remove tag ${title}`}>
+      <button
+        className="tag-chip-x"
+        onClick={onRemove}
+        aria-label={tr('Remove tag {title}', { title })}
+      >
         <X size={11} />
       </button>
     </span>
@@ -148,7 +153,7 @@ function CardBadge({ rem }: { rem: Rem }): ReactNode {
       <button
         ref={ref}
         className="card-badge"
-        title={`${cards.length} flashcard${cards.length > 1 ? 's' : ''}`}
+        title={tn('{n} flashcard', '{n} flashcards', cards.length)}
         onMouseDown={(e) => e.preventDefault()}
         onClick={(e) => {
           e.stopPropagation();
@@ -276,7 +281,7 @@ export const RemBlock = memo(function RemBlock({
           {hasChildren && (
             <button
               className={`collapse-btn${collapsed ? ' is-collapsed' : ''}`}
-              aria-label={collapsed ? 'Expand' : 'Collapse'}
+              aria-label={collapsed ? tr('Expand') : tr('Collapse')}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => app.rems.update(remId, { collapsed: collapsed ? undefined : true })}
             >
@@ -286,7 +291,7 @@ export const RemBlock = memo(function RemBlock({
           <span
             className={`bullet${collapsed ? ' is-collapsed' : ''}${rem.isDocument ? ' is-doc' : ''}`}
             draggable
-            title="Drag to move · click to zoom in"
+            title={tr('Drag to move · click to zoom in')}
             onDragStart={(e) => {
               const sel = controller.getState().selection;
               const ids =
@@ -321,7 +326,7 @@ export const RemBlock = memo(function RemBlock({
               checked={rem.todo === 'finished'}
               onMouseDown={(e) => e.stopPropagation()}
               onChange={() => app.rems.toggleTodo(remId)}
-              aria-label="Done"
+              aria-label={tr('Done')}
             />
           )}
           {marker}
@@ -359,7 +364,7 @@ export const RemBlock = memo(function RemBlock({
                   instance={instance}
                   caret={focus.caret}
                   nonce={focus.nonce}
-                  placeholder={depth === 0 && index === 0 ? "Type '/' for commands" : ''}
+                  placeholder={depth === 0 && index === 0 ? tr("Type '/' for commands") : ''}
                 />
               )
             ) : (
@@ -371,7 +376,7 @@ export const RemBlock = memo(function RemBlock({
             {rem.embed && <EmbedView url={rem.embed.url} />}
           </div>
           <TagChips rem={rem} />
-          {rem.editLater && <span className="badge badge-warning">edit later</span>}
+          {rem.editLater && <span className="badge badge-warning">{tr('edit later')}</span>}
           <CardBadge rem={rem} />
         </div>
       </div>
@@ -419,7 +424,9 @@ function McMarker({ rem, index }: { rem: Rem; index: number }): ReactNode {
     <button
       className={`mc-marker ${correct ? 'is-correct' : 'is-wrong'}`}
       title={
-        correct ? 'Correct answer (click to mark wrong)' : 'Wrong answer (click to mark correct)'
+        correct
+          ? tr('Correct answer (click to mark wrong)')
+          : tr('Wrong answer (click to mark correct)')
       }
       onMouseDown={(e) => {
         e.preventDefault();

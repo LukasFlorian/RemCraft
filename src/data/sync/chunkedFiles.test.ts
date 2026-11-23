@@ -47,7 +47,7 @@ describe('chunked files', () => {
     const store = memoryStore();
     await putChunked(store, 'x', new Blob(['0123456789ab']), 'application/pdf', 5);
     store.objects.delete('x.part1');
-    await expect(getChunked(store, 'x')).rejects.toThrow('unvollständig');
+    await expect(getChunked(store, 'x')).rejects.toThrow('incomplete');
     store.objects.delete('x.parts');
     expect(await getChunked(store, 'x')).toBeNull();
     expect(completeFileIds(['x.part0', 'x.part2'])).toEqual([]);

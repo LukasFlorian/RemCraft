@@ -13,6 +13,7 @@ import { BarChart, StatTile } from '../../components/Charts';
 import { useDialogs } from '../../components/Confirm';
 import { ProgressBar } from '../../components/Controls';
 import { useRemTitle } from '../../hooks/useRemTitle';
+import { t as tr } from '@core/i18n';
 
 /** The exams tab. */
 export function ExamsTab({ examId }: { examId?: string | undefined }): ReactNode {
@@ -28,18 +29,18 @@ export function ExamsTab({ examId }: { examId?: string | undefined }): ReactNode
     <div className="col" style={{ gap: 18 }}>
       <div className="row">
         <p className="muted" style={{ margin: 0, flex: 1 }}>
-          Set an exam date for documents or folders. New cards are spread over the days until the
-          exam, everything is reviewed once more right before it, and your daily goal adapts
-          automatically.
+          {tr(
+            'Set an exam date for documents or folders. New cards are spread over the days until the exam, everything is reviewed once more right before it, and your daily goal adapts automatically.',
+          )}
         </p>
         <button className="btn btn-primary" onClick={() => modals.open({ kind: 'exam' })}>
-          <Plus size={15} /> New exam
+          <Plus size={15} /> {tr('New exam')}
         </button>
       </div>
       {upcoming.length === 0 && (
         <div className="empty">
           <GraduationCap size={32} />
-          <div>No upcoming exams.</div>
+          <div>{tr('No upcoming exams.')}</div>
         </div>
       )}
       <div className="grid-2">
@@ -54,23 +55,23 @@ export function ExamsTab({ examId }: { examId?: string | undefined }): ReactNode
                 {p.exam.name}
               </strong>
               <span className={`badge ${p.onTrack ? 'badge-success' : 'badge-warning'}`}>
-                {p.onTrack ? 'On track' : 'Behind'}
+                {p.onTrack ? tr('On track') : tr('Behind')}
               </span>
             </div>
             <div className="muted" style={{ fontSize: 13 }}>
               {new Date(p.exam.date).toLocaleDateString(undefined, { dateStyle: 'medium' })} ·{' '}
-              {p.daysLeft} days left
+              {p.daysLeft} {tr('days left')}
             </div>
             <ProgressBar value={p.totalCards ? 1 - p.newRemaining / p.totalCards : 1} />
             <div className="faint" style={{ fontSize: 12 }}>
-              {p.totalCards - p.newRemaining} / {p.totalCards} cards started
+              {p.totalCards - p.newRemaining} / {p.totalCards} {tr('cards started')}
             </div>
           </button>
         ))}
       </div>
       {past.length > 0 && (
         <>
-          <h3 className="section-title">Past &amp; archived</h3>
+          <h3 className="section-title">{tr('Past & archived')}</h3>
           {past.map((p) => (
             <button
               key={p.exam.id}
@@ -98,18 +99,18 @@ function ExamDetail({ plan }: { plan: ExamPlan }): ReactNode {
   const fmt = (t: number): string =>
     new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const statusLabel = {
-    learning: 'Learning period',
-    'final-review': 'Final review',
-    'exam-day': 'Exam day',
-    past: 'Exam is over',
-    archived: 'Archived',
+    learning: tr('Learning period'),
+    'final-review': tr('Final review'),
+    'exam-day': tr('Exam day'),
+    past: tr('Exam is over'),
+    archived: tr('Archived'),
   }[plan.status];
 
   return (
     <div className="col" style={{ gap: 20 }}>
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <button className="btn btn-sm btn-ghost" onClick={() => navigate('/flashcards/exams')}>
-          ← All exams
+          {tr('← All exams')}
         </button>
         <h2 style={{ flex: 1, fontSize: 24 }}>{exam.name}</h2>
         <button
@@ -117,22 +118,22 @@ function ExamDetail({ plan }: { plan: ExamPlan }): ReactNode {
           onClick={() => navigate(`/practice?scope=exam:${exam.id}`)}
           disabled={plan.status === 'past'}
         >
-          <Play size={15} /> Practice exam
+          <Play size={15} /> {tr('Practice exam')}
         </button>
         <button className="btn" onClick={() => modals.open({ kind: 'exam', examId: exam.id })}>
-          <Pencil size={15} /> Edit
+          <Pencil size={15} /> {tr('Edit')}
         </button>
         <button className="btn" onClick={() => app.exams.archive(exam.id, !exam.archived)}>
-          <Archive size={15} /> {exam.archived ? 'Restore' : 'Archive'}
+          <Archive size={15} /> {exam.archived ? tr('Restore') : tr('Archive')}
         </button>
         <button
           className="btn btn-danger"
           onClick={async () => {
             if (
               await dialogs.confirm({
-                title: `Delete exam “${exam.name}”?`,
-                message: 'Your review history is kept.',
-                confirmLabel: 'Delete',
+                title: tr('Delete exam “{name}”?', { name: exam.name }),
+                message: tr('Your review history is kept.'),
+                confirmLabel: tr('Delete'),
                 danger: true,
               })
             ) {
@@ -150,61 +151,74 @@ function ExamDetail({ plan }: { plan: ExamPlan }): ReactNode {
           {new Date(exam.date).toLocaleDateString(undefined, { dateStyle: 'full' })}
         </span>
         <span className={`badge ${plan.onTrack ? 'badge-success' : 'badge-warning'}`}>
-          {plan.onTrack ? 'On track' : `Behind: ${plan.overdueBacklog} overdue`}
+          {plan.onTrack
+            ? tr('On track')
+            : tr('Behind: {overdueBacklog} overdue', { overdueBacklog: plan.overdueBacklog })}
         </span>
         <span className="badge">{statusLabel}</span>
         <span>
-          Scope:{' '}
+          {tr('Scope:')}{' '}
           {exam.scope.map((id) => (
             <ScopeName key={id} id={id} />
           ))}
         </span>
       </div>
       <div className="stat-grid">
-        <StatTile label="Days left" value={plan.daysLeft} />
-        <StatTile label="Cards" value={plan.totalCards} hint={`${plan.learnedCards} learned`} />
-        <StatTile label="Not started" value={plan.newRemaining} />
+        <StatTile label={tr('Days left')} value={plan.daysLeft} />
         <StatTile
-          label="Today"
+          label={tr('Cards')}
+          value={plan.totalCards}
+          hint={tr('{learnedCards} learned', { learnedCards: plan.learnedCards })}
+        />
+        <StatTile label={tr('Not started')} value={plan.newRemaining} />
+        <StatTile
+          label={tr('Today')}
           value={`${plan.todayDone} / ${plan.todayTarget}`}
-          hint={`${plan.todayNewQuota} new · ${plan.todayDueReviews} reviews · ${plan.todayFinalReviewQuota} final`}
+          hint={tr(
+            '{todayNewQuota} new · {todayDueReviews} reviews · {todayFinalReviewQuota} final',
+            {
+              todayNewQuota: plan.todayNewQuota,
+              todayDueReviews: plan.todayDueReviews,
+              todayFinalReviewQuota: plan.todayFinalReviewQuota,
+            },
+          )}
         />
       </div>
       <div className="card">
         <div className="row" style={{ marginBottom: 10 }}>
           <h3 className="card-title" style={{ flex: 1, margin: 0 }}>
-            Study plan
+            {tr('Study plan')}
           </h3>
           <div className="segmented" style={{ width: 200 }}>
             <button className={view === 'graph' ? 'active' : ''} onClick={() => setView('graph')}>
-              Graph
+              {tr('Graph')}
             </button>
             <button className={view === 'month' ? 'active' : ''} onClick={() => setView('month')}>
-              Month
+              {tr('Month')}
             </button>
           </div>
         </div>
         {plan.days.length === 0 ? (
-          <div className="empty">This exam is over.</div>
+          <div className="empty">{tr('This exam is over.')}</div>
         ) : view === 'graph' ? (
           <BarChart
-            ariaLabel="Planned cards per day until the exam"
+            ariaLabel={tr('Planned cards per day until the exam')}
             labels={plan.days.map((d) => fmt(d.day))}
             labelEvery={Math.ceil(plan.days.length / 10)}
             height={200}
             series={[
               {
-                name: 'New cards',
+                name: tr('New cards'),
                 color: 'var(--series-1)',
                 values: plan.days.map((d) => d.newCards),
               },
               {
-                name: 'Reviews',
+                name: tr('Reviews'),
                 color: 'var(--series-2)',
                 values: plan.days.map((d) => d.reviews),
               },
               {
-                name: 'Final review',
+                name: tr('Final review'),
                 color: 'var(--series-3)',
                 values: plan.days.map((d) => d.finalReview),
               },
@@ -248,12 +262,24 @@ function MonthView({ plan }: { plan: ExamPlan }): ReactNode {
           >
             <div className="month-date">{new Date(d.day).getDate()}</div>
             {d.phase === 'exam' ? (
-              <div className="month-exam">Exam</div>
+              <div className="month-exam">{tr('Exam')}</div>
             ) : (
               <>
-                {d.newCards > 0 && <div>{d.newCards} new</div>}
-                {d.reviews > 0 && <div>{d.reviews} reviews</div>}
-                {d.finalReview > 0 && <div>{d.finalReview} final</div>}
+                {d.newCards > 0 && (
+                  <div>
+                    {d.newCards} {tr('new')}
+                  </div>
+                )}
+                {d.reviews > 0 && (
+                  <div>
+                    {d.reviews} {tr('reviews')}
+                  </div>
+                )}
+                {d.finalReview > 0 && (
+                  <div>
+                    {d.finalReview} {tr('final')}
+                  </div>
+                )}
               </>
             )}
           </div>

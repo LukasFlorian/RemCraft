@@ -10,6 +10,7 @@ import type { RemGraph } from '../model/graph';
 import { walkSubtree } from '../model/graph';
 import type { Rem, RemId, RichText } from '../model/types';
 import { normalize, toPlainText } from '../richtext/ops';
+import { t } from '@core/i18n';
 
 /** Fields of a Rem that are searched. */
 export type ReplaceField = 'text' | 'back';
@@ -51,7 +52,7 @@ function escapeRegExp(text: string): string {
  * @returns The expression, or an error message for an invalid one.
  */
 export function buildMatcher(opts: FindOptions): RegExp | string {
-  if (!opts.query) return 'Suchbegriff fehlt';
+  if (!opts.query) return t('Search term missing');
   let source = opts.regex ? opts.query : escapeRegExp(opts.query);
   if (opts.wholeWord) source = `(?<![\\p{L}\\p{N}_])(?:${source})(?![\\p{L}\\p{N}_])`;
   try {

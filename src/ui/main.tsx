@@ -5,6 +5,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import { wrongChannelRedirect } from './app/channel';
+import { lang } from '@core/i18n';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
@@ -21,6 +22,7 @@ else renderApp();
 
 /** Mounts the app. */
 function renderApp(): void {
+  document.documentElement.lang = lang();
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />

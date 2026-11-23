@@ -17,6 +17,7 @@ import { parseSearchQuery } from '@core/search/search';
 import { findMatches, snippet } from '@core/search/highlight';
 import { toPlainText } from '@core/richtext/ops';
 import { useTextHighlight } from '../hooks/useTextHighlight';
+import { t } from '@core/i18n';
 
 /** The search dialog. */
 export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
@@ -56,13 +57,13 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
   };
 
   return (
-    <Modal title="Search" onClose={onClose} wide>
+    <Modal title={t('Search')} onClose={onClose} wide>
       <div className="search-input-row">
         <Search size={18} className="faint" />
         <input
           className="input search-input"
           autoFocus
-          placeholder="Search Rems… (try #tag, is:card, is:todo)"
+          placeholder={t('Search Rems… (try #tag, is:card, is:todo)')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
@@ -81,20 +82,20 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
         />
         <button
           className="btn btn-sm btn-ghost"
-          title="Suchen & Ersetzen (⌘⇧H)"
+          title={t('Find & replace (⌘⇧H)')}
           onClick={() => {
             onClose();
             modals.open({ kind: 'replace', rootId: null, query: query.trim() });
           }}
         >
-          Ersetzen…
+          {t('Replace…')}
         </button>
       </div>
       <div className="search-results">
-        {!hits && <div className="menu-label">Recent documents</div>}
+        {!hits && <div className="menu-label">{t('Recent documents')}</div>}
         {hits && hits.length === 0 && (
           <div className="faint" style={{ padding: 8 }}>
-            No results.
+            {t('No results.')}
           </div>
         )}
         {ids.map((id, i) => (
@@ -113,7 +114,8 @@ export function SearchDialog({ onClose }: { onClose: () => void }): ReactNode {
             onMouseEnter={() => setIndex(ids.length)}
             onClick={create}
           >
-            <Plus size={16} /> Create document “{query.trim()}”
+            <Plus size={16} /> {t('Create document “')}
+            {query.trim()}”
           </button>
         )}
       </div>

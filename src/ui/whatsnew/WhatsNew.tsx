@@ -11,6 +11,7 @@ import { selectSettings } from '@data/selectors';
 import { useApp, useSelector } from '../app/context';
 import { Modal } from '../components/Modal';
 import { RELEASES, unseenReleases } from './releases';
+import { t } from '@core/i18n';
 
 const SEEN_KEY = 'remcraft.whatsNewSeen';
 
@@ -79,7 +80,7 @@ export function WhatsNew(): ReactNode {
     setDismissed(true);
   };
   return (
-    <Modal title="Was ist neu" onClose={close}>
+    <Modal title={t("What's new")} onClose={close}>
       <div className="whats-new">
         {releases.map((r) => (
           <section key={r.id}>
@@ -95,7 +96,7 @@ export function WhatsNew(): ReactNode {
         ))}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn btn-primary" onClick={close}>
-            Los geht’s
+            {t("Let's go")}
           </button>
         </div>
       </div>

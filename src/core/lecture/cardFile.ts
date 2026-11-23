@@ -20,6 +20,7 @@ import type { Rem, RemId } from '../model/types';
 import { toPlainText } from '../richtext/ops';
 import { fold } from '../search/search';
 import { isoDate } from '../util/time';
+import { t } from '../i18n';
 
 /** Format name and version. */
 export const CARD_FORMAT = 'remcraft-cards';
@@ -77,14 +78,19 @@ export interface CardFileDoc {
 export function validateCardFile(doc: unknown): string[] {
   const d = doc as Partial<CardFileDoc> | null;
   if (!d || typeof d !== 'object' || (d.format !== CARD_FORMAT && d.format !== LEGACY_CARD_FORMAT))
-    return [`Keine RemCraft-Kartendatei (erwartet "format": "${CARD_FORMAT}")`];
+    return [t('Not a RemCraft card file (expected "format": "{format}")', { format: CARD_FORMAT })];
   const errors: string[] = [];
   if (Number(d.version ?? 0) > CARD_VERSION)
-    errors.push(`Version ${String(d.version)} ist neuer als diese App (kann ${CARD_VERSION})`);
+    errors.push(
+      t('Version {version} is newer than this app (supports {supported})', {
+        version: String(d.version),
+        supported: CARD_VERSION,
+      }),
+    );
   if (!Array.isArray(d.cards) || (d.notes !== undefined && !Array.isArray(d.notes)))
-    errors.push('"cards" und "notes" müssen Listen sein');
+    errors.push(t('"cards" and "notes" must be lists'));
   else if (d.cards.length + (d.notes?.length ?? 0) > 5000)
-    errors.push('Zu viele Einträge (max. 5000)');
+    errors.push(t('Too many entries (max. 5000)'));
   else
     d.cards.forEach(
       (c, i) =>
@@ -236,7 +242,9 @@ export function cardOutline(card: CardFileCard): OutlineNode[] {
 /** Outline of an explanation: title bullet with the Markdown text below. */
 export function noteOutline(note: CardFileNote): OutlineNode[] {
   const body = parseOutline(note.text);
-  return [{ text: `💡 ${plain(note.title?.trim() || 'Erklärung')}`, block: {}, children: body }];
+  return [
+    { text: `💡 ${plain(note.title?.trim() || t('Explanation'))}`, block: {}, children: body },
+  ];
 }
 
 /**

@@ -15,6 +15,7 @@ import { selectSchedulers, selectSettings } from '@data/selectors';
 import { useApp, useSelector } from '../../app/context';
 import { useDialogs } from '../../components/Confirm';
 import { Field, Switch } from '../../components/Controls';
+import { t } from '@core/i18n';
 
 /** Parses "1, 10" into minutes. */
 const parseSteps = (s: string): number[] =>
@@ -39,13 +40,13 @@ export function SchedulerSection(): ReactNode {
   return (
     <div className="col" style={{ gap: 16 }}>
       <div className="card col" style={{ gap: 12 }}>
-        <h2 className="card-title">Schedulers</h2>
+        <h2 className="card-title">{t('Schedulers')}</h2>
         <p className="muted" style={{ margin: 0 }}>
-          The global default applies to all cards. Custom schedulers can be assigned to a document
-          or folder (⋯ menu → Scheduler); the closest assignment wins. RemNote recommends changing
-          schedulers only once you have used the app for a while.
+          {t(
+            'The global default applies to all cards. Custom schedulers can be assigned to a document or folder (⋯ menu → Scheduler); the closest assignment wins. RemNote recommends changing schedulers only once you have used the app for a while.',
+          )}
         </p>
-        <Field label="Global default scheduler">
+        <Field label={t('Global default scheduler')}>
           <select
             className="select"
             value={settings.defaultSchedulerId}
@@ -61,15 +62,17 @@ export function SchedulerSection(): ReactNode {
         <div className="row">
           <button
             className="btn"
-            onClick={() => app.settings.createScheduler({ name: 'Custom SM-2', algorithm: 'sm2' })}
+            onClick={() =>
+              app.settings.createScheduler({ name: t('Custom SM-2'), algorithm: 'sm2' })
+            }
           >
-            <Plus size={15} /> New SM-2 scheduler
+            <Plus size={15} /> {t('New SM-2 scheduler')}
           </button>
           <button
             className="btn"
             onClick={() => app.settings.createScheduler({ name: 'FSRS', algorithm: 'fsrs' })}
           >
-            <Plus size={15} /> New FSRS scheduler
+            <Plus size={15} /> {t('New FSRS scheduler')}
           </button>
         </div>
       </div>
@@ -115,30 +118,34 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
           style={{ maxWidth: 320, fontWeight: 600 }}
           defaultValue={config.name}
           onBlur={(e) => save({ name: e.target.value || config.name })}
-          aria-label="Scheduler name"
+          aria-label={t('Scheduler name')}
         />
         <select
           className="select"
           style={{ width: 160 }}
           value={config.algorithm}
           onChange={(e) => save({ algorithm: e.target.value as 'sm2' | 'fsrs' })}
-          aria-label="Algorithm"
+          aria-label={t('Algorithm')}
         >
-          <option value="sm2">Anki SM-2</option>
-          <option value="fsrs">FSRS-6</option>
+          <option value="sm2">{t('Anki SM-2')}</option>
+          <option value="fsrs">{t('FSRS-6')}</option>
         </select>
         <span className="spacer" />
-        {usedBy > 0 && <span className="badge">used by {usedBy}</span>}
+        {usedBy > 0 && (
+          <span className="badge">
+            {t('used by')} {usedBy}
+          </span>
+        )}
         {!isDefault && (
           <button
             className="icon-btn"
-            aria-label="Delete scheduler"
+            aria-label={t('Delete scheduler')}
             onClick={async () => {
               if (
                 await dialogs.confirm({
-                  title: `Delete “${config.name}”?`,
-                  message: 'Assigned documents fall back to the default scheduler.',
-                  confirmLabel: 'Delete',
+                  title: t('Delete “{name}”?', { name: config.name }),
+                  message: t('Assigned documents fall back to the default scheduler.'),
+                  confirmLabel: t('Delete'),
                   danger: true,
                 })
               )
@@ -151,14 +158,14 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
       </div>
       {config.algorithm === 'sm2' ? (
         <div className="grid-3" key={`sm2-${config.updatedAt}`}>
-          <Field label="Learning steps (minutes)" hint="e.g. 1, 10">
+          <Field label={t('Learning steps (minutes)')} hint="e.g. 1, 10">
             <input
               className="input"
               defaultValue={config.sm2.learningSteps.join(', ')}
               onBlur={(e) => sm2({ learningSteps: parseSteps(e.target.value) })}
             />
           </Field>
-          <Field label="Relearning steps (minutes)">
+          <Field label={t('Relearning steps (minutes)')}>
             <input
               className="input"
               defaultValue={config.sm2.relearningSteps.join(', ')}
@@ -166,48 +173,53 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
             />
           </Field>
           {num(
-            'Graduating interval (days)',
+            t('Graduating interval (days)'),
             config.sm2.graduatingInterval,
             (v) => sm2({ graduatingInterval: v }),
             1,
           )}
-          {num('Easy interval (days)', config.sm2.easyInterval, (v) => sm2({ easyInterval: v }), 1)}
           {num(
-            'Starting ease',
+            t('Easy interval (days)'),
+            config.sm2.easyInterval,
+            (v) => sm2({ easyInterval: v }),
+            1,
+          )}
+          {num(
+            t('Starting ease'),
             config.sm2.startingEase,
             (v) => sm2({ startingEase: v }),
             0.05,
             '2.3 = 230 %',
           )}
-          {num('Minimum ease', config.sm2.minimumEase, (v) => sm2({ minimumEase: v }), 0.05)}
-          {num('Easy bonus', config.sm2.easyBonus, (v) => sm2({ easyBonus: v }), 0.05)}
+          {num(t('Minimum ease'), config.sm2.minimumEase, (v) => sm2({ minimumEase: v }), 0.05)}
+          {num(t('Easy bonus'), config.sm2.easyBonus, (v) => sm2({ easyBonus: v }), 0.05)}
           {num(
-            'Hard interval factor',
+            t('Hard interval factor'),
             config.sm2.hardInterval,
             (v) => sm2({ hardInterval: v }),
             0.05,
           )}
           {num(
-            'Interval modifier',
+            t('Interval modifier'),
             config.sm2.intervalModifier,
             (v) => sm2({ intervalModifier: v }),
             0.05,
           )}
           {num(
-            'Lapse multiplier',
+            t('Lapse multiplier'),
             config.sm2.lapseMultiplier,
             (v) => sm2({ lapseMultiplier: v }),
             0.05,
-            'New interval after forgetting',
+            t('New interval after forgetting'),
           )}
           {num(
-            'Minimum interval after lapse (days)',
+            t('Minimum interval after lapse (days)'),
             config.sm2.minimumLapseInterval,
             (v) => sm2({ minimumLapseInterval: v }),
             1,
           )}
           {num(
-            'Maximum interval (days)',
+            t('Maximum interval (days)'),
             config.sm2.maximumInterval,
             (v) => sm2({ maximumInterval: v }),
             1,
@@ -215,17 +227,19 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
           <Switch
             checked={config.sm2.fuzz}
             onChange={(v) => sm2({ fuzz: v })}
-            label="Interval fuzz"
+            label={t('Interval fuzz')}
           />
           <button className="btn btn-sm" onClick={() => save({ sm2: { ...DEFAULT_SM2_PARAMS } })}>
-            Reset to defaults
+            {t('Reset to defaults')}
           </button>
         </div>
       ) : (
         <div className="col" key={`fsrs-${config.updatedAt}`}>
           <Field
-            label={`Desired retention: ${Math.round(config.fsrs.desiredRetention * 100)} %`}
-            hint="Higher retention means more reviews. 90 % is a good default."
+            label={t('Desired retention: {0} %', {
+              '0': Math.round(config.fsrs.desiredRetention * 100),
+            })}
+            hint={t('Higher retention means more reviews. 90 % is a good default.')}
           >
             <input
               type="range"
@@ -237,14 +251,14 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
             />
           </Field>
           <div className="grid-3">
-            <Field label="Learning steps (minutes)">
+            <Field label={t('Learning steps (minutes)')}>
               <input
                 className="input"
                 defaultValue={config.fsrs.learningSteps.join(', ')}
                 onBlur={(e) => fsrs({ learningSteps: parseSteps(e.target.value) })}
               />
             </Field>
-            <Field label="Relearning steps (minutes)">
+            <Field label={t('Relearning steps (minutes)')}>
               <input
                 className="input"
                 defaultValue={config.fsrs.relearningSteps.join(', ')}
@@ -252,15 +266,15 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
               />
             </Field>
             {num(
-              'Maximum interval (days)',
+              t('Maximum interval (days)'),
               config.fsrs.maximumInterval,
               (v) => fsrs({ maximumInterval: v }),
               1,
             )}
           </div>
           <Field
-            label="Model weights (21 values, FSRS-6)"
-            hint="Paste optimised weights from the FSRS optimizer or keep the defaults."
+            label={t('Model weights (21 values, FSRS-6)')}
+            hint={t('Paste optimised weights from the FSRS optimizer or keep the defaults.')}
           >
             <textarea
               className="textarea mono"
@@ -281,7 +295,7 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
             <Switch
               checked={config.fsrs.fuzz}
               onChange={(v) => fsrs({ fuzz: v })}
-              label="Interval fuzz"
+              label={t('Interval fuzz')}
             />
             <button
               className="btn btn-sm"
@@ -290,7 +304,7 @@ function SchedulerCard({ config, usedBy }: { config: SchedulerConfig; usedBy: nu
                 fsrs({ weights: [...DEFAULT_FSRS_WEIGHTS] });
               }}
             >
-              Reset weights
+              {t('Reset weights')}
             </button>
           </div>
         </div>

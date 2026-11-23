@@ -7,21 +7,22 @@ import { CardsTab } from './CardsTab';
 import { ExamsTab } from './ExamsTab';
 import { HomeTab } from './HomeTab';
 import { StatsTab } from './StatsTab';
+import { t as tr } from '@core/i18n';
 
 /** The flashcards page. */
 export function FlashcardsPage(): ReactNode {
   const { tab = 'home', examId } = useParams();
   const tabs = [
-    { id: 'home', label: 'Home', to: '/flashcards' },
-    { id: 'cards', label: 'Cards', to: '/flashcards/cards' },
-    { id: 'stats', label: 'Stats', to: '/flashcards/stats' },
-    { id: 'exams', label: 'Exams', to: '/flashcards/exams' },
+    { id: 'home', label: tr('Home'), to: '/flashcards' },
+    { id: 'cards', label: tr('Cards'), to: '/flashcards/cards' },
+    { id: 'stats', label: tr('Stats'), to: '/flashcards/stats' },
+    { id: 'exams', label: tr('Exams'), to: '/flashcards/exams' },
   ];
   return (
     <div className="main-scroll">
       <div className="page page-wide">
         <div className="page-header">
-          <h1>Flashcards</h1>
+          <h1>{tr('Flashcards')}</h1>
         </div>
         <nav className="tabs" style={{ marginBottom: 22 }}>
           {tabs.map((t) => (

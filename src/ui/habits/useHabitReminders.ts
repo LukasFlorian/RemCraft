@@ -14,6 +14,7 @@ import { selectHabitData, selectHabits } from '@data/services/habits';
 import { useSelector, useStore } from '../app/context';
 import { feature } from '../app/channel';
 import { useToday } from './common';
+import { t } from '@core/i18n';
 
 /** localStorage key of reminders already shown (`<reminder>:<day>`). */
 const SHOWN_KEY = 'remcraft.habitReminders.shown';
@@ -70,7 +71,7 @@ export function useHabitReminders(): void {
           shown.add(key);
           void notify(
             habit.name,
-            habit.description || 'Zeit für deine Gewohnheit – heute noch offen.',
+            habit.description || t('Time for your habit – still open today.'),
             `#/habits/${habit.id}`,
           );
         }

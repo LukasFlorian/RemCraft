@@ -31,14 +31,15 @@ import { CardEditor } from '../../editor/CardEditor';
 import { useHotkeys } from '../../hooks/useHotkeys';
 import { useRemTitle } from '../../hooks/useRemTitle';
 import { CardFace } from './CardFace';
+import { t as tr } from '@core/i18n';
 
 const MODE_LABELS: Record<string, string> = {
-  srs: 'Spaced repetition',
-  all: 'Practice all',
-  'all-in-order': 'All in order',
-  cram: 'Cram (not scheduled)',
-  global: 'Daily queue',
-  exam: 'Exam',
+  srs: tr('Spaced repetition'),
+  all: tr('Practice all'),
+  'all-in-order': tr('All in order'),
+  cram: tr('Cram (not scheduled)'),
+  global: tr('Daily queue'),
+  exam: tr('Exam'),
 };
 
 /** The practice page. */
@@ -188,7 +189,7 @@ export function PracticePage(): ReactNode {
     app.practice.setDisabled([cardId], true);
     steps.current.push({ disabled: cardId });
     session.drop(cardId);
-    toast('Karte deaktiviert (Rückgängig: U)');
+    toast(tr('Card disabled (undo: U)'));
     advance();
   };
 
@@ -238,12 +239,12 @@ export function PracticePage(): ReactNode {
   return (
     <div className="practice">
       <div className="practice-top">
-        <button className="icon-btn" aria-label="Exit practice" onClick={() => navigate(-1)}>
+        <button className="icon-btn" aria-label={tr('Exit practice')} onClick={() => navigate(-1)}>
           <X size={20} />
         </button>
         <div className="col" style={{ gap: 2, flex: 1, minWidth: 0 }}>
           <div className="ellipsis" style={{ fontWeight: 600 }}>
-            {examName ?? (title || 'Daily queue')}
+            {examName ?? (title || tr('Daily queue'))}
           </div>
           <div className="faint" style={{ fontSize: 12 }}>
             {
@@ -260,8 +261,8 @@ export function PracticePage(): ReactNode {
         </div>
         <button
           className="icon-btn"
-          aria-label="Undo last answer"
-          title="Undo (U)"
+          aria-label={tr('Undo last answer')}
+          title={tr('Undo (U)')}
           disabled={steps.current.length === 0}
           onClick={undo}
         >
@@ -269,8 +270,8 @@ export function PracticePage(): ReactNode {
         </button>
         <button
           className="icon-btn"
-          aria-label="Disable card"
-          title="Karte deaktivieren (D)"
+          aria-label={tr('Disable card')}
+          title={tr('Disable card (D)')}
           disabled={!cardId}
           onClick={disable}
         >
@@ -278,8 +279,8 @@ export function PracticePage(): ReactNode {
         </button>
         <button
           className="icon-btn"
-          aria-label="Edit card"
-          title="Edit (E)"
+          aria-label={tr('Edit card')}
+          title={tr('Edit (E)')}
           disabled={!cardId}
           onClick={() => setEditing(true)}
         >
@@ -309,11 +310,11 @@ export function PracticePage(): ReactNode {
             <div className="practice-actions">
               {!revealed ? (
                 <div className="row" style={{ justifyContent: 'center' }}>
-                  <button className="btn btn-ghost" onClick={skip} title="Skip (S)">
-                    <SkipForward size={16} /> Skip
+                  <button className="btn btn-ghost" onClick={skip} title={tr('Skip (S)')}>
+                    <SkipForward size={16} /> {tr('Skip')}
                   </button>
                   <button className="btn btn-primary btn-lg show-answer" onClick={reveal}>
-                    Show answer <Kbd>Space</Kbd>
+                    {tr('Show answer')} <Kbd>{tr('Space')}</Kbd>
                   </button>
                 </div>
               ) : (
@@ -338,7 +339,7 @@ export function PracticePage(): ReactNode {
         )}
       </div>
       {editing && cardId && view && (
-        <Modal title="Edit card" onClose={() => setEditing(false)} wide>
+        <Modal title={tr('Edit card')} onClose={() => setEditing(false)} wide>
           <CardEditor remId={view.remId} />
         </Modal>
       )}
@@ -362,14 +363,15 @@ function Finished({
   return (
     <div className="practice-done">
       <div style={{ fontSize: 48 }}>🎉</div>
-      <h2>{answered === 0 ? 'Nothing to practice right now' : 'Session complete'}</h2>
+      <h2>{answered === 0 ? tr('Nothing to practice right now') : tr('Session complete')}</h2>
       {answered > 0 && (
         <p className="muted">
-          {answered} cards · {Math.round((correct / answered) * 100)} % recalled · {minutes} min
+          {answered} {tr('cards ·')} {Math.round((correct / answered) * 100)} {tr('% recalled ·')}{' '}
+          {minutes} {tr('min')}
         </p>
       )}
       <button className="btn btn-primary btn-lg" onClick={onDone}>
-        Back to Flashcards
+        {tr('Back to Flashcards')}
       </button>
     </div>
   );

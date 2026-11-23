@@ -70,6 +70,7 @@ import { useDeckPdf, useDeckSlides, useUpToDateTitles } from './useSlides';
 import type { WidgetRect } from './WidgetBoard';
 import { WidgetBoard } from './WidgetBoard';
 import { fileDropAttr } from '../import/fileDrop';
+import { t as tr } from '@core/i18n';
 
 /** Default widget layout (24 × 24 grid). */
 const DEFAULT_LAYOUT: Record<string, WidgetRect> = {
@@ -90,7 +91,7 @@ export function LecturePage(): ReactNode {
     return (
       <div className="main-scroll">
         <div className="page">
-          <div className="empty">Kein Foliensatz.</div>
+          <div className="empty">{tr('No slide deck.')}</div>
         </div>
       </div>
     );
@@ -116,7 +117,7 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   // Re-attach notes/cards that an earlier layout change detached from their slide.
   useEffect(() => {
     const n = app.lectures.repairDeck(deckId);
-    if (n) toast(`${n} Notizblöcke wieder ihren Folien zugeordnet`);
+    if (n) toast(tr('{n} note blocks re-attached to their slides', { n }));
   }, [app, deckId]); // eslint-disable-line react-hooks/exhaustive-deps
   useUpToDateTitles(deckId);
   const now = useNow(1000);
@@ -187,7 +188,7 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
   const drift = (): void => {
     if (!lectureId || !running) return;
     app.lectures.record(lectureId, 'drift', { slide: index });
-    toast('Abschweifen bemerkt - wo ist der Prof gerade?');
+    toast(tr('Drift noticed – where is the lecturer now?'));
     addNote('');
   };
   const startLecture = (name: string, goal: string): void => {
@@ -265,24 +266,28 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         }
       />
       <div className="slide-toolbar">
-        <button className="icon-btn" aria-label="Vorherige Folie" onClick={() => go(index - 1)}>
+        <button
+          className="icon-btn"
+          aria-label={tr('Previous slide')}
+          onClick={() => go(index - 1)}
+        >
           <ChevronLeft size={18} />
         </button>
         <button className="btn btn-sm btn-ghost" onClick={() => setDialog('overview')}>
           {slides.length ? index + 1 : 0} / {slides.length}
         </button>
-        <button className="icon-btn" aria-label="Nächste Folie" onClick={() => go(index + 1)}>
+        <button className="icon-btn" aria-label={tr('Next slide')} onClick={() => go(index + 1)}>
           <ChevronRight size={18} />
         </button>
         <button
           className="icon-btn"
-          title="Folienübersicht (G)"
+          title={tr('Slide overview (G)')}
           onClick={() => setDialog('overview')}
         >
           <Grid3x3 size={16} />
         </button>
         <span className="toolbar-sep" />
-        {toolButton('select', <MousePointer2 size={16} />, 'Auswählen / Text markieren (Esc)')}
+        {toolButton('select', <MousePointer2 size={16} />, tr('Select / highlight text (Esc)'))}
         {toolButton('pen', <PenLine size={16} />, 'Stift (P)')}
         {toolButton('marker', <Highlighter size={16} />, 'Marker (M)')}
         {toolButton('eraser', <Eraser size={16} />, 'Radierer (E)')}
@@ -293,7 +298,7 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
               key={c}
               className={`mark-swatch${color === c ? ' active' : ''}`}
               style={{ background: c }}
-              aria-label="Farbe"
+              aria-label={tr('Colour')}
               onClick={() => setColor(c)}
             />
           ))}
@@ -301,11 +306,11 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         <select
           className="select layout-select"
           value={deck.deck!.layout}
-          title="Folien pro Seite"
+          title={tr('Slides per page')}
           onChange={(e) =>
             void app.lectures
               .relayout(deckId, e.target.value)
-              .then(() => toast('Layout aktualisiert'))
+              .then(() => toast(tr('Layout updated')))
           }
         >
           {Object.entries(LAYOUT_MODES).map(([k, v]) => (
@@ -320,7 +325,7 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
 
   const notesWidget = (
     <div ref={notesRef} className="slide-notes">
-      {slide ? <Outliner rootId={slide.id} /> : <div className="faint">Keine Folie.</div>}
+      {slide ? <Outliner rootId={slide.id} /> : <div className="faint">{tr('No slide.')}</div>}
     </div>
   );
 
@@ -328,19 +333,19 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
     <div className="focus-widget">
       {sumState?.goal ? (
         <div className="goal">
-          <span className="faint">Ziel</span>
+          <span className="faint">{tr('Goal')}</span>
           <div>{sumState.goal}</div>
         </div>
       ) : (
         <div className="faint" style={{ fontSize: 13 }}>
           {lectureId
-            ? 'Kein Ziel gesetzt.'
-            : 'Starte eine Vorlesung, um Zeit, Abwesenheit und Check-ins aufzuzeichnen.'}
+            ? tr('No goal set.')
+            : tr('Start a lecture to record time, absence and check-ins.')}
         </div>
       )}
       <div className="col" style={{ gap: 6 }}>
-        <button className="btn" disabled={!running} onClick={drift} title="Taste A">
-          ↺ Abgelenkt
+        <button className="btn" disabled={!running} onClick={drift} title={tr('Key A')}>
+          {tr('↺ Distracted')}
         </button>
         <div className="row">
           {(['important', 'unclear'] as SlideFlag[]).map((f) => (
@@ -348,14 +353,14 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
               key={f}
               className={`btn btn-sm${slide?.slideFlags?.includes(f) ? ' btn-primary' : ''}`}
               onClick={() => toggleFlag(f)}
-              title={f === 'important' ? 'Taste W' : 'Taste U'}
+              title={f === 'important' ? tr('Key W') : tr('Key U')}
             >
               {FLAG_ICONS[f]} {FLAG_LABELS[f]}
             </button>
           ))}
         </div>
-        <button className="btn btn-sm" onClick={() => addNote('? ')} title="Taste F">
-          ✎ Frage
+        <button className="btn btn-sm" onClick={() => addNote('? ')} title={tr('Key F')}>
+          {tr('✎ Question')}
         </button>
       </div>
     </div>
@@ -363,27 +368,27 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
 
   const kpiWidget = kpis ? (
     <div className="kpi-grid">
-      <Kpi label="Dauer" value={clock(kpis.durationMs)} />
+      <Kpi label={tr('Duration')} value={clock(kpis.durationMs)} />
       <Kpi
-        label="In der App"
+        label={tr('In the app')}
         value={kpis.focusRatio === null ? '—' : `${Math.round(kpis.focusRatio * 100)} %`}
       />
-      <Kpi label="Außerhalb" value={clock(kpis.awayMs)} hint={`${kpis.awayCount}×`} />
-      <Kpi label="Abschweifen bemerkt" value={String(kpis.drifts)} />
+      <Kpi label={tr('Outside')} value={clock(kpis.awayMs)} hint={`${kpis.awayCount}×`} />
+      <Kpi label={tr('Drift noticed')} value={String(kpis.drifts)} />
       <Kpi
-        label="Check-ins"
+        label={tr('Check-ins')}
         value={`${kpis.checkinsAnswered}/${kpis.checkins}`}
-        hint={kpis.focusAvg ? `Ø Fokus ${kpis.focusAvg}` : undefined}
+        hint={kpis.focusAvg ? tr('Avg. focus {focusAvg}', { focusAvg: kpis.focusAvg }) : undefined}
       />
       <Kpi
-        label="Folien besprochen"
+        label={tr('Slides covered')}
         value={String(kpis.slidesSeen)}
         hint={kpis.paceMs ? `Ø ${clock(kpis.paceMs)}` : undefined}
       />
     </div>
   ) : (
     <div className="faint" style={{ fontSize: 13 }}>
-      Kennzahlen erscheinen, sobald eine Vorlesung läuft.
+      {tr('Numbers appear once a lecture is running.')}
     </div>
   );
 
@@ -395,11 +400,11 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
       <div className="topbar lecture-top">
         {returnTo ? (
           <button className="btn btn-sm btn-primary" onClick={() => navigate(returnTo)}>
-            ← Weiter üben
+            {tr('← Continue practice')}
           </button>
         ) : (
           <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/rem/${deckId}`)}>
-            ← {toPlainText(deck.text) || 'Foliensatz'}
+            ← {toPlainText(deck.text) || tr('Slide deck')}
           </button>
         )}
         <span className="spacer" />
@@ -411,34 +416,35 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         )}
         {!lecture && (
           <button className="btn btn-sm btn-primary" onClick={() => setDialog('start')}>
-            <Play size={14} /> Vorlesung starten
+            <Play size={14} /> {tr('Start lecture')}
           </button>
         )}
         {lecture && (
           <button
             className="btn btn-sm"
             onClick={() => app.lectures.setPaused(lecture.id, running)}
-            title="Taste B"
+            title={tr('Key B')}
           >
-            {running ? <Pause size={14} /> : <Play size={14} />} {running ? 'Pause' : 'Weiter'}
+            {running ? <Pause size={14} /> : <Play size={14} />}{' '}
+            {running ? tr('Pause') : tr('Continue')}
           </button>
         )}
         {lecture && (
           <button className="btn btn-sm" onClick={stopLecture}>
-            <Square size={14} /> Abschließen
+            <Square size={14} /> {tr('Finish')}
           </button>
         )}
         <button
-          title="Nacharbeiten"
-          aria-label="Nacharbeiten"
+          title={tr('Follow-up')}
+          aria-label={tr('Follow-up')}
           className={`icon-btn${view === 'review' ? ' active' : ''}`}
           onClick={() => setView(view === 'review' ? null : 'review')}
         >
           <ListChecks size={17} />
         </button>
         <button
-          title="Auswertung"
-          aria-label="Auswertung"
+          title={tr('Analysis')}
+          aria-label={tr('Analysis')}
           className={`icon-btn${view === 'stats' ? ' active' : ''}`}
           onClick={() => setView(view === 'stats' ? null : 'stats')}
         >
@@ -446,44 +452,48 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
         </button>
         <button
           className="icon-btn"
-          title="Handout drucken"
-          aria-label="Handout"
+          title={tr('Print handout')}
+          aria-label={tr('Handout')}
           onClick={() => navigate(`/handout/${deckId}`)}
         >
           <Printer size={17} />
         </button>
         <button
           className={`icon-btn${editingLayout ? ' active' : ''}`}
-          title="Ausgeblendete Widgets / Standard-Layout"
-          aria-label="Layout"
+          title={tr('Hidden widgets / default layout')}
+          aria-label={tr('Layout')}
           onClick={() => setEditingLayout(!editingLayout)}
         >
           <LayoutDashboard size={17} />
         </button>
         <button
           className="icon-btn"
-          title="Fokusmodus (V)"
-          aria-label="Fokusmodus"
+          title={tr('Focus mode (V)')}
+          aria-label={tr('Focus mode')}
           onClick={() => setFocusMode(!focusMode)}
         >
           <Maximize2 size={17} />
         </button>
         <button
           className={`icon-btn${assistant.open ? ' active' : ''}`}
-          title="Assistent (K)"
-          aria-label="Assistent"
+          title={tr('Assistant (K)')}
+          aria-label={tr('Assistant')}
           onClick={() => setAssistant((a) => ({ open: !a.open }))}
         >
           <Sparkles size={17} />
         </button>
       </div>
-      {error && <div className="banner banner-error">PDF nicht verfügbar: {error}</div>}
+      {error && (
+        <div className="banner banner-error">
+          {tr('PDF not available:')} {error}
+        </div>
+      )}
       {welcome && welcomeDismissed !== welcome.since && (
         <div className="banner">
-          Willkommen zurück - du warst {clock(welcome.ms)} weg. Folie{' '}
-          {welcome.slide !== null ? welcome.slide + 1 : '?'} landet in „Nacharbeiten“.
+          {tr('Welcome back – you were')} {clock(welcome.ms)} {tr('away. Slide')}{' '}
+          {welcome.slide !== null ? welcome.slide + 1 : '?'} {tr('goes to “Follow-up”.')}
           <button className="btn btn-sm" onClick={() => setWelcomeDismissed(welcome.since)}>
-            OK
+            {tr('OK')}
           </button>
         </div>
       )}
@@ -492,7 +502,7 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
           <div className="lecture-panel">
             <div className="lecture-panel-bar">
               <button className="btn btn-sm" onClick={() => setView(null)}>
-                ← Zurück zu den Folien
+                {tr('← Back to the slides')}
               </button>
             </div>
             <div className="lecture-panel-body">
@@ -525,31 +535,35 @@ function LectureView({ deckId }: { deckId: RemId }): ReactNode {
             widgets={[
               {
                 id: 'prev',
-                title: 'Vorherige',
+                title: tr('Previous'),
                 render: () => (
                   <div className="clickable-slide" onClick={() => go(index - 1)}>
                     <SlideView deckId={deckId} slide={slides[index - 1]} width={300} />
                   </div>
                 ),
               },
-              { id: 'current', title: `Folie ${index + 1}`, render: () => currentWidget },
+              {
+                id: 'current',
+                title: tr('Slide {0}', { '0': index + 1 }),
+                render: () => currentWidget,
+              },
               {
                 id: 'next',
-                title: 'Nächste',
+                title: tr('Next'),
                 render: () => (
                   <div className="clickable-slide" onClick={() => go(index + 1)}>
                     <SlideView deckId={deckId} slide={slides[index + 1]} width={300} />
                   </div>
                 ),
               },
-              { id: 'notes', title: 'Notizen', render: () => notesWidget },
-              { id: 'focus', title: 'Fokus', render: () => focusWidget },
+              { id: 'notes', title: tr('Notes'), render: () => notesWidget },
+              { id: 'focus', title: tr('Focus'), render: () => focusWidget },
               {
                 id: 'cards',
-                title: 'Karten',
+                title: tr('Cards'),
                 render: () => <SlideCards slideId={slide?.id} deckSlideIds={slideIds} />,
               },
-              { id: 'kpis', title: 'Kennzahlen', render: () => kpiWidget },
+              { id: 'kpis', title: tr('Numbers'), render: () => kpiWidget },
             ]}
           />
         )}

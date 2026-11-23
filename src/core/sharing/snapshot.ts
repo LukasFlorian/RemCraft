@@ -13,6 +13,7 @@ import type { Rem, RemId, RichText, SlideAnnotations, Timestamp } from '../model
 import { toPlainText } from '../richtext/ops';
 import type { ShareScope } from './scope';
 import { selectScope } from './scope';
+import { t as tr } from '@core/i18n';
 
 /** Format marker of snapshot files. */
 export const SNAPSHOT_FORMAT = 'remcraft-share';
@@ -96,7 +97,7 @@ export function buildSnapshot(
   return {
     format: SNAPSHOT_FORMAT,
     version: 1,
-    title: toPlainText(graph.get(rootId)?.text ?? []) || 'Geteilt',
+    title: toPlainText(graph.get(rootId)?.text ?? []) || tr('Shared'),
     rootId,
     scope,
     createdAt: now,
@@ -138,8 +139,8 @@ export function validateSnapshot(value: unknown): ShareSnapshot {
     !Array.isArray(s.rems) ||
     typeof s.rootId !== 'string'
   )
-    throw new Error('Keine gültige RemCraft-Freigabe');
-  if (!s.rems.some((r) => r.id === s.rootId)) throw new Error('Freigabe ohne Wurzel');
+    throw new Error(tr('Not a valid RemCraft share'));
+  if (!s.rems.some((r) => r.id === s.rootId)) throw new Error(tr('Share without root'));
   return { annotations: [], files: [], ...s } as ShareSnapshot;
 }
 

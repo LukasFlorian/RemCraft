@@ -13,6 +13,7 @@ import type { HabitData } from '@core/habits/habits';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { HabitBadge } from './common';
+import { t as tr } from '@core/i18n';
 
 /** Card themes. */
 type Theme = 'dark' | 'light' | 'color';
@@ -115,8 +116,8 @@ export function drawShareCard(
   const t = totals(data);
   const stats: [string, string][] = [
     [String(s.current), `Aktuelle Serie (${streakUnit(s.period, s.current)})`],
-    [String(s.best), 'Beste Serie'],
-    [String(t.completions), 'Erledigt'],
+    [String(s.best), tr('Best streak')],
+    [String(t.completions), tr('Completed')],
   ];
   const statsTop = W - pad - 110;
   const colW = (W - 2 * pad) / 3;
@@ -202,21 +203,21 @@ export function ShareCardDialog({
       await navigator.share({ files: [file], title: habit.name }).catch(() => undefined);
     } else {
       await download();
-      toast('Teilen wird hier nicht unterstützt – das Bild wurde heruntergeladen.');
+      toast(tr('Sharing is not supported here – the image was downloaded.'));
     }
   };
 
   return (
     <Modal
-      title="Als Bild teilen"
+      title={tr('Share as image')}
       onClose={onClose}
       footer={
         <>
           <button className="btn" onClick={() => void download()}>
-            <Download size={14} /> Herunterladen
+            <Download size={14} /> {tr('Download')}
           </button>
           <button className="btn btn-primary" onClick={() => void share()}>
-            <Share2 size={14} /> Teilen
+            <Share2 size={14} /> {tr('Share')}
           </button>
         </>
       }
@@ -228,15 +229,15 @@ export function ShareCardDialog({
         <canvas
           ref={canvas}
           className="habit-share-canvas"
-          aria-label="Vorschau der Teilen-Karte"
+          aria-label={tr('Preview of the share card')}
         />
         <div className="row" style={{ flexWrap: 'wrap' }}>
           <div className="segmented">
             {(
               [
-                ['dark', 'Dunkel'],
-                ['light', 'Hell'],
-                ['color', 'Farbe'],
+                ['dark', tr('Dark')],
+                ['light', tr('Light')],
+                ['color', tr('Colour')],
               ] as [Theme, string][]
             ).map(([id, label]) => (
               <button

@@ -155,6 +155,6 @@ describe('Fokus import', () => {
   });
 
   it('rejects folders without Fokus data', () => {
-    expect(() => archiveFromFiles([new File(['x'], 'a.txt')])).toThrow(/Keine Fokus-Daten/);
+    expect(() => archiveFromFiles([new File(['x'], 'a.txt')])).toThrow(/No Fokus data/);
   });
 });
