@@ -24,7 +24,9 @@ test('runs a lecture on the demo deck and shows the analysis', async ({ page }) 
   await page.getByRole('button', { name: 'Start lecture' }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Start/ }).click();
   await page.keyboard.press('w');
-  await expect(page.getByRole('button', { name: '★ Important' })).toHaveClass(/active|btn-primary/);
+  await expect(page.getByRole('button', { name: 'Important', exact: true })).toHaveClass(
+    /active|btn-primary/,
+  );
   await page.getByRole('button', { name: 'Finish' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('heading', { name: 'Time per slide' })).toBeVisible();
