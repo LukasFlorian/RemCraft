@@ -178,3 +178,21 @@ test('looking at a card’s slide does not restart the practice session', async 
   await page.getByRole('button', { name: 'Weiter üben' }).click();
   await expect(progress).toHaveText(before!);
 });
+
+test('a card can be edited right in the lecture cards widget', async ({ page }) => {
+  const widget = page.locator('.slide-cards');
+  await widget.getByRole('button', { name: 'Alle Folien' }).click();
+  await widget.getByRole('button', { name: 'Karte bearbeiten' }).click();
+  const editor = page.getByTestId('slide-card-editor');
+  await expect(editor).toBeVisible();
+  // Append to the front of the card (first line of the embedded outliner).
+  // The outliner shows text until a Rem is clicked; then the editor opens there.
+  await editor.locator('.rem-row').first().click();
+  await expect(editor.locator('.ProseMirror').first()).toBeFocused();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' (bearbeitet)');
+  await editor.getByRole('button', { name: 'Fertig' }).click();
+  // The edited text is on the card (front or back, so reveal it).
+  await widget.getByRole('button', { name: 'Aufdecken' }).click();
+  await expect(widget.locator('.mini-card')).toContainText('(bearbeitet)');
+});

@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Ban, Check, RotateCcw, X } from 'lucide-react';
+import { Ban, Check, Pencil, RotateCcw, X } from 'lucide-react';
 import { walkSubtree } from '@core/model/graph';
 import type { Rating, RemId } from '@core/model/types';
 import { shuffle } from '@core/scheduling/queue';
@@ -14,6 +14,7 @@ import { selectCardIndex, selectCardView, selectSettings } from '@data/selectors
 import { useApp, useSelector } from '../app/context';
 import { RemContent } from '../editor/RemBlock';
 import { CardFace } from '../pages/practice/CardFace';
+import { CardEditor } from '../editor/CardEditor';
 
 /** Card ids and explanation Rems below some roots. */
 function useSlideCards(rootIds: RemId[]): { cards: string[]; explanations: RemId[] } {
@@ -78,6 +79,10 @@ export function SlideCards({
   const cardId = order[pos % Math.max(1, order.length)];
   // Revealed state belongs to one card: another card (other slide, next card) starts hidden.
   const [revealedId, setRevealedId] = useState<string | null>(null);
+  // Rem being edited in place (kept even if editing changes the card's id/type).
+  const [editingRemId, setEditingRemId] = useState<RemId | null>(null);
+  // Another slide (or "Alle Folien") ends editing.
+  useEffect(() => setEditingRemId(null), [slideId, all]);
   const revealed = cardId !== undefined && revealedId === cardId;
   const setRevealed = (on: boolean): void => setRevealedId(on && cardId ? cardId : null);
   const view = useSelector((s) =>
@@ -122,6 +127,20 @@ export function SlideCards({
           Keine Karten {all ? 'in diesem Foliensatz' : 'zu dieser Folie'}. Schreib in den Notizen z.
           B. „Begriff &gt;&gt; Erklärung“ oder importiere eine Kartendatei (*.cards.json).
         </div>
+      ) : editingRemId ? (
+        <div className="mini-card mini-card-edit" data-testid="slide-card-editor">
+          {/* "Fertig" on top: the editing toolbar covers the bottom of the widget. */}
+          <div className="row" style={{ marginBottom: 6 }}>
+            <span className="faint" style={{ fontSize: 12 }}>
+              Karte bearbeiten – Änderungen werden sofort gespeichert
+            </span>
+            <span className="spacer" />
+            <button className="btn btn-sm btn-primary" onClick={() => setEditingRemId(null)}>
+              Fertig
+            </button>
+          </div>
+          <CardEditor remId={editingRemId} />
+        </div>
       ) : view ? (
         <div className="mini-card">
           <div className="faint" style={{ fontSize: 12 }}>
@@ -151,6 +170,14 @@ export function SlideCards({
               </>
             )}
             <span className="spacer" />
+            <button
+              className="icon-btn"
+              title="Karte bearbeiten"
+              aria-label="Karte bearbeiten"
+              onClick={() => setEditingRemId(view.remId)}
+            >
+              <Pencil size={14} />
+            </button>
             <button
               className="icon-btn"
               title="Überspringen"

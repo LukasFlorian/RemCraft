@@ -27,7 +27,7 @@ import { Kbd } from '../../components/Controls';
 import { Modal } from '../../components/Modal';
 import { ProgressBar } from '../../components/Controls';
 import { useToast } from '../../components/Toast';
-import { Outliner } from '../../editor/Outliner';
+import { CardEditor } from '../../editor/CardEditor';
 import { useHotkeys } from '../../hooks/useHotkeys';
 import { useRemTitle } from '../../hooks/useRemTitle';
 import { CardFace } from './CardFace';
@@ -339,22 +339,11 @@ export function PracticePage(): ReactNode {
       </div>
       {editing && cardId && view && (
         <Modal title="Edit card" onClose={() => setEditing(false)} wide>
-          <EditCard remId={view.remId} />
+          <CardEditor remId={view.remId} />
         </Modal>
       )}
     </div>
   );
-}
-
-/** The card's Rem (with its children) for quick edits - only this card. */
-function EditCard({ remId }: { remId: string }): ReactNode {
-  const parentId = useSelector((s) => s.get(remId)?.parentId ?? null);
-  if (!parentId)
-    return (
-      <div className="muted">This card is a top-level Rem; open it from the sidebar to edit.</div>
-    );
-  // Rendered inside its parent so the answer mode inherited from it applies.
-  return <Outliner rootId={parentId} only={remId} embedded />;
 }
 
 /** Session summary. */

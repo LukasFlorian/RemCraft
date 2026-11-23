@@ -22,9 +22,10 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     id: '2026-11-19b',
-    title: 'Beta auch am Handy',
+    title: 'Karten in der Vorlesung bearbeiten, Beta am Handy',
     items: [
       'Der Link zur Beta-Version öffnet jetzt auch in der installierten App am Handy wirklich die Beta (vorher erschien teils wieder die normale Version).',
+      'Vorlesung: Karten im Karten-Widget lassen sich direkt dort bearbeiten (Stift-Symbol).',
     ],
   },
   {
